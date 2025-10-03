@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DatabaseService } from '@/lib/database/supabase';
-import { LeaderboardEntry, Participant } from '@/types/race';
+import { LeaderboardEntry } from '@/types/race';
 
 // Define proper types for the database results
 type Stage = { 
@@ -25,11 +25,7 @@ type RawStageResult = {
   };
 };
 
-type StageResultOut = {
-  timeInSeconds: number;
-  date: string;        // store as string to avoid server/client Date mismatches
-  isValid: boolean;
-};
+// StageResultOut type is defined in the LeaderboardEntry interface
 
 // LeaderboardEntry is imported from types/race.ts
 
@@ -85,7 +81,18 @@ export async function GET(request: NextRequest) {
 
           if (!participantMap.has(participantId)) {
             participantMap.set(participantId, {
-              participant: result.participants,
+              participant: {
+                id: result.participants.id,
+                firstName: result.participants.firstName,
+                lastName: result.participants.lastName,
+                stravaId: result.participants.stravaId,
+                email: '', // Not available in leaderboard context
+                stravaAccessToken: '', // Not available in leaderboard context
+                stravaRefreshToken: '', // Not available in leaderboard context
+                tokenExpiresAt: new Date(), // Not available in leaderboard context
+                createdAt: new Date(), // Not available in leaderboard context
+                updatedAt: new Date() // Not available in leaderboard context
+              },
               totalTime: 0,
               bonusApplied: false,
               rank: 0,
