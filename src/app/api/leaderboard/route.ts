@@ -8,7 +8,7 @@ type StageResult = {
   participantId: string;
   stageId: string;
   timeInSeconds: number;
-  date: string;
+  date: string | Date; // raw input can be string or Date
   isValid: boolean;
   participants: {
     id: string;
@@ -16,6 +16,12 @@ type StageResult = {
     lastName: string;
     stravaId: number;
   };
+};
+
+type StageResultNormalized = {
+  timeInSeconds: number;
+  date: Date;
+  isValid: boolean;
 };
 
 type RaceStage = {
@@ -29,6 +35,12 @@ type RaceConfig = {
   name: string;
   bonusMinutes: number;
   race_stages: RaceStage[];
+};
+
+// Helper function to safely convert string/Date to Date
+const toValidDate = (v: string | Date): Date | null => {
+  const d = typeof v === 'string' ? new Date(v) : v;
+  return d instanceof Date && !Number.isNaN(d.getTime()) ? d : null;
 };
 
 export async function GET(request: NextRequest) {
@@ -85,9 +97,19 @@ export async function GET(request: NextRequest) {
           }
           
           const entry = participantMap.get(participantId)!;
+          
+          // Convert string date to Date object
+          const raw = result.date;
+          const date = typeof raw === 'string' ? new Date(raw) : raw;
+          
+          // Guard against invalid dates
+          if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+            return; // skip invalid dates
+          }
+          
           entry.stageResults[stage.id] = {
             timeInSeconds: result.timeInSeconds,
-            date: result.date,
+            date, // now a proper Date object
             isValid: result.isValid
           };
         });
