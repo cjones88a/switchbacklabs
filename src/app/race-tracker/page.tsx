@@ -198,7 +198,7 @@ export default function RaceTrackerPage() {
             ) : (
               <div className="space-y-2">
                 {leaderboard.map((entry, index) => (
-                  <div key={`${entry.participant.id}-${entry.stageId || 'overall'}`}>
+                  <div key={`${entry.participant.id}-${'stageId' in entry ? entry.stageId : 'overall'}`}>
                     <div className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center gap-4">
                         <div className="text-2xl font-bold text-gray-400 w-8">
