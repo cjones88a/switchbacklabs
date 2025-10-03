@@ -34,6 +34,12 @@ export default function ProjectsPage() {
             ctaText="View details"
             ctaHref="#4soh-details"
           />
+          <ProjectCard
+            title="4SOH Race Tracker"
+            description="Automated race tracking system that integrates with Strava segments. Participants' times are automatically recorded, aggregated, and displayed on real-time leaderboards with bonus scoring."
+            ctaText="Try it now"
+            ctaHref="/race-tracker"
+          />
         </div>
       </Section>
 

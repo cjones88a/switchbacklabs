@@ -18,6 +18,12 @@ export function Header() {
             >
               Projects
             </Link>
+            <Link 
+              href="/race-tracker" 
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Race Tracker
+            </Link>
             <Link href="#contact">
               <Button variant="outline" size="sm">
                 Contact
