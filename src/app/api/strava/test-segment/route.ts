@@ -1,6 +1,21 @@
 import { NextResponse } from 'next/server';
 import { StravaAPI } from '@/lib/strava/api';
 
+// Define types for Strava API responses
+type StravaAthlete = {
+  id: number;
+  firstname: string;
+  lastname: string;
+  username?: string | null;
+};
+
+type StravaSegmentEffort = {
+  id: number;
+  elapsedTime: number;
+  startDate: string;
+  prRank?: number;
+};
+
 export async function GET() {
   try {
     // For testing, we'll use a hardcoded access token
@@ -18,10 +33,10 @@ export async function GET() {
     const segmentId = 7977451; // The segment you specified
     
     // Get segment efforts for this segment
-    const efforts = await stravaAPI.getSegmentEfforts(segmentId, testAccessToken);
+    const efforts = await stravaAPI.getSegmentEfforts(segmentId, testAccessToken) as StravaSegmentEffort[];
     
     // Get athlete info
-    const athlete = await stravaAPI.getAthlete(testAccessToken);
+    const athlete = await stravaAPI.getAthlete(testAccessToken) as StravaAthlete;
     
     return NextResponse.json({
       success: true,
@@ -30,7 +45,7 @@ export async function GET() {
         id: athlete.id,
         firstname: athlete.firstname,
         lastname: athlete.lastname,
-        username: athlete.username
+        username: athlete.username ?? null
       },
       efforts: efforts.map(effort => ({
         id: effort.id,
