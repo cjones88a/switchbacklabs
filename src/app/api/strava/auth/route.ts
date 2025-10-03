@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { StravaAPI } from '@/lib/strava/api';
-import { DatabaseService } from '@/lib/database/supabase';
+// import { DatabaseService } from '@/lib/database/supabase';
 
 type StravaAthlete = {
   id: number;
@@ -32,29 +32,19 @@ export async function GET(request: NextRequest) {
     // Get athlete information
     const athlete = await stravaAPI.getAthlete(tokenData.accessToken) as StravaAthlete;
     
-    // Check if participant already exists
-    let participant = await DatabaseService.getParticipantByStravaId(athlete.id);
-    
-    if (participant) {
-      // Update existing participant's tokens
-      participant = await DatabaseService.updateParticipantTokens(
-        athlete.id,
-        tokenData.accessToken,
-        tokenData.refreshToken,
-        tokenData.expiresAt
-      );
-    } else {
-      // Create new participant
-      participant = await DatabaseService.createParticipant({
-        stravaId: athlete.id,
-        firstName: athlete.firstname,
-        lastName: athlete.lastname,
-        email: athlete.email || '',
-        stravaAccessToken: tokenData.accessToken,
-        stravaRefreshToken: tokenData.refreshToken,
-        tokenExpiresAt: tokenData.expiresAt
-      });
-    }
+    // Mock participant for now (until Supabase is set up)
+    const participant = {
+      id: `mock_${athlete.id}`,
+      stravaId: athlete.id,
+      firstName: athlete.firstname,
+      lastName: athlete.lastname,
+      email: athlete.email || '',
+      stravaAccessToken: tokenData.accessToken,
+      stravaRefreshToken: tokenData.refreshToken,
+      tokenExpiresAt: tokenData.expiresAt,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
 
     // Redirect to test page for now
     const redirectUrl = new URL('/strava-test', process.env.NEXT_PUBLIC_APP_URL!);

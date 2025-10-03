@@ -33,11 +33,18 @@ export class StravaAPI {
       redirect_uri: redirectUri
     });
 
+    const data = response.data as {
+      access_token: string;
+      refresh_token: string;
+      expires_in: number;
+      athlete: unknown;
+    };
+    
     return {
-      accessToken: response.data.access_token,
-      refreshToken: response.data.refresh_token,
-      expiresAt: new Date(Date.now() + response.data.expires_in * 1000),
-      athlete: response.data.athlete
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      expiresAt: new Date(Date.now() + data.expires_in * 1000),
+      athlete: data.athlete
     };
   }
 
@@ -49,10 +56,16 @@ export class StravaAPI {
       grant_type: 'refresh_token'
     });
 
+    const data = response.data as {
+      access_token: string;
+      refresh_token: string;
+      expires_in: number;
+    };
+    
     return {
-      accessToken: response.data.access_token,
-      refreshToken: response.data.refresh_token,
-      expiresAt: new Date(Date.now() + response.data.expires_in * 1000)
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      expiresAt: new Date(Date.now() + data.expires_in * 1000)
     };
   }
 
@@ -94,11 +107,11 @@ export class StravaAPI {
       params.end_date_local = endDate.toISOString();
     }
 
-    return this.makeAuthenticatedRequest('/segment_efforts', accessToken, params);
+    return this.makeAuthenticatedRequest('/segment_efforts', accessToken, params) as Promise<StravaSegmentEffort[]>;
   }
 
   async getActivity(activityId: number, accessToken: string): Promise<StravaActivity> {
-    return this.makeAuthenticatedRequest(`/activities/${activityId}`, accessToken);
+    return this.makeAuthenticatedRequest(`/activities/${activityId}`, accessToken) as Promise<StravaActivity>;
   }
 
   async getAthleteActivities(
@@ -118,7 +131,7 @@ export class StravaAPI {
       params.after = Math.floor(after.getTime() / 1000);
     }
 
-    return this.makeAuthenticatedRequest('/athlete/activities', accessToken, params);
+    return this.makeAuthenticatedRequest('/athlete/activities', accessToken, params) as Promise<StravaActivity[]>;
   }
 
   // Utility method to check if token is expired

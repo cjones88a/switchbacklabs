@@ -219,7 +219,7 @@ export default function RaceTrackerPage() {
                         <div className="text-xl font-bold">
                           {formatTime('timeInSeconds' in entry ? entry.timeInSeconds : entry.totalTime)}
                         </div>
-                        {selectedStage !== 'overall' && (
+                        {selectedStage !== 'overall' && 'date' in entry && (
                           <div className="text-sm text-gray-600">
                             {new Date(entry.date).toLocaleDateString()}
                           </div>
