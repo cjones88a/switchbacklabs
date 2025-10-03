@@ -52,9 +52,7 @@ export async function GET(request: NextRequest) {
         email: athlete.email || '',
         stravaAccessToken: tokenData.accessToken,
         stravaRefreshToken: tokenData.refreshToken,
-        tokenExpiresAt: tokenData.expiresAt,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        tokenExpiresAt: tokenData.expiresAt
       });
     }
 
