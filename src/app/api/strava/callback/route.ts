@@ -11,7 +11,7 @@ type StravaAthlete = {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { code, state, redirectUri } = body;
+    const { code, state } = body;
 
     if (!code) {
       return NextResponse.json({ error: 'No authorization code received' }, { status: 400 });
