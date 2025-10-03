@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { StravaAPI } from '@/lib/strava/api';
 import { DatabaseService } from '@/lib/database/supabase';
 
+type StravaAthlete = {
+  id: number;
+  firstname: string;
+  lastname: string;
+  email?: string;
+};
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -23,7 +30,7 @@ export async function GET(request: NextRequest) {
     const tokenData = await stravaAPI.exchangeCodeForToken(code, redirectUri);
     
     // Get athlete information
-    const athlete = await stravaAPI.getAthlete(tokenData.accessToken) as any;
+    const athlete = await stravaAPI.getAthlete(tokenData.accessToken) as StravaAthlete;
     
     // Check if participant already exists
     let participant = await DatabaseService.getParticipantByStravaId(athlete.id);
