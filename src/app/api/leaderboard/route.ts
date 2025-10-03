@@ -3,12 +3,19 @@ import { DatabaseService } from '@/lib/database/supabase';
 import { LeaderboardEntry, Participant } from '@/types/race';
 
 // Define proper types for the database results
-type StageResult = {
+type Stage = { 
+  id: string; 
+  name: string; 
+  startDate: string;
+  endDate: string;
+};
+
+type RawStageResult = {
   id: string;
   participantId: string;
   stageId: string;
   timeInSeconds: number;
-  date: string | Date; // raw input can be string or Date
+  date: string;        // incoming is string (ISO), not Date
   isValid: boolean;
   participants: {
     id: string;
@@ -18,29 +25,29 @@ type StageResult = {
   };
 };
 
-type StageResultNormalized = {
+type StageResultOut = {
   timeInSeconds: number;
-  date: Date;
+  date: string;        // store as string to avoid server/client Date mismatches
   isValid: boolean;
 };
 
-type RaceStage = {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
+type LeaderboardEntry = {
+  participant: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    stravaId: number;
+  };
+  totalTime: number;
+  bonusApplied: boolean;
+  rank: number;
+  stageResults: Record<string, StageResultOut>;
 };
 
 type RaceConfig = {
   name: string;
   bonusMinutes: number;
-  race_stages: RaceStage[];
-};
-
-// Helper function to safely convert string/Date to Date
-const toValidDate = (v: string | Date): Date | null => {
-  const d = typeof v === 'string' ? new Date(v) : v;
-  return d instanceof Date && !Number.isNaN(d.getTime()) ? d : null;
+  race_stages: Stage[];
 };
 
 export async function GET(request: NextRequest) {
@@ -51,7 +58,7 @@ export async function GET(request: NextRequest) {
 
     if (stageId) {
       // Get leaderboard for specific stage
-      const results: StageResult[] = await DatabaseService.getResultsByStage(stageId);
+      const results: RawStageResult[] = await DatabaseService.getResultsByStage(stageId);
       
       const leaderboard = results.map((result, index) => ({
         rank: index + 1,
@@ -70,46 +77,39 @@ export async function GET(request: NextRequest) {
     } else {
       // Get overall leaderboard across all stages
       const raceConfig: RaceConfig = await DatabaseService.getRaceConfig();
-      const stages: RaceStage[] = raceConfig.race_stages;
+      const stages: Stage[] = raceConfig.race_stages;
       
       // Get all participants who have results
-      const allResults: StageResult[][] = await Promise.all(
-        stages.map((stage: RaceStage) => DatabaseService.getResultsByStage(stage.id))
+      const allResults: RawStageResult[][] = await Promise.all(
+        stages.map((stage: Stage) => DatabaseService.getResultsByStage(stage.id))
       );
 
       // Create a map of participants and their best times per stage
       const participantMap = new Map<string, LeaderboardEntry>();
       
-      allResults.forEach((stageResults: StageResult[], stageIndex: number) => {
-        const stage: RaceStage = stages[stageIndex];
+      allResults.forEach((stageResults: RawStageResult[], stageIndex: number) => {
+        const stage: Stage = stages[stageIndex];
         
-        stageResults.forEach((result: StageResult) => {
-          const participantId: string = result.participantId;
-          
+        // Before: stageResults.forEach(result => { ... })  // result was 'any'
+        (stageResults as RawStageResult[]).forEach((result: RawStageResult) => {
+          const participantId = result.participantId;
+
           if (!participantMap.has(participantId)) {
             participantMap.set(participantId, {
-              participant: result.participants as Participant,
-              stageResults: {},
+              participant: result.participants,
               totalTime: 0,
               bonusApplied: false,
-              rank: 0
+              rank: 0,
+              stageResults: {}
             });
           }
-          
+
           const entry = participantMap.get(participantId)!;
-          
-          // Convert string date to Date object
-          const raw = result.date;
-          const date = typeof raw === 'string' ? new Date(raw) : raw;
-          
-          // Guard against invalid dates
-          if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
-            return; // skip invalid dates
-          }
-          
+
+          // Keep date as a string to match StageResultOut
           entry.stageResults[stage.id] = {
             timeInSeconds: result.timeInSeconds,
-            date, // now a proper Date object
+            date: result.date,          // ✅ now typed as string everywhere
             isValid: result.isValid
           };
         });
