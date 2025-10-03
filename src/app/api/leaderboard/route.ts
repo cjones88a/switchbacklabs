@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       allResults.forEach((stageResults, stageIndex) => {
         const stage = stages[stageIndex];
         
-        stageResults.forEach(result => {
+        stageResults.forEach((result: any) => {
           const participantId = result.participantId;
           
           if (!participantMap.has(participantId)) {
