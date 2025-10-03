@@ -29,7 +29,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Get current athlete info
-    const athlete = await stravaAPI.getAthlete(testAccessToken);
+    const athlete = await stravaAPI.getAthlete(testAccessToken) as {
+      id: number;
+      firstname: string;
+      lastname: string;
+      profile: string;
+    };
     
     // Get segment efforts for the specific segment
     const segmentEfforts = await stravaAPI.getSegmentEfforts(
