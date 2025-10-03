@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { LeaderboardEntry } from '@/types/race';
 
-interface LeaderboardEntry {
+// For single stage results
+interface StageLeaderboardEntry {
   rank: number;
   participant: {
     id: string;
@@ -30,7 +32,7 @@ interface RaceConfig {
 }
 
 export default function RaceTrackerPage() {
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [leaderboard, setLeaderboard] = useState<(LeaderboardEntry | StageLeaderboardEntry)[]>([]);
   const [raceConfig, setRaceConfig] = useState<RaceConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -206,7 +208,7 @@ export default function RaceTrackerPage() {
                           <h3 className="font-semibold">
                             {entry.participant.firstName} {entry.participant.lastName}
                           </h3>
-                          {selectedStage === 'overall' && (
+                          {selectedStage === 'overall' && 'stageResults' in entry && (
                             <p className="text-sm text-gray-600">
                               {Object.keys(entry.stageResults || {}).length} stages completed
                             </p>
@@ -215,7 +217,7 @@ export default function RaceTrackerPage() {
                       </div>
                       <div className="text-right">
                         <div className="text-xl font-bold">
-                          {formatTime(entry.timeInSeconds)}
+                          {formatTime('timeInSeconds' in entry ? entry.timeInSeconds : entry.totalTime)}
                         </div>
                         {selectedStage !== 'overall' && (
                           <div className="text-sm text-gray-600">
