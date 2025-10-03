@@ -8,7 +8,7 @@ import Link from 'next/link';
 
 export default function SuccessPage() {
   const searchParams = useSearchParams();
-  const participantId = searchParams.get('participantId');
+  const _participantId = searchParams.get('participantId');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export default function SuccessPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-600 mt-1">✓</span>
-                  <span>You'll get bonus time for completing all 4 stages</span>
+                  <span>You&apos;ll get bonus time for completing all 4 stages</span>
                 </li>
               </ul>
             </div>
@@ -69,7 +69,7 @@ export default function SuccessPage() {
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
               <h3 className="font-semibold text-blue-800 mb-2">Important Notes:</h3>
               <ul className="space-y-1 text-sm text-blue-700">
-                <li>• Make sure your Strava activities are set to "Everyone" or "Followers" for public segments</li>
+                  <li>• Make sure your Strava activities are set to &quot;Everyone&quot; or &quot;Followers&quot; for public segments</li>
                 <li>• Only activities completed during the official race dates will count</li>
                 <li>• Your best time for each stage will be automatically recorded</li>
               </ul>

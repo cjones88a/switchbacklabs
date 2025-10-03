@@ -55,7 +55,7 @@ export interface StravaSegmentEffort {
   elapsedTime: number;
   startDate: string;
   prRank?: number;
-  achievements?: any[];
+  achievements?: unknown[];
 }
 
 export interface StravaActivity {

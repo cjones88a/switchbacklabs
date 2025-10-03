@@ -38,7 +38,7 @@ export default function RaceTrackerPage() {
 
   useEffect(() => {
     fetchLeaderboard();
-  }, [selectedStage]);
+  }, [selectedStage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchLeaderboard = async () => {
     try {
@@ -90,7 +90,7 @@ export default function RaceTrackerPage() {
       if (data.authUrl) {
         window.location.href = data.authUrl;
       }
-    } catch (err) {
+    } catch {
       setError('Failed to initiate Strava connection');
     }
   };

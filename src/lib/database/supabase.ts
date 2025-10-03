@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Participant, RaceStage, RaceResult, RaceConfig } from '@/types/race';
+import { Participant, RaceResult, RaceConfig } from '@/types/race';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;

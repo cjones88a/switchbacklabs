@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 export default function StravaTestPage() {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleStravaAuth = async () => {
@@ -107,9 +107,9 @@ export default function StravaTestPage() {
               <ol className="text-sm text-blue-700 space-y-1">
                 <li>1. Make sure your Strava API callback domain is set to: <code className="bg-blue-100 px-1 rounded">switchbacklabsco.com</code></li>
                 <li>2. Add your Strava Client ID and Secret to <code className="bg-blue-100 px-1 rounded">.env.local</code></li>
-                <li>3. Click "Connect to Strava" to start the OAuth flow</li>
-                <li>4. After authorization, you'll be redirected back here</li>
-                <li>5. Click "Get My Segment Times" to test the API</li>
+                <li>3. Click &quot;Connect to Strava&quot; to start the OAuth flow</li>
+                <li>4. After authorization, you&apos;ll be redirected back here</li>
+                <li>5. Click &quot;Get My Segment Times&quot; to test the API</li>
               </ol>
             </div>
           </CardContent>

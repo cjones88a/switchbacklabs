@@ -60,7 +60,7 @@ export class StravaAPI {
   private async makeAuthenticatedRequest(
     endpoint: string, 
     accessToken: string, 
-    params?: Record<string, any>
+    params?: Record<string, string | number>
   ) {
     const response = await axios.get(`${this.baseURL}${endpoint}`, {
       headers: {
@@ -82,7 +82,7 @@ export class StravaAPI {
     startDate?: Date, 
     endDate?: Date
   ): Promise<StravaSegmentEffort[]> {
-    const params: Record<string, any> = {
+    const params: Record<string, string | number> = {
       segment_id: segmentId,
       per_page: 200
     };
@@ -107,7 +107,7 @@ export class StravaAPI {
     after?: Date, 
     perPage: number = 200
   ): Promise<StravaActivity[]> {
-    const params: Record<string, any> = {
+    const params: Record<string, string | number> = {
       per_page: perPage
     };
 

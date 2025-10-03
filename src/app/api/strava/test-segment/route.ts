@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { StravaAPI } from '@/lib/strava/api';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // For testing, we'll use a hardcoded access token
     // In production, this would come from the database after OAuth
