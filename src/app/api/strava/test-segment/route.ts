@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { StravaAPI } from '@/lib/strava/api';
 
 export async function GET() {

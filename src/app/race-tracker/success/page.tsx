@@ -8,7 +8,7 @@ import Link from 'next/link';
 
 export default function SuccessPage() {
   const searchParams = useSearchParams();
-  const _participantId = searchParams.get('participantId');
+  // const _participantId = searchParams.get('participantId');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export default function SuccessPage() {
         <div className="max-w-2xl mx-auto text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
           <h2 className="text-2xl font-semibold mb-2">Setting up your account...</h2>
-          <p className="text-gray-600">We're connecting your Strava data to the race tracker.</p>
+          <p className="text-gray-600">We&apos;re connecting your Strava data to the race tracker.</p>
         </div>
       </div>
     );
