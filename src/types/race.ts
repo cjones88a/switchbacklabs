@@ -40,7 +40,7 @@ export interface LeaderboardEntry {
   stageResults: {
     [stageId: string]: {
       timeInSeconds: number;
-      date: Date;
+      date: string; // Use string dates to avoid server/client Date mismatches
       isValid: boolean;
     };
   };

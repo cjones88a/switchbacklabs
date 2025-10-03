@@ -31,18 +31,7 @@ type StageResultOut = {
   isValid: boolean;
 };
 
-type LeaderboardEntry = {
-  participant: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    stravaId: number;
-  };
-  totalTime: number;
-  bonusApplied: boolean;
-  rank: number;
-  stageResults: Record<string, StageResultOut>;
-};
+// LeaderboardEntry is imported from types/race.ts
 
 type RaceConfig = {
   name: string;
