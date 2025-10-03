@@ -4,7 +4,7 @@ import { StravaAPI } from '@/lib/strava/api';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const redirectUri = searchParams.get('redirect_uri') || `${process.env.NEXT_PUBLIC_APP_URL}/race-tracker`;
+    const redirectUri = searchParams.get('redirect_uri') || `${process.env.NEXT_PUBLIC_APP_URL}/api/strava/auth`;
     const state = searchParams.get('state') || 'race_tracker';
 
     const stravaAPI = new StravaAPI();
