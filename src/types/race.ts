@@ -56,6 +56,9 @@ export interface StravaSegmentEffort {
   startDate: string;
   prRank?: number;
   achievements?: unknown[];
+  athlete?: {
+    id: number;
+  };
 }
 
 export interface StravaActivity {

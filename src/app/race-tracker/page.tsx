@@ -31,10 +31,42 @@ interface RaceConfig {
   }>;
 }
 
+interface SegmentData {
+  segmentId: number;
+  athlete: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    profile: string;
+  };
+  mostRecentEffort?: {
+    id: number;
+    elapsedTime: number;
+    startDate: string;
+    prRank?: number;
+    activity: {
+      id: number;
+      name: string;
+      type: string;
+      distance: number;
+      startDate: string;
+    };
+  };
+  allEfforts: Array<{
+    id: number;
+    elapsedTime: number;
+    startDate: string;
+    prRank?: number;
+  }>;
+  message?: string;
+}
+
 export default function RaceTrackerPage() {
   const [leaderboard, setLeaderboard] = useState<(LeaderboardEntry | StageLeaderboardEntry)[]>([]);
   const [raceConfig, setRaceConfig] = useState<RaceConfig | null>(null);
+  const [segmentData, setSegmentData] = useState<SegmentData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [segmentLoading, setSegmentLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedStage, setSelectedStage] = useState<string>('overall');
 
@@ -84,6 +116,25 @@ export default function RaceTrackerPage() {
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const fetchSegmentData = async () => {
+    try {
+      setSegmentLoading(true);
+      const response = await fetch('/api/strava/my-segment?segmentId=7977451');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch segment data');
+      }
+      
+      const data = await response.json();
+      setSegmentData(data);
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch segment data');
+    } finally {
+      setSegmentLoading(false);
+    }
+  };
+
   const handleStravaConnect = async () => {
     try {
       const response = await fetch('/api/strava/initiate');
@@ -117,15 +168,117 @@ export default function RaceTrackerPage() {
             Connect your Strava account to automatically track your race times
           </p>
           
-          <Button onClick={handleStravaConnect} size="lg">
-            Connect Strava Account
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button onClick={handleStravaConnect} size="lg">
+              Connect Strava Account
+            </Button>
+            <Button 
+              onClick={fetchSegmentData} 
+              variant="outline" 
+              size="lg"
+              disabled={segmentLoading}
+            >
+              {segmentLoading ? 'Loading...' : 'Check My Segment Time'}
+            </Button>
+          </div>
         </div>
 
         {error && (
           <Card className="mb-6 border-red-200 bg-red-50">
             <CardContent className="pt-6">
               <p className="text-red-600">{error}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {segmentData && (
+          <Card className="mb-6 border-blue-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span>🏃‍♂️</span>
+                My Segment Performance
+              </CardTitle>
+              <CardDescription>
+                Segment ID: {segmentData.segmentId} | Athlete: {segmentData.athlete.firstName} {segmentData.athlete.lastName}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {segmentData.mostRecentEffort ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 bg-white rounded-lg border">
+                      <h3 className="font-semibold text-lg mb-2">Most Recent Effort</h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Time:</span>
+                          <span className="font-bold text-xl">{formatTime(segmentData.mostRecentEffort.elapsedTime)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Date:</span>
+                          <span>{new Date(segmentData.mostRecentEffort.startDate).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Activity:</span>
+                          <span className="text-sm">{segmentData.mostRecentEffort.activity.name}</span>
+                        </div>
+                        {segmentData.mostRecentEffort.prRank && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">PR Rank:</span>
+                            <span className="text-green-600 font-semibold">#{segmentData.mostRecentEffort.prRank}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 bg-white rounded-lg border">
+                      <h3 className="font-semibold text-lg mb-2">Activity Details</h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Type:</span>
+                          <span>{segmentData.mostRecentEffort.activity.type}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Distance:</span>
+                          <span>{(segmentData.mostRecentEffort.activity.distance / 1000).toFixed(2)} km</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Total Efforts:</span>
+                          <span>{segmentData.allEfforts.length}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {segmentData.allEfforts.length > 1 && (
+                    <div className="p-4 bg-white rounded-lg border">
+                      <h3 className="font-semibold text-lg mb-3">All Efforts on This Segment</h3>
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {segmentData.allEfforts.map((effort, index) => (
+                          <div key={effort.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                            <div className="flex items-center gap-3">
+                              <span className="text-sm text-gray-500">#{index + 1}</span>
+                              <span className="font-medium">{formatTime(effort.elapsedTime)}</span>
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {new Date(effort.startDate).toLocaleDateString()}
+                              {effort.prRank && (
+                                <span className="ml-2 text-green-600">PR #{effort.prRank}</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-gray-600">{segmentData.message || 'No efforts found for this segment'}</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Complete this segment on Strava to see your time here!
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
