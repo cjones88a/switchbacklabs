@@ -52,8 +52,9 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Redirect to success page or return success response
-    const redirectUrl = new URL('/race-tracker/success', process.env.NEXT_PUBLIC_APP_URL!);
+    // Redirect to test page for now
+    const redirectUrl = new URL('/strava-test', process.env.NEXT_PUBLIC_APP_URL!);
+    redirectUrl.searchParams.set('success', 'true');
     redirectUrl.searchParams.set('participantId', participant.id);
     
     return NextResponse.redirect(redirectUrl);
