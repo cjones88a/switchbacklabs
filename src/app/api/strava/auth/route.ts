@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const tokenData = await stravaAPI.exchangeCodeForToken(code, redirectUri);
     
     // Get athlete information
-    const athlete = await stravaAPI.getAthlete(tokenData.accessToken);
+    const athlete = await stravaAPI.getAthlete(tokenData.accessToken) as any;
     
     // Check if participant already exists
     let participant = await DatabaseService.getParticipantByStravaId(athlete.id);
