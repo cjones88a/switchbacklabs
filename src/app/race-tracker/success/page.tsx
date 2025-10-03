@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 export default function SuccessPage() {
-  const searchParams = useSearchParams();
+  // const searchParams = useSearchParams();
   // const _participantId = searchParams.get('participantId');
   const [loading, setLoading] = useState(true);
 

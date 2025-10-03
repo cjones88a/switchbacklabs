@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       
       // Get all participants who have results
       const allResults = await Promise.all(
-        stages.map(stage => DatabaseService.getResultsByStage(stage.id))
+        stages.map((stage: any) => DatabaseService.getResultsByStage(stage.id))
       );
 
       // Create a map of participants and their best times per stage
