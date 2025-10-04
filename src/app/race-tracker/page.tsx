@@ -91,6 +91,7 @@ export default function RaceTrackerPage() {
   const [overallLeaderboard, setOverallLeaderboard] = useState<NewLeaderboardRow[]>([]);
   const [climberLeaderboard, setClimberLeaderboard] = useState<NewLeaderboardRow[]>([]);
   const [downhillLeaderboard, setDownhillLeaderboard] = useState<NewLeaderboardRow[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   // read query params
   useEffect(() => {
@@ -194,25 +195,76 @@ export default function RaceTrackerPage() {
     loadLeaderboards();
   }, []);
 
+  // Function to refresh leaderboard data
+  const refreshLeaderboards = async () => {
+    try {
+      setRefreshing(true);
+      console.log('🔄 Refreshing leaderboard data...');
+      
+      const [overallData, climberData, downhillData] = await Promise.all([
+        getOverallLoopLeaderboard(),
+        getClimberScoreLeaderboard(),
+        getDownhillScoreLeaderboard()
+      ]);
+      
+      setOverallLeaderboard(overallData.rows);
+      setClimberLeaderboard(climberData.rows);
+      setDownhillLeaderboard(downhillData.rows);
+      
+      console.log('✅ Leaderboard data refreshed');
+    } catch (error) {
+      console.error('Failed to refresh leaderboards:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   // Load new leaderboard data using proper Prisma-style logic
   useEffect(() => {
-    const loadNewLeaderboards = async () => {
-      try {
-        const [overallData, climberData, downhillData] = await Promise.all([
-          getOverallLoopLeaderboard(),
-          getClimberScoreLeaderboard(),
-          getDownhillScoreLeaderboard()
-        ]);
-        
-        setOverallLeaderboard(overallData.rows);
-        setClimberLeaderboard(climberData.rows);
-        setDownhillLeaderboard(downhillData.rows);
-      } catch (error) {
-        console.error('Failed to load new leaderboards:', error);
+    refreshLeaderboards();
+  }, []);
+
+  // Add refresh on page visibility change (when user comes back to tab)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('🔄 Page became visible, refreshing data...');
+        refreshLeaderboards();
       }
     };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  // Add keyboard shortcut for refresh (F5 or Ctrl+R)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // F5 key or Ctrl+R
+      if (event.key === 'F5' || (event.ctrlKey && event.key === 'r')) {
+        event.preventDefault();
+        console.log('🔄 Keyboard refresh triggered');
+        refreshLeaderboards();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Force refresh on page load (handles browser refresh)
+  useEffect(() => {
+    const handlePageLoad = () => {
+      console.log('🔄 Page loaded, refreshing data...');
+      refreshLeaderboards();
+    };
+
+    // Refresh immediately on mount
+    handlePageLoad();
     
-    loadNewLeaderboards();
+    // Also listen for page load events
+    window.addEventListener('load', handlePageLoad);
+    return () => window.removeEventListener('load', handlePageLoad);
   }, []);
 
 
@@ -444,13 +496,23 @@ export default function RaceTrackerPage() {
 
       <section className="flex items-center justify-between gap-4">
         <div className="text-sm text-white/60">Individual season times • −10:00 bonus if all 4 stages completed</div>
-        <input
-          value={q}
-          onChange={e=>setQ(e.target.value)}
-          placeholder="Search riders"
-          className="bg-transparent border border-white/20 rounded-xl px-3 py-2 outline-none focus:border-white/40"
-          aria-label="Search riders"
-        />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={refreshLeaderboards}
+            disabled={refreshing}
+            className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2"
+            title="Refresh leaderboard data"
+          >
+            {refreshing ? '🔄' : '🔄'} {refreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
+          <input
+            value={q}
+            onChange={e=>setQ(e.target.value)}
+            placeholder="Search riders"
+            className="bg-transparent border border-white/20 rounded-xl px-3 py-2 outline-none focus:border-white/40"
+            aria-label="Search riders"
+          />
+        </div>
       </section>
 
       {/* Overall Leaderboard */}
