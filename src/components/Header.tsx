@@ -25,6 +25,12 @@ export function Header() {
               Race Tracker
             </Link>
             <Link 
+              href="/leaderboard" 
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Leaderboards
+            </Link>
+            <Link 
               href="/strava-test" 
               className="text-gray-600 hover:text-gray-900 transition-colors text-sm"
             >

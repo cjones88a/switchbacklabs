@@ -77,10 +77,15 @@ class MockDatabase {
     return this.results.get(participantId) || [];
   }
 
-  async getAllResults(): Promise<RaceResult[]> {
-    const allResults: RaceResult[] = [];
-    for (const results of this.results.values()) {
-      allResults.push(...results);
+  async getAllResults(): Promise<Array<RaceResult & { participantName?: string }>> {
+    const allResults: Array<RaceResult & { participantName?: string }> = [];
+    for (const [participantId, results] of this.results.entries()) {
+      const participant = this.participants.get(participantId);
+      const resultsWithNames = results.map(result => ({
+        ...result,
+        participantName: participant?.name
+      }));
+      allResults.push(...resultsWithNames);
     }
     return allResults;
   }

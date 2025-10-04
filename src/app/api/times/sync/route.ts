@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { StravaAPI } from '@/lib/strava/api';
 import { raceDatabase } from '@/lib/race-database';
+import { updateMockEffortsFromDatabase } from '@/lib/leaderboards';
 
 // POST /api/times/sync
 // Exchange Strava code for token, fetch segment efforts, and upsert to database
@@ -61,12 +62,35 @@ export async function POST(req: Request) {
     // Fetch data for all segment types
     console.log('🔄 Fetching segment data for all categories...');
     
+    // Fetch all segments for all seasons
     const segmentsToFetch = [
-      { id: 7977451, stageIndex: 0, type: 'overall' }, // Fall 2025 - Overall
-      { id: 9589287, stageIndex: 0, type: 'climbing' }, // Fall 2025 - Climbing
-      { id: 18229887, stageIndex: 1, type: 'climbing' }, // Winter 2025 - Climbing
-      { id: 2105607, stageIndex: 0, type: 'descending' }, // Fall 2025 - Descending
-      { id: 1359027, stageIndex: 1, type: 'descending' }, // Winter 2025 - Descending
+      // Overall Loop (7977451) for all seasons
+      { id: 7977451, stageIndex: 0, type: 'overall' }, // Fall 2025
+      { id: 7977451, stageIndex: 1, type: 'overall' }, // Winter 2025
+      { id: 7977451, stageIndex: 2, type: 'overall' }, // Spring 2026
+      { id: 7977451, stageIndex: 3, type: 'overall' }, // Summer 2026
+      
+      // Climbing segments (9589287 + 18229887) for all seasons
+      { id: 9589287, stageIndex: 0, type: 'climbing' }, // Fall 2025
+      { id: 9589287, stageIndex: 1, type: 'climbing' }, // Winter 2025
+      { id: 9589287, stageIndex: 2, type: 'climbing' }, // Spring 2026
+      { id: 9589287, stageIndex: 3, type: 'climbing' }, // Summer 2026
+      
+      { id: 18229887, stageIndex: 0, type: 'climbing' }, // Fall 2025
+      { id: 18229887, stageIndex: 1, type: 'climbing' }, // Winter 2025
+      { id: 18229887, stageIndex: 2, type: 'climbing' }, // Spring 2026
+      { id: 18229887, stageIndex: 3, type: 'climbing' }, // Summer 2026
+      
+      // Descending segments (2105607 + 1359027) for all seasons
+      { id: 2105607, stageIndex: 0, type: 'descending' }, // Fall 2025
+      { id: 2105607, stageIndex: 1, type: 'descending' }, // Winter 2025
+      { id: 2105607, stageIndex: 2, type: 'descending' }, // Spring 2026
+      { id: 2105607, stageIndex: 3, type: 'descending' }, // Summer 2026
+      
+      { id: 1359027, stageIndex: 0, type: 'descending' }, // Fall 2025
+      { id: 1359027, stageIndex: 1, type: 'descending' }, // Winter 2025
+      { id: 1359027, stageIndex: 2, type: 'descending' }, // Spring 2026
+      { id: 1359027, stageIndex: 3, type: 'descending' }, // Summer 2026
     ];
     
     let segmentEfforts: Array<{
@@ -140,6 +164,10 @@ export async function POST(req: Request) {
       name: participant.name,
       effortsCount: segmentEfforts.length
     });
+
+    // Update the leaderboard data with new results
+    const allResults = await raceDatabase.getAllResults();
+    updateMockEffortsFromDatabase(allResults);
 
     return NextResponse.json({ 
       ok: true, 
