@@ -67,13 +67,44 @@ function AddTimeButton() {
         </button>
         
         <button
-          onClick={() => {
-            console.log('🚀 Direct OAuth test...');
-            window.location.href = '/api/strava/auth-simple';
+          onClick={async () => {
+            console.log('🚀 Testing OAuth API response...');
+            try {
+              const response = await fetch('/api/strava/auth-simple');
+              console.log('OAuth API response:', response);
+              console.log('Response status:', response.status);
+              console.log('Response headers:', response.headers);
+              
+              if (response.redirected) {
+                console.log('✅ Redirect detected, going to:', response.url);
+                window.location.href = response.url;
+              } else {
+                const text = await response.text();
+                console.log('Response body:', text);
+                alert('No redirect - API returned: ' + text);
+              }
+            } catch (error) {
+              console.error('OAuth API error:', error);
+              alert('OAuth API failed: ' + error.message);
+            }
           }}
           className="px-4 py-2 bg-red-500 text-white rounded"
         >
-          🚀 Direct OAuth
+          🚀 Test OAuth API
+        </button>
+        
+        <button
+          onClick={() => {
+            console.log('🚀 Direct redirect to Strava...');
+            const clientId = '179098';
+            const redirectUri = 'https://switchbacklabsco.com/api/strava/callback-simple';
+            const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=read,activity:read,activity:read_all&approval_prompt=auto&state=race_tracker`;
+            console.log('Auth URL:', authUrl);
+            window.location.href = authUrl;
+          }}
+          className="px-4 py-2 bg-purple-500 text-white rounded"
+        >
+          🚀 Direct Strava
         </button>
       </div>
     </div>
