@@ -75,12 +75,28 @@ export async function POST(req: Request) {
       tokenExpiresAt: new Date(Date.now() + (6 * 60 * 60 * 1000))
     });
 
-    // Store the result
+    // Store the result with safe date handling
+    let effortDate: Date;
+    try {
+      effortDate = new Date(mostRecentEffort.startDate);
+      if (isNaN(effortDate.getTime())) {
+        throw new Error(`Invalid date format: ${mostRecentEffort.startDate}`);
+      }
+    } catch (error) {
+      console.error('❌ Error parsing effort date:', mostRecentEffort.startDate, error);
+      return NextResponse.json({
+        success: false,
+        message: `Invalid date format: ${mostRecentEffort.startDate}`,
+        athlete: athlete,
+        effort: mostRecentEffort
+      });
+    }
+
     await raceDatabase.upsertRaceResult({
       participantId: participant.id,
       stageIndex: 0, // Fall 2025
       elapsedTime: mostRecentEffort.elapsedTime,
-      effortDate: new Date(mostRecentEffort.startDate),
+      effortDate: effortDate,
       segmentId: 7977451,
       leaderboardType: 'overall'
     });

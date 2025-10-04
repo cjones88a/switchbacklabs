@@ -162,11 +162,24 @@ export async function POST(req: Request) {
 
     // Store race results in database
     for (const effort of segmentEfforts) {
+      // Validate and parse the date safely
+      let effortDate: Date;
+      try {
+        effortDate = new Date(effort.effortDate);
+        if (isNaN(effortDate.getTime())) {
+          console.error('❌ Invalid date format:', effort.effortDate);
+          continue; // Skip this effort if date is invalid
+        }
+      } catch (error) {
+        console.error('❌ Error parsing date:', effort.effortDate, error);
+        continue; // Skip this effort if date parsing fails
+      }
+
       await raceDatabase.upsertRaceResult({
         participantId: participant.id,
         stageIndex: effort.stageIndex,
         elapsedTime: effort.elapsedTime,
-        effortDate: new Date(effort.effortDate),
+        effortDate: effortDate,
         segmentId: effort.segmentId || 7977451,
         prRank: effort.prRank,
         leaderboardType: effort.type as 'overall' | 'climbing' | 'descending'

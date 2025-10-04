@@ -78,15 +78,24 @@ const mockStages: MockStage[] = [
  * Check if a date falls within a seasonal window (Equinox/Solstice based)
  */
 function isWithinSeasonalWindow(effortDate: string, season: 'fall' | 'winter' | 'spring' | 'summer'): boolean {
-  const effort = new Date(effortDate);
-  const stage = mockStages.find(s => s.season === season);
-  
-  if (!stage) return false;
-  
-  const startDate = new Date(stage.startDate);
-  const endDate = new Date(stage.endDate);
-  
-  return effort >= startDate && effort <= endDate;
+  try {
+    const effort = new Date(effortDate);
+    if (isNaN(effort.getTime())) {
+      console.error('❌ Invalid effort date:', effortDate);
+      return false;
+    }
+    
+    const stage = mockStages.find(s => s.season === season);
+    if (!stage) return false;
+    
+    const startDate = new Date(stage.startDate);
+    const endDate = new Date(stage.endDate);
+    
+    return effort >= startDate && effort <= endDate;
+  } catch (error) {
+    console.error('❌ Error in isWithinSeasonalWindow:', error);
+    return false;
+  }
 }
 
 /**
@@ -217,7 +226,19 @@ function getMostRecentActivityInSeason(
       activity.overallLoop && 
       isWithinSeasonalWindow(activity.overallLoop.effortDate, season)
     )
-    .sort((a, b) => new Date(b.activityDate).getTime() - new Date(a.activityDate).getTime());
+    .sort((a, b) => {
+      try {
+        const dateA = new Date(a.activityDate);
+        const dateB = new Date(b.activityDate);
+        if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+          return 0; // If either date is invalid, don't sort
+        }
+        return dateB.getTime() - dateA.getTime();
+      } catch (error) {
+        console.error('❌ Error sorting activity dates:', error);
+        return 0;
+      }
+    });
   
   return riderActivities[0] || null;
 }
