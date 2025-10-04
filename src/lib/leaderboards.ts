@@ -54,7 +54,7 @@ const mockStages: MockStage[] = [
 // This will be populated from the actual database
 let mockEfforts: MockEffort[] = [
   // Sample data for Colt Jones - Fall 2025 (stage 1)
-  { id: '1', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 7977451, stageId: 1, elapsedSec: 6557, effortDate: '2025-10-01' }, // Overall Loop: 1:49:17
+  { id: '1', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 7977451, stageId: 1, elapsedSec: 6631, effortDate: '2025-09-29' }, // Overall Loop: 1:50:31 (ACTUAL STRAVA DATA)
   { id: '2', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 9589287, stageId: 1, elapsedSec: 1200, effortDate: '2025-10-01' }, // Climbing segment 1: 20:00
   { id: '3', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 18229887, stageId: 1, elapsedSec: 1800, effortDate: '2025-10-01' }, // Climbing segment 2: 30:00
   { id: '4', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 2105607, stageId: 1, elapsedSec: 900, effortDate: '2025-10-01' }, // Descending segment 1: 15:00
