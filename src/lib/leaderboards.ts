@@ -103,15 +103,8 @@ function getCurrentSeason(): 'fall' | 'winter' | 'spring' | 'summer' {
   return currentStage?.season || 'fall'; // Default to fall if not found
 }
 
-// This will be populated from the actual database
-let mockEfforts: MockEffort[] = [
-  // Sample data for Colt Jones - Fall 2025 (all from same activity)
-  { id: '1', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 7977451, stageId: 1, elapsedSec: 6557, effortDate: '2025-09-29', activityId: 'activity_colt_fall_2025', activityDate: '2025-09-29' }, // Overall Loop: 1:49:17 (SEGMENT TIME - not total activity time)
-  { id: '2', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 9589287, stageId: 1, elapsedSec: 1200, effortDate: '2025-09-29', activityId: 'activity_colt_fall_2025', activityDate: '2025-09-29' }, // Climbing segment 1: 20:00
-  { id: '3', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 18229887, stageId: 1, elapsedSec: 1800, effortDate: '2025-09-29', activityId: 'activity_colt_fall_2025', activityDate: '2025-09-29' }, // Climbing segment 2: 30:00
-  { id: '4', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 2105607, stageId: 1, elapsedSec: 900, effortDate: '2025-09-29', activityId: 'activity_colt_fall_2025', activityDate: '2025-09-29' }, // Descending segment 1: 15:00
-  { id: '5', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 1359027, stageId: 1, elapsedSec: 1100, effortDate: '2025-09-29', activityId: 'activity_colt_fall_2025', activityDate: '2025-09-29' }, // Descending segment 2: 18:20
-];
+// This will be populated from the actual database - starting fresh with no mock data
+let mockEfforts: MockEffort[] = [];
 
 /**
  * Load efforts from database with enhanced activity linking
@@ -138,19 +131,14 @@ async function loadEffortsFromDatabase(): Promise<MockEffort[]> {
     
     console.log('📊 Converted efforts with activity linking:', dbEfforts);
     
-    // Merge database results with sample data
-    const allEfforts = [...mockEfforts, ...dbEfforts];
-    
-    // Remove duplicates (database results take precedence)
-    const uniqueEfforts = allEfforts.filter((effort, index, self) => 
-      index === self.findIndex(e => e.id === effort.id)
-    );
-    
-    return uniqueEfforts;
+    // Use only database results - no mock data
+    console.log('📊 Using only real database results:', dbEfforts.length, 'efforts');
+    return dbEfforts;
   } catch (error) {
     console.error('Error loading efforts from database:', error);
-    // Return sample data if database fails
-    return mockEfforts;
+    // Return empty array if database fails - no mock data fallback
+    console.log('📊 No database data available, returning empty results');
+    return [];
   }
 }
 
@@ -235,7 +223,7 @@ function getMostRecentActivityInSeason(
 }
 
 /**
- * Update mock efforts from database (called by sync API)
+ * Update efforts from database (called by sync API) - now handles real data only
  */
 export function updateMockEffortsFromDatabase(databaseResults: Array<{
   id: string;
@@ -246,6 +234,8 @@ export function updateMockEffortsFromDatabase(databaseResults: Array<{
   elapsedTime: number;
   effortDate: Date;
 }>) {
+  console.log('🔄 Updating efforts from database:', databaseResults.length, 'results');
+  
   mockEfforts = databaseResults.map(result => ({
     id: result.id,
     riderId: result.participantId,
@@ -253,8 +243,12 @@ export function updateMockEffortsFromDatabase(databaseResults: Array<{
     segmentId: result.segmentId,
     stageId: result.stageIndex + 1, // Convert 0-based to 1-based
     elapsedSec: result.elapsedTime,
-    effortDate: result.effortDate.toISOString().split('T')[0]
+    effortDate: result.effortDate.toISOString().split('T')[0],
+    activityId: `activity_${result.id}`, // Generate activity ID
+    activityDate: result.effortDate.toISOString().split('T')[0]
   }));
+  
+  console.log('✅ Updated efforts with real data:', mockEfforts.length, 'efforts');
 }
 
 /**
