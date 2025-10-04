@@ -7,8 +7,9 @@ export class StravaAPI {
   private clientSecret: string;
 
   constructor() {
-    this.clientId = process.env.STRAVA_CLIENT_ID!;
-    this.clientSecret = process.env.STRAVA_CLIENT_SECRET!;
+    // Use environment variables or fallback to hardcoded values for production
+    this.clientId = process.env.STRAVA_CLIENT_ID || '179098';
+    this.clientSecret = process.env.STRAVA_CLIENT_SECRET || 'e42d5b7d7ce04b98ab1f34a878e66aa12653d9aa';
   }
 
   // OAuth 2.0 Authentication

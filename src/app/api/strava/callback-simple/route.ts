@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     console.log('🔄 Exchanging code for tokens...');
     const stravaAPI = new StravaAPI();
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://switchbacklabsco.com';
-    const redirectUri = `${baseUrl}/api/strava/callback-simple`;
+    const redirectUri = process.env.STRAVA_REDIRECT_URI || `${baseUrl}/api/strava/callback-simple`;
     
     console.log('🔧 Environment check:', {
       baseUrl,
