@@ -1,21 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { StravaAPI } from '@/lib/strava/api';
+import { performanceMonitor, TeslaErrorHandler, spaceXCache } from '@/lib/performance-monitor';
 
 // GET /api/strava/segment-7977451?accessToken=xxx
 // Fetches the specific segment 7977451 data for the authenticated user
 export async function GET(request: NextRequest) {
+  performanceMonitor.start('segment-7977451-fetch');
+  
   try {
-    console.log('🏃‍♂️ Segment 7977451 API called');
+    console.log('🚀 [SPACEX] Segment 7977451 API called');
     
     const { searchParams } = new URL(request.url);
     const accessToken = searchParams.get('accessToken');
     
     if (!accessToken) {
-      console.error('❌ No access token provided');
+      performanceMonitor.end('segment-7977451-fetch', false, 'No access token provided');
       return NextResponse.json(
         { error: 'Access token required' },
         { status: 401 }
       );
+    }
+
+    // Check cache first (SpaceX-level optimization)
+    const cacheKey = `segment-7977451-${accessToken.slice(-8)}`;
+    const cachedData = spaceXCache.get(cacheKey);
+    if (cachedData) {
+      console.log('⚡ [CACHE HIT] Returning cached segment data');
+      performanceMonitor.end('segment-7977451-fetch', true);
+      return NextResponse.json(cachedData);
     }
 
     const stravaAPI = new StravaAPI();
@@ -79,7 +91,7 @@ export async function GET(request: NextRequest) {
     console.log('🔄 Fetching activity details for effort', mostRecentEffort.id);
     const activity = await stravaAPI.getActivity(mostRecentEffort.activityId, accessToken);
 
-    return NextResponse.json({
+    const responseData = {
       segmentId,
       athlete: {
         id: athlete.id,
@@ -107,43 +119,34 @@ export async function GET(request: NextRequest) {
         startDate: effort.startDate,
         prRank: effort.prRank
       })),
-      totalEfforts: athleteEfforts.length
-    });
+      totalEfforts: athleteEfforts.length,
+      performance: {
+        fetchTime: performance.now(),
+        cacheHit: false,
+        dataFreshness: new Date().toISOString()
+      }
+    };
+
+    // Cache the response (5 minutes TTL)
+    spaceXCache.set(cacheKey, responseData, 300);
+    
+    performanceMonitor.end('segment-7977451-fetch', true);
+    return NextResponse.json(responseData);
 
   } catch (error) {
-    console.error('💥 Segment 7977451 API error:', error);
+    const errorHandler = TeslaErrorHandler.handle(error);
+    performanceMonitor.end('segment-7977451-fetch', false, errorHandler.message);
     
-    // Handle specific Strava API errors
-    if (error instanceof Error) {
-      if (error.message.includes('401')) {
-        return NextResponse.json(
-          { 
-            error: 'Authentication failed',
-            message: 'Access token is invalid or expired',
-            details: error.message
-          },
-          { status: 401 }
-        );
-      }
-      
-      if (error.message.includes('403')) {
-        return NextResponse.json(
-          { 
-            error: 'Access forbidden',
-            message: 'Insufficient permissions to access segment data',
-            details: error.message
-          },
-          { status: 403 }
-        );
-      }
-    }
+    console.error('💥 [TESLA ERROR HANDLER]', errorHandler);
     
     return NextResponse.json(
       { 
-        error: 'Failed to fetch segment data',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        error: errorHandler.message,
+        recoverable: errorHandler.recoverable,
+        action: errorHandler.action,
+        timestamp: new Date().toISOString()
       },
-      { status: 500 }
+      { status: errorHandler.recoverable ? 400 : 500 }
     );
   }
 }

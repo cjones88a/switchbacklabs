@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { TeslaButton, TeslaCard, TeslaMetric, TeslaAlert } from '@/components/TeslaUI';
 
 interface LeaderboardRow {
   id: string;
@@ -17,14 +18,14 @@ interface LeaderboardRow {
 function AddTimeButton() {
   const [pending, setPending] = useState(false);
   return (
-    <button
+    <TeslaButton
       onClick={() => { setPending(true); window.location.href = '/api/strava/auth-simple'; }}
-      disabled={pending}
-      className="px-5 py-3 rounded-2xl bg-white text-black font-medium hover:opacity-90 disabled:opacity-50"
-      aria-label="Add my time via Strava"
+      loading={pending}
+      size="lg"
+      variant="primary"
     >
-      {pending ? 'Redirecting…' : 'Add my time'}
-    </button>
+      🚀 Connect Strava & Get My Time
+    </TeslaButton>
   );
 }
 
@@ -64,6 +65,11 @@ export default function RaceTrackerPage() {
       prRank?: number;
     }>;
     totalEfforts: number;
+    performance?: {
+      fetchTime: number;
+      cacheHit: boolean;
+      dataFreshness: string;
+    };
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -142,10 +148,13 @@ export default function RaceTrackerPage() {
         )}
         
         {error && (
-          <div className="text-center mt-4">
-            <p className="text-sm text-red-400">
-              ❌ {error}
-            </p>
+          <div className="mt-4">
+            <TeslaAlert
+              type="error"
+              title="Connection Error"
+              message={error}
+              onClose={() => setError(null)}
+            />
           </div>
         )}
       </header>
@@ -158,88 +167,98 @@ export default function RaceTrackerPage() {
       )}
 
       {segmentData && (
-        <section className="rounded-2xl overflow-hidden border border-white/10 bg-white/5">
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">Your Segment 7977451 Performance</h2>
-            
-            {segmentData.mostRecentEffort ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="p-4 bg-white/10 rounded-lg">
-                    <h3 className="font-semibold text-lg mb-3">Most Recent Effort</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-white/70">Time:</span>
-                        <span className="font-bold text-xl">{fmt(segmentData.mostRecentEffort.elapsedTime)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-white/70">Date:</span>
-                        <span>{new Date(segmentData.mostRecentEffort.startDate).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-white/70">Activity:</span>
-                        <span className="text-sm">{segmentData.mostRecentEffort.activity.name}</span>
-                      </div>
-                      {segmentData.mostRecentEffort.prRank && (
-                        <div className="flex justify-between">
-                          <span className="text-white/70">PR Rank:</span>
-                          <span className="text-green-400 font-semibold">#{segmentData.mostRecentEffort.prRank}</span>
-                        </div>
-                      )}
+        <TeslaCard title="🚀 Your Segment 7977451 Performance Dashboard">
+          {segmentData.mostRecentEffort ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <TeslaMetric
+                  label="Best Time"
+                  value={fmt(segmentData.mostRecentEffort.elapsedTime)}
+                  trend={segmentData.mostRecentEffort.prRank ? 'up' : 'neutral'}
+                />
+                <TeslaMetric
+                  label="Total Efforts"
+                  value={segmentData.totalEfforts}
+                  trend="neutral"
+                />
+                <TeslaMetric
+                  label="PR Rank"
+                  value={segmentData.mostRecentEffort.prRank ? `#${segmentData.mostRecentEffort.prRank}` : 'N/A'}
+                  trend={segmentData.mostRecentEffort.prRank ? 'up' : 'neutral'}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <TeslaCard title="📊 Most Recent Effort">
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-white/70">Date:</span>
+                      <span>{new Date(segmentData.mostRecentEffort.startDate).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/70">Activity:</span>
+                      <span className="text-sm">{segmentData.mostRecentEffort.activity.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/70">Type:</span>
+                      <span>{segmentData.mostRecentEffort.activity.type}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/70">Distance:</span>
+                      <span>{(segmentData.mostRecentEffort.activity.distance / 1000).toFixed(2)} km</span>
                     </div>
                   </div>
-                  
-                  <div className="p-4 bg-white/10 rounded-lg">
-                    <h3 className="font-semibold text-lg mb-3">Activity Details</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-white/70">Type:</span>
-                        <span>{segmentData.mostRecentEffort.activity.type}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-white/70">Distance:</span>
-                        <span>{(segmentData.mostRecentEffort.activity.distance / 1000).toFixed(2)} km</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-white/70">Total Efforts:</span>
-                        <span>{segmentData.totalEfforts}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                </TeslaCard>
                 
-                {segmentData.allEfforts.length > 1 && (
-                  <div className="p-4 bg-white/10 rounded-lg">
-                    <h3 className="font-semibold text-lg mb-3">All Efforts on This Segment</h3>
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {segmentData.allEfforts.map((effort, index: number) => (
-                        <div key={effort.id} className="flex justify-between items-center p-2 bg-white/5 rounded">
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm text-white/50">#{index + 1}</span>
-                            <span className="font-medium">{fmt(effort.elapsedTime)}</span>
-                          </div>
-                          <div className="text-sm text-white/70">
-                            {new Date(effort.startDate).toLocaleDateString()}
-                            {effort.prRank && (
-                              <span className="ml-2 text-green-400">PR #{effort.prRank}</span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                <TeslaCard title="⚡ Performance Stats">
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-white/70">Data Freshness:</span>
+                      <span className="text-sm">{new Date(segmentData.performance?.dataFreshness || Date.now()).toLocaleTimeString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/70">Cache Status:</span>
+                      <span className="text-sm">{segmentData.performance?.cacheHit ? '⚡ Cached' : '🔄 Fresh'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/70">Fetch Time:</span>
+                      <span className="text-sm">{segmentData.performance?.fetchTime?.toFixed(0)}ms</span>
                     </div>
                   </div>
-                )}
+                </TeslaCard>
+              </div>
+                
+              {segmentData.allEfforts.length > 1 && (
+                <TeslaCard title="📈 Complete Effort History">
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {segmentData.allEfforts.map((effort, index: number) => (
+                      <div key={effort.id} className="flex justify-between items-center p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
+                        <div className="flex items-center gap-4">
+                          <span className="text-sm text-white/50 font-mono">#{index + 1}</span>
+                          <span className="font-bold text-lg">{fmt(effort.elapsedTime)}</span>
+                          {effort.prRank && (
+                            <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full">
+                              PR #{effort.prRank}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm text-white/70">
+                          {new Date(effort.startDate).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </TeslaCard>
+              )}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <p className="text-white/70">No efforts found for this segment</p>
-                <p className="text-sm text-white/50 mt-2">
-                  Complete this segment on Strava to see your time here!
-                </p>
-              </div>
+              <TeslaAlert
+                type="info"
+                title="No Segment Data Found"
+                message="Complete segment 7977451 on Strava to see your performance data here!"
+              />
             )}
-          </div>
-        </section>
+        </TeslaCard>
       )}
 
       <section className="flex items-center justify-between gap-4">
