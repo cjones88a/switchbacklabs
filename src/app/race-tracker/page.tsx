@@ -1,5 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { Table } from '@/components/Table';
+import { 
+  getOverallLoopLeaderboard, 
+  getClimberScoreLeaderboard, 
+  getDownhillScoreLeaderboard,
+  LeaderboardRow as NewLeaderboardRow
+} from '@/lib/leaderboards';
 
 interface LeaderboardRow {
   id: string;
@@ -163,6 +170,11 @@ export default function RaceTrackerPage() {
   const [climbingData, setClimbingData] = useState<{ stageNames: string[]; stageSegments: { [key: number]: number }; rows: LeaderboardRow[] } | null>(null);
   const [descendingData, setDescendingData] = useState<{ stageNames: string[]; stageSegments: { [key: number]: number }; rows: LeaderboardRow[] } | null>(null);
   const [q, setQ] = useState('');
+  
+  // New leaderboard data using proper Prisma-style logic
+  const [overallLeaderboard, setOverallLeaderboard] = useState<NewLeaderboardRow[]>([]);
+  const [climberLeaderboard, setClimberLeaderboard] = useState<NewLeaderboardRow[]>([]);
+  const [downhillLeaderboard, setDownhillLeaderboard] = useState<NewLeaderboardRow[]>([]);
 
   // read query params
   useEffect(() => {
@@ -266,81 +278,28 @@ export default function RaceTrackerPage() {
     loadLeaderboards();
   }, []);
 
-  const rows = (data?.rows ?? []).filter(r => r.name.toLowerCase().includes(q.toLowerCase()));
-  const climbingRows = (climbingData?.rows ?? []).filter(r => r.name.toLowerCase().includes(q.toLowerCase()));
-  const descendingRows = (descendingData?.rows ?? []).filter(r => r.name.toLowerCase().includes(q.toLowerCase()));
+  // Load new leaderboard data using proper Prisma-style logic
+  useEffect(() => {
+    const loadNewLeaderboards = async () => {
+      try {
+        const [overallData, climberData, downhillData] = await Promise.all([
+          getOverallLoopLeaderboard(),
+          getClimberScoreLeaderboard(),
+          getDownhillScoreLeaderboard()
+        ]);
+        
+        setOverallLeaderboard(overallData.rows);
+        setClimberLeaderboard(climberData.rows);
+        setDownhillLeaderboard(downhillData.rows);
+      } catch (error) {
+        console.error('Failed to load new leaderboards:', error);
+      }
+    };
+    
+    loadNewLeaderboards();
+  }, []);
 
-  // Reusable leaderboard component
-  const LeaderboardTable = ({ 
-    title, 
-    subtitle, 
-    data, 
-    rows, 
-    icon 
-  }: { 
-    title: string; 
-    subtitle: string; 
-    data: { stageNames: string[]; stageSegments: { [key: number]: number }; rows: LeaderboardRow[] } | null; 
-    rows: LeaderboardRow[]; 
-    icon: string;
-  }) => (
-    <section className="rounded-2xl overflow-hidden border border-white/10">
-      <div className="px-4 py-3 bg-white/5 backdrop-blur border-b border-white/10">
-        <h2 className="text-xl font-bold flex items-center gap-2">
-          {icon} {title}
-        </h2>
-        <p className="text-sm text-white/60 mt-1">{subtitle}</p>
-      </div>
-      
-      <div className="grid grid-cols-8 gap-4 px-4 py-3 bg-white/5 backdrop-blur sticky top-0">
-        <div>#</div><div>Rider</div>
-        {(data?.stageNames ?? []).map((stageName, i) => (
-          <div key={i} className="text-center text-sm">{stageName}</div>
-        ))}
-        <div className="text-right font-semibold">Total</div>
-      </div>
-      
-      <div>
-        {rows.length === 0 ? (
-          <div className="px-4 py-10 text-center text-white/60">No riders yet. Be the first to add a time!</div>
-        ) : rows.map((r, idx) => (
-          <div key={r.id} className="grid grid-cols-8 gap-4 px-4 py-3 border-t border-white/10 hover:bg-white/5">
-            <div className="font-semibold">{idx+1}</div>
-            <div className="truncate">{r.name}</div>
-            {(data?.stageNames ?? []).map((_, i) => (
-              <div key={i} className="text-center">
-                {r.stages[i] ? (
-                  <a
-                    href={`https://www.strava.com/segments/${data?.stageSegments[i] || 0}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`inline-block min-w-[60px] text-center rounded-md px-2 py-1 text-sm bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer`}
-                    title={`View segment ${data?.stageSegments[i] || 0} on Strava`}
-                  >
-                    {fmt(r.stages[i])}
-                  </a>
-                ) : (
-                  <span className="text-white/30">—</span>
-                )}
-              </div>
-            ))}
-            <div className="text-right font-semibold">
-              {r.score.final > 0 ? (
-                <span className="bg-white/10 rounded-md px-2 py-1 text-sm">
-                  {fmt(r.score.final)}
-                  {r.score.bonus > 0 && (
-                    <span className="text-xs text-green-400 ml-1">(-{fmt(r.score.bonus)})</span>
-                  )}
-                </span>
-              ) : (
-                <span className="text-white/30">—</span>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
+
 
   return (
     <main className="max-w-6xl mx-auto px-4 py-10 space-y-8 text-white">
@@ -601,29 +560,26 @@ export default function RaceTrackerPage() {
       </section>
 
       {/* Overall Leaderboard */}
-      <LeaderboardTable
+      <Table
         title="Overall Times"
-        subtitle="Best 3 total • −10:00 bonus if all 4 stages completed"
-        data={data}
-        rows={rows}
+        subtitle="Best time on segment 7977451 per season"
+        rows={overallLeaderboard.filter(r => r.riderName.toLowerCase().includes(q.toLowerCase()))}
         icon="🏆"
       />
 
       {/* Climbing Leaderboard */}
-      <LeaderboardTable
+      <Table
         title="Top Pogi's - Here to Tear Legs Off"
-        subtitle="Climbing segments • Sum of all times • Fastest wins"
-        data={climbingData}
-        rows={climbingRows}
+        subtitle="Sum of segments 9589287 + 18229887 (only if completed loop)"
+        rows={climberLeaderboard.filter(r => r.riderName.toLowerCase().includes(q.toLowerCase()))}
         icon="🏔️"
       />
 
       {/* Descending Leaderboard */}
-      <LeaderboardTable
+      <Table
         title="Top Bruni's - Shrediest DownHillers"
-        subtitle="Descending segments • Sum of all times • Fastest wins"
-        data={descendingData}
-        rows={descendingRows}
+        subtitle="Sum of segments 2105607 + 1359027 (only if completed loop)"
+        rows={downhillLeaderboard.filter(r => r.riderName.toLowerCase().includes(q.toLowerCase()))}
         icon="🏂"
       />
     </main>
