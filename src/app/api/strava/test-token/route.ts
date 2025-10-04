@@ -3,7 +3,7 @@ import { StravaAPI } from '@/lib/strava/api';
 
 // GET /api/strava/test-token
 // Test endpoint to check if the current token is valid
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const testAccessToken = process.env.STRAVA_TEST_ACCESS_TOKEN;
     
@@ -21,7 +21,12 @@ export async function GET(request: NextRequest) {
     
     // Test the token by trying to get athlete info
     try {
-      const athlete = await stravaAPI.getAthlete(testAccessToken);
+      const athlete = await stravaAPI.getAthlete(testAccessToken) as {
+        id: number;
+        firstname: string;
+        lastname: string;
+        username?: string;
+      };
       
       return NextResponse.json({
         success: true,
