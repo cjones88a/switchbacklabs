@@ -85,7 +85,7 @@ function AddTimeButton() {
               }
             } catch (error) {
               console.error('OAuth API error:', error);
-              alert('OAuth API failed: ' + error.message);
+              alert('OAuth API failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
             }
           }}
           className="px-4 py-2 bg-red-500 text-white rounded"
