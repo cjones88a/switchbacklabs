@@ -486,7 +486,7 @@ export default function RaceTrackerPage() {
       )}
 
       <section className="flex items-center justify-between gap-4">
-        <div className="text-sm text-white/60">Best 3 total • −10:00 bonus if all 4 stages</div>
+        <div className="text-sm text-white/60">Individual season times • −10:00 bonus if all 4 stages completed</div>
         <input
           value={q}
           onChange={e=>setQ(e.target.value)}
@@ -497,26 +497,42 @@ export default function RaceTrackerPage() {
       </section>
 
       <section className="rounded-2xl overflow-hidden border border-white/10">
-        <div className="grid grid-cols-6 gap-4 px-4 py-3 bg-white/5 backdrop-blur sticky top-0">
-          <div>#</div><div>Rider</div><div>Best 3</div><div>Bonus</div><div>Final</div>
-          <div className="text-right">Stages</div>
+        <div className="grid grid-cols-8 gap-4 px-4 py-3 bg-white/5 backdrop-blur sticky top-0">
+          <div>#</div><div>Rider</div>
+          {(data?.stageNames ?? []).map((stageName, i) => (
+            <div key={i} className="text-center text-sm">{stageName}</div>
+          ))}
+          <div className="text-right font-semibold">Total</div>
         </div>
         <div>
           {rows.length === 0 ? (
             <div className="px-4 py-10 text-center text-white/60">No riders yet. Be the first to add a time!</div>
           ) : rows.map((r, idx) => (
-            <div key={r.id} className="grid grid-cols-6 gap-4 px-4 py-3 border-t border-white/10 hover:bg-white/5">
+            <div key={r.id} className="grid grid-cols-8 gap-4 px-4 py-3 border-t border-white/10 hover:bg-white/5">
               <div className="font-semibold">{idx+1}</div>
               <div className="truncate">{r.name}</div>
-              <div>{fmt(r.score.best3)}</div>
-              <div>{r.score.bonus ? `-${fmt(r.score.bonus)}` : '—'}</div>
-              <div className="font-semibold">{fmt(r.score.final)}</div>
-              <div className="text-right text-sm text-white/70">
-                {(data?.stageNames ?? []).map((_, i) => (
-                  <span key={i} className={`inline-block min-w-[70px] text-center rounded-md px-2 py-0.5 ml-1 ${r.stages[i] ? 'bg-white/10' : 'bg-white/5 opacity-50'}`}>
-                    {r.stages[i] ? fmt(r.stages[i]) : '—'}
+              {(data?.stageNames ?? []).map((_, i) => (
+                <div key={i} className="text-center">
+                  {r.stages[i] ? (
+                    <span className={`inline-block min-w-[60px] text-center rounded-md px-2 py-1 text-sm ${r.stages[i] ? 'bg-white/10 text-white' : 'bg-white/5 text-white/50'}`}>
+                      {fmt(r.stages[i])}
+                    </span>
+                  ) : (
+                    <span className="text-white/30">—</span>
+                  )}
+                </div>
+              ))}
+              <div className="text-right font-semibold">
+                {r.score.final > 0 ? (
+                  <span className="bg-white/10 rounded-md px-2 py-1 text-sm">
+                    {fmt(r.score.final)}
+                    {r.score.bonus > 0 && (
+                      <span className="text-xs text-green-400 ml-1">(-{fmt(r.score.bonus)})</span>
+                    )}
                   </span>
-                ))}
+                ) : (
+                  <span className="text-white/30">—</span>
+                )}
               </div>
             </div>
           ))}
