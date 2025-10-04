@@ -130,7 +130,8 @@ export async function POST(req: Request) {
         elapsedTime: effort.elapsedTime,
         effortDate: new Date(effort.effortDate),
         segmentId: effort.segmentId || 7977451,
-        prRank: effort.prRank
+        prRank: effort.prRank,
+        leaderboardType: effort.type as 'overall' | 'climbing' | 'descending'
       });
     }
     

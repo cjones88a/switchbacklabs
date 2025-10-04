@@ -24,6 +24,7 @@ interface RaceResult {
   effortDate: Date;
   segmentId: number;
   prRank?: number;
+  leaderboardType: 'overall' | 'climbing' | 'descending';
   createdAt: Date;
 }
 
@@ -62,7 +63,9 @@ class MockDatabase {
     };
     
     const existingResults = this.results.get(result.participantId) || [];
-    const filteredResults = existingResults.filter(r => r.stageIndex !== result.stageIndex);
+    const filteredResults = existingResults.filter(r => 
+      !(r.stageIndex === result.stageIndex && r.leaderboardType === result.leaderboardType)
+    );
     filteredResults.push(fullResult);
     
     this.results.set(result.participantId, filteredResults);
@@ -124,10 +127,12 @@ class MockDatabase {
     }
     const allResults = await this.getAllResults();
     
-    // Filter results by segment type
+    // Filter results by leaderboard type and segment type
     const relevantSegments = Object.values(stageSegments).filter(id => id > 0);
     const filteredResults = allResults.filter(result => 
-      result.segmentId && relevantSegments.includes(result.segmentId)
+      result.leaderboardType === type && 
+      result.segmentId && 
+      relevantSegments.includes(result.segmentId)
     );
     
     console.log(`📊 Filtering results for ${type} leaderboard:`, {
@@ -156,25 +161,43 @@ class MockDatabase {
       for (let i = 0; i < 4; i++) {
         const segmentId = stageSegments[i];
         if (segmentId > 0) {
-          const stageResult = results.find(r => r.segmentId === segmentId);
-          stages[i] = stageResult?.elapsedTime;
+          if (type === 'climbing' || type === 'descending') {
+            // For climbing/descending: sum all segments for this season
+            const seasonResults = results.filter(r => r.stageIndex === i);
+            if (seasonResults.length > 0) {
+              stages[i] = seasonResults.reduce((sum, r) => sum + r.elapsedTime, 0);
+            }
+          } else {
+            // For overall: single segment per season
+            const stageResult = results.find(r => r.segmentId === segmentId);
+            stages[i] = stageResult?.elapsedTime;
+          }
         }
       }
       
       // Calculate score based on leaderboard type
-      const completedStages = results.map(r => r.elapsedTime).sort((a, b) => a - b);
-      
       let best3: number;
       let bonus: number;
       let final: number;
       
       if (type === 'climbing' || type === 'descending') {
-        // For climbing/descending: sum all available times (no best 3, no bonus)
-        best3 = completedStages.reduce((sum, time) => sum + time, 0);
+        // For climbing/descending: sum times for each season (2 segments per season)
+        // Group results by season and sum the two segments
+        const seasonTotals: number[] = [];
+        for (let i = 0; i < 4; i++) {
+          const seasonResults = results.filter(r => r.stageIndex === i);
+          if (seasonResults.length > 0) {
+            const seasonTotal = seasonResults.reduce((sum, r) => sum + r.elapsedTime, 0);
+            seasonTotals.push(seasonTotal);
+          }
+        }
+        
+        best3 = seasonTotals.reduce((sum, time) => sum + time, 0);
         bonus = 0; // No bonus for climbing/descending
-        final = best3; // Final is just the sum
+        final = best3; // Final is just the sum of all season totals
       } else {
         // For overall: best 3 times with bonus
+        const completedStages = results.map(r => r.elapsedTime).sort((a, b) => a - b);
         best3 = completedStages.length >= 3 
           ? completedStages.slice(0, 3).reduce((sum, time) => sum + time, 0)
           : 0;
