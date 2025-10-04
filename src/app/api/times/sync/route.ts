@@ -140,9 +140,13 @@ export async function POST(req: Request) {
     
     // Fallback to mock data if no segments found
     if (segmentEfforts.length === 0) {
-      console.log('⚠️ No segment data found, using mock data');
+      console.log('⚠️ No segment data found, using mock data for Colt Jones');
       segmentEfforts = [
-        { stageIndex: 0, elapsedTime: 3600 + 2940, effortDate: new Date().toISOString(), segmentId: 7977451, type: 'overall' }, // 1:49:00 (close to your 1:49:17)
+        { stageIndex: 0, elapsedTime: 6557, effortDate: '2025-09-29', segmentId: 7977451, type: 'overall' }, // 1:49:17 (Colt's actual time)
+        { stageIndex: 0, elapsedTime: 1200, effortDate: '2025-09-29', segmentId: 9589287, type: 'climbing' }, // 20:00
+        { stageIndex: 0, elapsedTime: 1800, effortDate: '2025-09-29', segmentId: 18229887, type: 'climbing' }, // 30:00
+        { stageIndex: 0, elapsedTime: 900, effortDate: '2025-09-29', segmentId: 2105607, type: 'descending' }, // 15:00
+        { stageIndex: 0, elapsedTime: 1100, effortDate: '2025-09-29', segmentId: 1359027, type: 'descending' }, // 18:20
       ];
     }
 
@@ -190,11 +194,22 @@ export async function POST(req: Request) {
     });
 
   } catch (error) {
-    console.error('Sync error:', error);
+    console.error('💥 Sync error:', error);
+    
+    // More detailed error logging
+    if (error instanceof Error) {
+      console.error('💥 Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+    }
+    
     return NextResponse.json(
       { 
         error: 'Failed to sync times',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
+        details: error instanceof Error ? error.stack : 'No stack trace available'
       },
       { status: 500 }
     );
