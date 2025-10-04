@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
         
         // In production, you would update the database with new tokens here
         console.log('Token refreshed successfully');
-      } catch (refreshError) {
+      } catch (refreshError: unknown) {
         return NextResponse.json(
           { 
             error: 'Token refresh failed',
