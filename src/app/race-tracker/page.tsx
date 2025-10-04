@@ -100,6 +100,17 @@ export default function RaceTrackerPage() {
     const token = sp.get('accessToken');
     const athleteId = sp.get('athleteId');
     const athleteName = sp.get('athleteName');
+    const error = sp.get('error');
+    const errorDetails = sp.get('details');
+    
+    if (error) {
+      console.error('❌ Strava callback error:', error, errorDetails);
+      setError(`Strava connection failed: ${error}${errorDetails ? ` - ${errorDetails}` : ''}`);
+      
+      // Clean the URL
+      window.history.replaceState({}, '', '/race-tracker');
+      return;
+    }
     
     if (success && token && athleteId && athleteName) {
       setAthleteInfo({ id: athleteId, name: athleteName });

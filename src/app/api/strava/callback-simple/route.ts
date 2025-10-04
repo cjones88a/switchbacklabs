@@ -7,6 +7,18 @@ export async function GET(request: NextRequest) {
   try {
     console.log('🔗 Simple Strava callback received:', request.url);
     
+    // Check environment variables first
+    const clientId = process.env.STRAVA_CLIENT_ID;
+    const clientSecret = process.env.STRAVA_CLIENT_SECRET;
+    
+    if (!clientId || !clientSecret) {
+      console.error('❌ Missing Strava environment variables:', {
+        clientId: clientId ? 'present' : 'missing',
+        clientSecret: clientSecret ? 'present' : 'missing'
+      });
+      return NextResponse.redirect('/race-tracker?error=config_missing');
+    }
+    
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
     const state = searchParams.get('state');
@@ -34,6 +46,13 @@ export async function GET(request: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://switchbacklabsco.com';
     const redirectUri = `${baseUrl}/api/strava/callback-simple`;
     
+    console.log('🔧 Environment check:', {
+      baseUrl,
+      redirectUri,
+      clientId: clientId ? 'present' : 'missing',
+      clientSecret: clientSecret ? 'present' : 'missing'
+    });
+    
     const tokenData = await stravaAPI.exchangeCodeForToken(code, redirectUri);
     console.log('✅ Token exchange successful');
     
@@ -59,6 +78,16 @@ export async function GET(request: NextRequest) {
     
   } catch (error) {
     console.error('💥 Simple callback error:', error);
-    return NextResponse.redirect('/race-tracker?error=callback_failed');
+    
+    // More detailed error logging
+    if (error instanceof Error) {
+      console.error('💥 Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+    }
+    
+    return NextResponse.redirect('/race-tracker?error=callback_failed&details=' + encodeURIComponent(error instanceof Error ? error.message : 'Unknown error'));
   }
 }
