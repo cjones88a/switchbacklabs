@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
         
         // In production, you would update the database with new tokens here
         console.log('Token refreshed successfully');
-      } catch (refreshError: unknown) {
+      } catch (refreshError) {
         const errorMessage = refreshError instanceof Error ? refreshError.message : 'Unknown error';
         return NextResponse.json(
           { 
