@@ -69,9 +69,17 @@ export default function RaceTrackerPage() {
   const [segmentLoading, setSegmentLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedStage, setSelectedStage] = useState<string>('overall');
+  const [participantId, setParticipantId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchLeaderboard();
+    
+    // Check for participant ID in URL params (from OAuth success)
+    const urlParams = new URLSearchParams(window.location.search);
+    const participantIdFromUrl = urlParams.get('participantId');
+    if (participantIdFromUrl) {
+      setParticipantId(participantIdFromUrl);
+    }
   }, [selectedStage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchLeaderboard = async () => {
@@ -119,10 +127,17 @@ export default function RaceTrackerPage() {
   const fetchSegmentData = async () => {
     try {
       setSegmentLoading(true);
-      const response = await fetch('/api/strava/my-segment?segmentId=7977451');
+      
+      if (!participantId) {
+        setError('Please connect your Strava account first to view segment data');
+        return;
+      }
+      
+      const response = await fetch(`/api/strava/my-segment?segmentId=7977451&participantId=${participantId}`);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch segment data');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch segment data');
       }
       
       const data = await response.json();
@@ -169,18 +184,38 @@ export default function RaceTrackerPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button onClick={handleStravaConnect} size="lg">
-              Connect Strava Account
-            </Button>
-            <Button 
-              onClick={fetchSegmentData} 
-              variant="outline" 
-              size="lg"
-              disabled={segmentLoading}
-            >
-              {segmentLoading ? 'Loading...' : 'Check My Segment Time'}
-            </Button>
+            {!participantId ? (
+              <Button onClick={handleStravaConnect} size="lg">
+                Connect Strava Account
+              </Button>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button 
+                  onClick={fetchSegmentData} 
+                  variant="outline" 
+                  size="lg"
+                  disabled={segmentLoading}
+                >
+                  {segmentLoading ? 'Loading...' : 'Check My Segment Time'}
+                </Button>
+                <Button 
+                  onClick={handleStravaConnect} 
+                  variant="secondary" 
+                  size="lg"
+                >
+                  Reconnect Strava
+                </Button>
+              </div>
+            )}
           </div>
+          
+          {participantId && (
+            <div className="text-center mt-4">
+              <p className="text-sm text-green-600">
+                ✅ Strava account connected (ID: {participantId})
+              </p>
+            </div>
+          )}
         </div>
 
         {error && (
