@@ -296,233 +296,47 @@ export default function RaceTrackerPage() {
             <p className="text-sm text-green-400">
               ✅ Connected as {athleteInfo.name}
             </p>
-            <div className="flex gap-2">
-              <button
-                onClick={async () => {
-                  try {
-                    setLoading(true);
-                    setError(null);
-                    
-                    // Get access token from localStorage or prompt user
-                    const accessToken = prompt('Enter your Strava access token to sync data:');
-                    
-                    if (!accessToken) {
-                      setError('Access token required to sync data');
-                      return;
-                    }
-                    
-                    console.log('🔄 Syncing Strava data...');
-                    
-                    const response = await fetch('/api/times/sync', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ accessToken })
-                    });
-                    
-                    if (!response.ok) {
-                      const errorData = await response.json();
-                      throw new Error(errorData.error || 'Failed to sync data');
-                    }
-                    
-                    const result = await response.json();
-                    console.log('✅ Sync successful:', result);
-                    
-                    // Refresh leaderboards after sync
-                    await refreshLeaderboards();
-                    
-                  } catch (err) {
-                    console.error('❌ Sync failed:', err);
-                    setError(err instanceof Error ? err.message : 'Failed to sync data');
-                  } finally {
-                    setLoading(false);
+            <button
+              onClick={async () => {
+                try {
+                  setLoading(true);
+                  setError(null);
+                  
+                  const accessToken = prompt('Enter your Strava access token:');
+                  if (!accessToken) {
+                    setError('Access token required');
+                    return;
                   }
-                }}
-                disabled={loading}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 text-sm"
-              >
-                {loading ? '🔄 Syncing...' : '🔄 Sync My Data'}
-              </button>
-              
-              <button
-                onClick={async () => {
-                  try {
-                    setLoading(true);
-                    setError(null);
-                    
-                    // Get access token from localStorage or prompt user
-                    const accessToken = prompt('Enter your Strava access token for simple test:');
-                    
-                    if (!accessToken) {
-                      setError('Access token required for test');
-                      return;
-                    }
-                    
-                    console.log('🧪 Testing simple sync...');
-                    
-                    const response = await fetch('/api/test-simple-sync', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ accessToken })
-                    });
-                    
-                    const result = await response.json();
-                    console.log('🧪 Test result:', result);
-                    
-                    if (result.success) {
-                      console.log('✅ Simple sync successful!');
-                      // Refresh leaderboards after sync
-                      await refreshLeaderboards();
-                    } else {
-                      setError(`Test failed: ${result.message}`);
-                    }
-                    
-                  } catch (err) {
-                    console.error('❌ Test failed:', err);
-                    setError(err instanceof Error ? err.message : 'Test failed');
-                  } finally {
-                    setLoading(false);
+                  
+                  console.log('Getting segment time...');
+                  
+                  const response = await fetch('/api/my-segment-time', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ accessToken })
+                  });
+                  
+                  const result = await response.json();
+                  console.log('Result:', result);
+                  
+                  if (result.success) {
+                    setError(`✅ ${result.athlete}: ${result.time} on ${result.segment} (${result.date})`);
+                  } else {
+                    setError(`❌ ${result.error}`);
                   }
-                }}
-                disabled={loading}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 text-sm"
-              >
-                {loading ? '🧪 Testing...' : '🧪 Test 1 Segment'}
-              </button>
-              
-              <button
-                onClick={async () => {
-                  try {
-                    setLoading(true);
-                    setError(null);
-                    
-                    // Get access token from localStorage or prompt user
-                    const accessToken = prompt('Enter your Strava access token for diagnostic:');
-                    
-                    if (!accessToken) {
-                      setError('Access token required for diagnostic');
-                      return;
-                    }
-                    
-                    console.log('🔍 Running comprehensive diagnostic...');
-                    
-                    const response = await fetch('/api/qa/diagnostic', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ accessToken })
-                    });
-                    
-                    const result = await response.json();
-                    console.log('🔍 Diagnostic results:', result);
-                    
-                    // Display results in a more readable format
-                    const summary = result.summary;
-                    const failedTests = result.tests.filter((t: { status: string }) => t.status === 'fail' || t.status === 'error');
-                    
-                    if (failedTests.length === 0) {
-                      setError(`✅ All tests passed! (${summary.passed} passed)`);
-                    } else {
-                      const errorDetails = failedTests.map((t: { name: string; details: unknown }) => `${t.name}: ${t.details}`).join('; ');
-                      setError(`❌ ${failedTests.length} tests failed: ${errorDetails}`);
-                    }
-                    
-                  } catch (err) {
-                    console.error('❌ Diagnostic failed:', err);
-                    setError(err instanceof Error ? err.message : 'Diagnostic failed');
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-                disabled={loading}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 text-sm"
-              >
-                {loading ? '🔍 Diagnosing...' : '🔍 Run Diagnostic'}
-              </button>
-              
-              <button
-                onClick={async () => {
-                  try {
-                    setLoading(true);
-                    setError(null);
-                    
-                    if (!confirm('Are you sure you want to clear all data and start fresh? This cannot be undone.')) {
-                      return;
-                    }
-                    
-                    console.log('🧹 Clearing all data for fresh start...');
-                    
-                    const response = await fetch('/api/qa/fresh-start', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' }
-                    });
-                    
-                    const result = await response.json();
-                    console.log('🧹 Fresh start result:', result);
-                    
-                    if (result.success) {
-                      setError('✅ All data cleared - fresh start completed');
-                      // Refresh leaderboards after clearing
-                      await refreshLeaderboards();
-                    } else {
-                      setError(`Failed to clear data: ${result.error}`);
-                    }
-                    
-                  } catch (err) {
-                    console.error('❌ Fresh start failed:', err);
-                    setError(err instanceof Error ? err.message : 'Fresh start failed');
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-                disabled={loading}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 text-sm"
-              >
-                {loading ? '🧹 Clearing...' : '🧹 Fresh Start'}
-              </button>
-              
-              <button
-                onClick={async () => {
-                  try {
-                    setLoading(true);
-                    setError(null);
-                    
-                    // Get access token from localStorage or prompt user
-                    const accessToken = prompt('Enter your Strava access token to get your time:');
-                    
-                    if (!accessToken) {
-                      setError('Access token required');
-                      return;
-                    }
-                    
-                    console.log('🕐 Getting my segment time...');
-                    
-                    const response = await fetch('/api/get-my-time', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ accessToken })
-                    });
-                    
-                    const result = await response.json();
-                    console.log('🕐 Get my time result:', result);
-                    
-                    if (result.success) {
-                      setError(`✅ Your time on segment ${result.segment.id}: ${result.effort.formattedTime} (${result.effort.startDate})`);
-                    } else {
-                      setError(`❌ ${result.message || result.error}`);
-                    }
-                    
-                  } catch (err) {
-                    console.error('❌ Get my time failed:', err);
-                    setError(err instanceof Error ? err.message : 'Get my time failed');
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-                disabled={loading}
-                className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors disabled:opacity-50 text-sm"
-              >
-                {loading ? '🕐 Getting...' : '🕐 Get My Time'}
-              </button>
-            </div>
+                  
+                } catch (err) {
+                  console.error('Error:', err);
+                  setError(err instanceof Error ? err.message : 'Failed');
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              disabled={loading}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 text-lg font-medium"
+            >
+              {loading ? 'Getting Time...' : 'Get My Segment Time'}
+            </button>
           </div>
         )}
         
