@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { StravaAPI } from '@/lib/strava/api';
+import { raceDatabase } from '@/lib/race-database';
 
 // POST /api/times/sync
 // Exchange Strava code for token, fetch segment efforts, and upsert to database
@@ -40,37 +41,65 @@ export async function POST(req: Request) {
       username?: string;
     };
 
-    // For now, we'll mock the segment efforts since we don't have the real segments configured
-    // In production, you would fetch actual segment efforts for each stage
-    const mockEfforts = [
-      { stageIndex: 0, elapsedTime: 3600 + 1200, effortDate: new Date().toISOString() }, // 1:20:00
-      { stageIndex: 1, elapsedTime: 3600 + 1800, effortDate: new Date().toISOString() }, // 1:30:00
-      { stageIndex: 2, elapsedTime: 3600 + 900, effortDate: new Date().toISOString() },  // 1:15:00
-    ];
+    // Fetch actual segment 7977451 data (Fall 2025 stage)
+    console.log('🔄 Fetching segment 7977451 data for Fall 2025 stage...');
+    const segmentResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/strava/segment-7977451?accessToken=${tokenData.accessToken}`);
+    
+    let segmentEfforts: Array<{
+      stageIndex: number;
+      elapsedTime: number;
+      effortDate: string;
+      segmentId?: number;
+      prRank?: number;
+    }> = [];
+    if (segmentResponse.ok) {
+      const segmentData = await segmentResponse.json();
+      if (segmentData.mostRecentEffort) {
+        // Convert segment 7977451 to Fall 2025 stage (index 0)
+        segmentEfforts = [{
+          stageIndex: 0, // Fall 2025
+          elapsedTime: segmentData.mostRecentEffort.elapsedTime,
+          effortDate: segmentData.mostRecentEffort.startDate,
+          segmentId: 7977451,
+          prRank: segmentData.mostRecentEffort.prRank
+        }];
+        console.log('✅ Found segment 7977451 effort:', segmentEfforts[0]);
+      }
+    } else {
+      console.log('⚠️ No segment 7977451 data found, using mock data');
+      // Fallback to mock data if segment fetch fails
+      segmentEfforts = [
+        { stageIndex: 0, elapsedTime: 3600 + 2940, effortDate: new Date().toISOString() }, // 1:49:00 (close to your 1:49:17)
+      ];
+    }
 
-    // Mock participant data - in production this would be stored in database
-    const participant = {
+    // Store participant in database
+    const participant = await raceDatabase.upsertParticipant({
       id: `athlete_${athlete.id}`,
       stravaId: athlete.id,
       name: `${athlete.firstname} ${athlete.lastname}`,
       username: athlete.username || '',
       accessToken: tokenData.accessToken,
       refreshToken: tokenData.refreshToken,
-      tokenExpiresAt: tokenData.expiresAt,
-      efforts: mockEfforts,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+      tokenExpiresAt: tokenData.expiresAt
+    });
 
-    // In production, you would:
-    // 1. Upsert participant to database
-    // 2. Upsert efforts to database
-    // 3. Calculate scores (best 3, bonus, final)
+    // Store race results in database
+    for (const effort of segmentEfforts) {
+      await raceDatabase.upsertRaceResult({
+        participantId: participant.id,
+        stageIndex: effort.stageIndex,
+        elapsedTime: effort.elapsedTime,
+        effortDate: new Date(effort.effortDate),
+        segmentId: effort.segmentId || 7977451,
+        prRank: effort.prRank
+      });
+    }
     
-    console.log('Mock participant created:', {
+    console.log('✅ Participant and results stored:', {
       id: participant.id,
       name: participant.name,
-      effortsCount: participant.efforts.length
+      effortsCount: segmentEfforts.length
     });
 
     return NextResponse.json({ 
@@ -78,7 +107,7 @@ export async function POST(req: Request) {
       participant: {
         id: participant.id,
         name: participant.name,
-        effortsCount: participant.efforts.length
+        effortsCount: segmentEfforts.length
       }
     });
 

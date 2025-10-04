@@ -90,31 +90,53 @@ export default function RaceTrackerPage() {
       // Clean the URL
       window.history.replaceState({}, '', '/race-tracker');
       
-      // Fetch segment data immediately
-      fetchSegmentData(token);
+      // Sync times with database and fetch segment data
+      syncTimesAndFetchData(token);
     }
   }, []);
 
-  const fetchSegmentData = async (token: string) => {
+  const syncTimesAndFetchData = async (token: string) => {
     try {
       setLoading(true);
       setError(null);
       
-      console.log('🔄 Fetching segment 7977451 data...');
-      const response = await fetch(`/api/strava/segment-7977451?accessToken=${token}`);
+      // First, sync the times with the database
+      console.log('🔄 Syncing times with database...');
+      const syncResponse = await fetch('/api/times/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: token })
+      });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch segment data');
+      if (!syncResponse.ok) {
+        const errorData = await syncResponse.json();
+        throw new Error(errorData.message || 'Failed to sync times');
       }
       
-      const segmentData = await response.json();
-      setSegmentData(segmentData);
-      console.log('✅ Segment data fetched successfully');
+      console.log('✅ Times synced successfully');
+      
+      // Then fetch the segment data for display
+      console.log('🔄 Fetching segment 7977451 data...');
+      const segmentResponse = await fetch(`/api/strava/segment-7977451?accessToken=${token}`);
+      
+      if (segmentResponse.ok) {
+        const segmentData = await segmentResponse.json();
+        setSegmentData(segmentData);
+        console.log('✅ Segment data fetched successfully');
+      }
+      
+      // Finally, refresh the leaderboard to show the new data
+      console.log('🔄 Refreshing leaderboard...');
+      const leaderboardResponse = await fetch('/api/leaderboard', { cache: 'no-store' });
+      if (leaderboardResponse.ok) {
+        const leaderboardData = await leaderboardResponse.json();
+        setData(leaderboardData);
+        console.log('✅ Leaderboard refreshed with new data');
+      }
       
     } catch (err) {
-      console.error('❌ Error fetching segment data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch segment data');
+      console.error('❌ Error syncing data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to sync data');
     } finally {
       setLoading(false);
     }
