@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { TeslaButton, TeslaCard, TeslaMetric, TeslaAlert } from '@/components/TeslaUI';
 
 interface LeaderboardRow {
   id: string;
@@ -16,93 +15,98 @@ interface LeaderboardRow {
 }
 
 function AddTimeButton() {
-  const [pending, setPending] = useState(false);
-  
-  const handleClick = () => {
-    console.log('🚀 Button clicked! Redirecting to OAuth...');
-    setPending(true);
-    window.location.href = '/api/strava/auth-simple';
-  };
-  
   return (
     <div className="space-y-4">
-      <TeslaButton
-        onClick={handleClick}
-        loading={pending}
-        size="lg"
-        variant="primary"
+      {/* ELON-READY: Simple HTML button with inline event handler */}
+      <button
+        onClick={() => {
+          console.log('🚀 MAIN BUTTON CLICKED - ELON APPROVED');
+          alert('Button works! Redirecting to Strava...');
+          const clientId = '179098';
+          const redirectUri = 'https://switchbacklabsco.com/api/strava/callback-simple';
+          const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=read,activity:read,activity:read_all&approval_prompt=auto&state=race_tracker`;
+          console.log('🚀 Redirecting to:', authUrl);
+          window.location.href = authUrl;
+        }}
+        style={{
+          padding: '16px 32px',
+          fontSize: '18px',
+          fontWeight: 'bold',
+          backgroundColor: 'white',
+          color: 'black',
+          border: 'none',
+          borderRadius: '16px',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease'
+        }}
+        onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#f0f0f0'}
+        onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = 'white'}
       >
         🚀 Connect Strava & Get My Time
-      </TeslaButton>
+      </button>
       
-      {/* Debug buttons */}
-      <div className="flex gap-2">
+      {/* ELON-READY: Debug buttons with inline handlers */}
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <button
           onClick={() => {
-            console.log('🔧 Debug button clicked');
-            alert('Debug button works!');
+            console.log('🔧 DEBUG BUTTON CLICKED');
+            alert('✅ JavaScript is working!');
           }}
-          className="px-4 py-2 bg-blue-500 text-white rounded"
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#3b82f6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer'
+          }}
         >
-          🔧 Debug Test
+          🔧 Test JavaScript
         </button>
         
         <button
           onClick={() => {
-            console.log('🔍 Testing OAuth API...');
+            console.log('🔍 ENVIRONMENT CHECK');
             fetch('/api/debug')
               .then(r => r.json())
               .then(data => {
-                console.log('Debug data:', data);
-                alert(`Environment check: ${JSON.stringify(data.environment, null, 2)}`);
+                console.log('✅ Environment data:', data);
+                alert('✅ Environment OK: ' + JSON.stringify(data.environment));
               })
               .catch(err => {
-                console.error('Debug error:', err);
-                alert('Debug API failed: ' + err.message);
+                console.error('❌ Environment error:', err);
+                alert('❌ Environment failed: ' + err.message);
               });
           }}
-          className="px-4 py-2 bg-green-500 text-white rounded"
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#10b981',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer'
+          }}
         >
           🔍 Check Environment
         </button>
         
         <button
-          onClick={async () => {
-            console.log('🚀 Testing OAuth API response...');
-            try {
-              const response = await fetch('/api/strava/auth-simple');
-              console.log('OAuth API response:', response);
-              console.log('Response status:', response.status);
-              console.log('Response headers:', response.headers);
-              
-              if (response.redirected) {
-                console.log('✅ Redirect detected, going to:', response.url);
-                window.location.href = response.url;
-              } else {
-                const text = await response.text();
-                console.log('Response body:', text);
-                alert('No redirect - API returned: ' + text);
-              }
-            } catch (error) {
-              console.error('OAuth API error:', error);
-              alert('OAuth API failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
-            }
-          }}
-          className="px-4 py-2 bg-red-500 text-white rounded"
-        >
-          🚀 Test OAuth API
-        </button>
-        
-        <button
           onClick={() => {
-            console.log('🚀 Direct redirect to Strava...');
+            console.log('🚀 DIRECT STRAVA REDIRECT');
             const clientId = '179098';
             const redirectUri = 'https://switchbacklabsco.com/api/strava/callback-simple';
             const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=read,activity:read,activity:read_all&approval_prompt=auto&state=race_tracker`;
-            console.log('Auth URL:', authUrl);
+            console.log('🚀 Direct redirect to:', authUrl);
             window.location.href = authUrl;
           }}
-          className="px-4 py-2 bg-purple-500 text-white rounded"
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#8b5cf6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer'
+          }}
         >
           🚀 Direct Strava
         </button>
@@ -252,13 +256,28 @@ export default function RaceTrackerPage() {
         )}
         
         {error && (
-          <div className="mt-4">
-            <TeslaAlert
-              type="error"
-              title="Connection Error"
-              message={error}
-              onClose={() => setError(null)}
-            />
+          <div style={{
+            padding: '16px',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: '8px',
+            color: '#fca5a5',
+            marginTop: '16px'
+          }}>
+            <strong>❌ Connection Error:</strong> {error}
+            <button
+              onClick={() => setError(null)}
+              style={{
+                float: 'right',
+                background: 'none',
+                border: 'none',
+                color: '#fca5a5',
+                cursor: 'pointer',
+                fontSize: '18px'
+              }}
+            >
+              ×
+            </button>
           </div>
         )}
       </header>
@@ -271,98 +290,175 @@ export default function RaceTrackerPage() {
       )}
 
       {segmentData && (
-        <TeslaCard title="🚀 Your Segment 7977451 Performance Dashboard">
+        <div style={{
+          borderRadius: '16px',
+          overflow: 'hidden',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(10px)'
+        }}>
+          <div style={{
+            padding: '24px',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            backgroundColor: 'rgba(255, 255, 255, 0.05)'
+          }}>
+            <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', margin: 0 }}>
+              🚀 Your Segment 7977451 Performance Dashboard
+            </h2>
+          </div>
+          <div style={{ padding: '24px' }}>
           {segmentData.mostRecentEffort ? (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <TeslaMetric
-                  label="Best Time"
-                  value={fmt(segmentData.mostRecentEffort.elapsedTime)}
-                  trend={segmentData.mostRecentEffort.prRank ? 'up' : 'neutral'}
-                />
-                <TeslaMetric
-                  label="Total Efforts"
-                  value={segmentData.totalEfforts}
-                  trend="neutral"
-                />
-                <TeslaMetric
-                  label="PR Rank"
-                  value={segmentData.mostRecentEffort.prRank ? `#${segmentData.mostRecentEffort.prRank}` : 'N/A'}
-                  trend={segmentData.mostRecentEffort.prRank ? 'up' : 'neutral'}
-                />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ padding: '16px', backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '4px' }}>Best Time</div>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>
+                    {fmt(segmentData.mostRecentEffort.elapsedTime)}
+                  </div>
+                </div>
+                <div style={{ padding: '16px', backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '4px' }}>Total Efforts</div>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>
+                    {segmentData.totalEfforts}
+                  </div>
+                </div>
+                <div style={{ padding: '16px', backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '4px' }}>PR Rank</div>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: segmentData.mostRecentEffort.prRank ? '#10b981' : 'white' }}>
+                    {segmentData.mostRecentEffort.prRank ? `#${segmentData.mostRecentEffort.prRank}` : 'N/A'}
+                  </div>
+                </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <TeslaCard title="📊 Most Recent Effort">
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-white/70">Date:</span>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '24px' }}>
+                <div style={{
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                }}>
+                  <div style={{
+                    padding: '16px',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                  }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 'semibold', color: 'white', margin: 0 }}>📊 Most Recent Effort</h3>
+                  </div>
+                  <div style={{ padding: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                      <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Date:</span>
                       <span>{new Date(segmentData.mostRecentEffort.startDate).toLocaleDateString()}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-white/70">Activity:</span>
-                      <span className="text-sm">{segmentData.mostRecentEffort.activity.name}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                      <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Activity:</span>
+                      <span style={{ fontSize: '14px' }}>{segmentData.mostRecentEffort.activity.name}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-white/70">Type:</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                      <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Type:</span>
                       <span>{segmentData.mostRecentEffort.activity.type}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-white/70">Distance:</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Distance:</span>
                       <span>{(segmentData.mostRecentEffort.activity.distance / 1000).toFixed(2)} km</span>
                     </div>
                   </div>
-                </TeslaCard>
+                </div>
                 
-                <TeslaCard title="⚡ Performance Stats">
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-white/70">Data Freshness:</span>
-                      <span className="text-sm">{new Date(segmentData.performance?.dataFreshness || Date.now()).toLocaleTimeString()}</span>
+                <div style={{
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                }}>
+                  <div style={{
+                    padding: '16px',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                  }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 'semibold', color: 'white', margin: 0 }}>⚡ Performance Stats</h3>
+                  </div>
+                  <div style={{ padding: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                      <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Data Freshness:</span>
+                      <span style={{ fontSize: '14px' }}>{new Date(segmentData.performance?.dataFreshness || Date.now()).toLocaleTimeString()}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-white/70">Cache Status:</span>
-                      <span className="text-sm">{segmentData.performance?.cacheHit ? '⚡ Cached' : '🔄 Fresh'}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                      <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Cache Status:</span>
+                      <span style={{ fontSize: '14px' }}>{segmentData.performance?.cacheHit ? '⚡ Cached' : '🔄 Fresh'}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-white/70">Fetch Time:</span>
-                      <span className="text-sm">{segmentData.performance?.fetchTime?.toFixed(0)}ms</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Fetch Time:</span>
+                      <span style={{ fontSize: '14px' }}>{segmentData.performance?.fetchTime?.toFixed(0)}ms</span>
                     </div>
                   </div>
-                </TeslaCard>
+                </div>
               </div>
                 
               {segmentData.allEfforts.length > 1 && (
-                <TeslaCard title="📈 Complete Effort History">
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {segmentData.allEfforts.map((effort, index: number) => (
-                      <div key={effort.id} className="flex justify-between items-center p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
-                        <div className="flex items-center gap-4">
-                          <span className="text-sm text-white/50 font-mono">#{index + 1}</span>
-                          <span className="font-bold text-lg">{fmt(effort.elapsedTime)}</span>
-                          {effort.prRank && (
-                            <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full">
-                              PR #{effort.prRank}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-sm text-white/70">
-                          {new Date(effort.startDate).toLocaleDateString()}
-                        </div>
-                      </div>
-                    ))}
+                <div style={{
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                }}>
+                  <div style={{
+                    padding: '16px',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                  }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 'semibold', color: 'white', margin: 0 }}>📈 Complete Effort History</h3>
                   </div>
-                </TeslaCard>
+                  <div style={{ padding: '16px' }}>
+                    <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
+                      {segmentData.allEfforts.map((effort, index: number) => (
+                        <div key={effort.id} style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '12px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                          borderRadius: '8px',
+                          marginBottom: '8px'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <span style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.5)', fontFamily: 'monospace' }}>#{index + 1}</span>
+                            <span style={{ fontWeight: 'bold', fontSize: '18px' }}>{fmt(effort.elapsedTime)}</span>
+                            {effort.prRank && (
+                              <span style={{
+                                fontSize: '12px',
+                                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                                color: '#10b981',
+                                padding: '4px 8px',
+                                borderRadius: '12px'
+                              }}>
+                                PR #{effort.prRank}
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.7)' }}>
+                            {new Date(effort.startDate).toLocaleDateString()}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               )}
               </div>
             ) : (
-              <TeslaAlert
-                type="info"
-                title="No Segment Data Found"
-                message="Complete segment 7977451 on Strava to see your performance data here!"
-              />
+              <div style={{
+                padding: '16px',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                border: '1px solid rgba(59, 130, 246, 0.3)',
+                borderRadius: '8px',
+                color: '#93c5fd'
+              }}>
+                <strong>ℹ️ No Segment Data Found</strong><br/>
+                Complete segment 7977451 on Strava to see your performance data here!
+              </div>
             )}
-        </TeslaCard>
+          </div>
+        </div>
       )}
 
       <section className="flex items-center justify-between gap-4">
