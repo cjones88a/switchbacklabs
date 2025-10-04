@@ -85,6 +85,7 @@ class MockDatabase {
   // Leaderboard calculation
   async getLeaderboard(): Promise<{
     stageNames: string[];
+    stageSegments: { [key: number]: number };
     rows: Array<{
       id: string;
       name: string;
@@ -93,6 +94,12 @@ class MockDatabase {
     }>;
   }> {
     const stageNames = ['Fall 2025', 'Winter 2025', 'Spring 2026', 'Summer 2026'];
+    const stageSegments = {
+      0: 7977451, // Fall 2025 - your segment
+      1: 0, // Winter 2025 - TBD
+      2: 0, // Spring 2026 - TBD  
+      3: 0  // Summer 2026 - TBD
+    };
     const allResults = await this.getAllResults();
     
     // Group results by participant
@@ -140,7 +147,7 @@ class MockDatabase {
       return a.score.final - b.score.final;
     });
     
-    return { stageNames, rows };
+    return { stageNames, stageSegments, rows };
   }
 }
 

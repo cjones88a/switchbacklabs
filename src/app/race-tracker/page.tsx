@@ -159,7 +159,7 @@ export default function RaceTrackerPage() {
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<{ stageNames: string[]; rows: LeaderboardRow[] } | null>(null);
+  const [data, setData] = useState<{ stageNames: string[]; stageSegments: { [key: number]: number }; rows: LeaderboardRow[] } | null>(null);
   const [q, setQ] = useState('');
 
   // read query params
@@ -233,7 +233,11 @@ export default function RaceTrackerPage() {
     fetch('/api/leaderboard', { cache: 'no-store' })
       .then(r => r.json())
       .then(setData)
-      .catch(() => setData({ stageNames: ['Stage 1','Stage 2','Stage 3','Stage 4'], rows: [] }));
+      .catch(() => setData({ 
+        stageNames: ['Fall 2025','Winter 2025','Spring 2026','Summer 2026'], 
+        stageSegments: { 0: 7977451, 1: 0, 2: 0, 3: 0 },
+        rows: [] 
+      }));
   }, []);
 
   const rows = (data?.rows ?? []).filter(r => r.name.toLowerCase().includes(q.toLowerCase()));
@@ -514,9 +518,15 @@ export default function RaceTrackerPage() {
               {(data?.stageNames ?? []).map((_, i) => (
                 <div key={i} className="text-center">
                   {r.stages[i] ? (
-                    <span className={`inline-block min-w-[60px] text-center rounded-md px-2 py-1 text-sm ${r.stages[i] ? 'bg-white/10 text-white' : 'bg-white/5 text-white/50'}`}>
+                    <a
+                      href={`https://www.strava.com/segments/${data?.stageSegments[i] || 0}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-block min-w-[60px] text-center rounded-md px-2 py-1 text-sm bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer`}
+                      title={`View segment ${data?.stageSegments[i] || 0} on Strava`}
+                    >
                       {fmt(r.stages[i])}
-                    </span>
+                    </a>
                   ) : (
                     <span className="text-white/30">—</span>
                   )}
