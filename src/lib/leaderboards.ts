@@ -24,7 +24,7 @@ export interface LeaderboardData {
   rows: LeaderboardRow[];
 }
 
-// Mock data structure (in production, this would be Prisma queries)
+// Enhanced data structure for improved segment logic
 interface MockEffort {
   id: string;
   riderId: string;
@@ -33,6 +33,29 @@ interface MockEffort {
   stageId: number;
   elapsedSec: number;
   effortDate: string;
+  activityId?: string; // Link to the activity that contains this segment
+  activityDate?: string; // Date of the activity
+}
+
+// Activity-based segment grouping
+interface ActivitySegments {
+  activityId: string;
+  activityDate: string;
+  riderId: string;
+  riderName: string;
+  overallLoop?: {
+    segmentId: 7977451;
+    elapsedSec: number;
+    effortDate: string;
+  };
+  climbingSegments: {
+    segment9589287?: { elapsedSec: number; effortDate: string };
+    segment18229887?: { elapsedSec: number; effortDate: string };
+  };
+  descendingSegments: {
+    segment2105607?: { elapsedSec: number; effortDate: string };
+    segment1359027?: { elapsedSec: number; effortDate: string };
+  };
 }
 
 interface MockStage {
@@ -43,26 +66,55 @@ interface MockStage {
   endDate: string;
 }
 
-// Mock data (in production, this would come from Prisma)
+// Seasonal stages with proper Equinox/Solstice dates
 const mockStages: MockStage[] = [
-  { id: 1, name: 'Fall 2025', season: 'fall', startDate: '2025-09-22', endDate: '2025-12-20' },
-  { id: 2, name: 'Winter 2025', season: 'winter', startDate: '2025-12-21', endDate: '2026-03-19' },
-  { id: 3, name: 'Spring 2026', season: 'spring', startDate: '2026-03-20', endDate: '2026-06-20' },
-  { id: 4, name: 'Summer 2026', season: 'summer', startDate: '2026-06-21', endDate: '2026-09-21' },
-];
-
-// This will be populated from the actual database
-let mockEfforts: MockEffort[] = [
-  // Sample data for Colt Jones - Fall 2025 (stage 1)
-  { id: '1', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 7977451, stageId: 1, elapsedSec: 6557, effortDate: '2025-09-29' }, // Overall Loop: 1:49:17 (SEGMENT TIME - not total activity time)
-  { id: '2', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 9589287, stageId: 1, elapsedSec: 1200, effortDate: '2025-10-01' }, // Climbing segment 1: 20:00
-  { id: '3', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 18229887, stageId: 1, elapsedSec: 1800, effortDate: '2025-10-01' }, // Climbing segment 2: 30:00
-  { id: '4', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 2105607, stageId: 1, elapsedSec: 900, effortDate: '2025-10-01' }, // Descending segment 1: 15:00
-  { id: '5', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 1359027, stageId: 1, elapsedSec: 1100, effortDate: '2025-10-01' }, // Descending segment 2: 18:20
+  { id: 1, name: 'Fall 2025', season: 'fall', startDate: '2025-09-22', endDate: '2025-12-20' }, // Autumnal Equinox to Winter Solstice
+  { id: 2, name: 'Winter 2025', season: 'winter', startDate: '2025-12-21', endDate: '2026-03-19' }, // Winter Solstice to Vernal Equinox
+  { id: 3, name: 'Spring 2026', season: 'spring', startDate: '2026-03-20', endDate: '2026-06-20' }, // Vernal Equinox to Summer Solstice
+  { id: 4, name: 'Summer 2026', season: 'summer', startDate: '2026-06-21', endDate: '2026-09-21' }, // Summer Solstice to Autumnal Equinox
 ];
 
 /**
- * Load efforts from database
+ * Check if a date falls within a seasonal window (Equinox/Solstice based)
+ */
+function isWithinSeasonalWindow(effortDate: string, season: 'fall' | 'winter' | 'spring' | 'summer'): boolean {
+  const effort = new Date(effortDate);
+  const stage = mockStages.find(s => s.season === season);
+  
+  if (!stage) return false;
+  
+  const startDate = new Date(stage.startDate);
+  const endDate = new Date(stage.endDate);
+  
+  return effort >= startDate && effort <= endDate;
+}
+
+/**
+ * Get the current season based on today's date
+ */
+function getCurrentSeason(): 'fall' | 'winter' | 'spring' | 'summer' {
+  const today = new Date();
+  const currentStage = mockStages.find(stage => {
+    const startDate = new Date(stage.startDate);
+    const endDate = new Date(stage.endDate);
+    return today >= startDate && today <= endDate;
+  });
+  
+  return currentStage?.season || 'fall'; // Default to fall if not found
+}
+
+// This will be populated from the actual database
+let mockEfforts: MockEffort[] = [
+  // Sample data for Colt Jones - Fall 2025 (all from same activity)
+  { id: '1', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 7977451, stageId: 1, elapsedSec: 6557, effortDate: '2025-09-29', activityId: 'activity_colt_fall_2025', activityDate: '2025-09-29' }, // Overall Loop: 1:49:17 (SEGMENT TIME - not total activity time)
+  { id: '2', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 9589287, stageId: 1, elapsedSec: 1200, effortDate: '2025-09-29', activityId: 'activity_colt_fall_2025', activityDate: '2025-09-29' }, // Climbing segment 1: 20:00
+  { id: '3', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 18229887, stageId: 1, elapsedSec: 1800, effortDate: '2025-09-29', activityId: 'activity_colt_fall_2025', activityDate: '2025-09-29' }, // Climbing segment 2: 30:00
+  { id: '4', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 2105607, stageId: 1, elapsedSec: 900, effortDate: '2025-09-29', activityId: 'activity_colt_fall_2025', activityDate: '2025-09-29' }, // Descending segment 1: 15:00
+  { id: '5', riderId: 'athlete_123', riderName: 'Colt Jones', segmentId: 1359027, stageId: 1, elapsedSec: 1100, effortDate: '2025-09-29', activityId: 'activity_colt_fall_2025', activityDate: '2025-09-29' }, // Descending segment 2: 18:20
+];
+
+/**
+ * Load efforts from database with enhanced activity linking
  */
 async function loadEffortsFromDatabase(): Promise<MockEffort[]> {
   try {
@@ -79,10 +131,12 @@ async function loadEffortsFromDatabase(): Promise<MockEffort[]> {
       segmentId: result.segmentId,
       stageId: result.stageIndex + 1, // Convert 0-based to 1-based
       elapsedSec: result.elapsedTime,
-      effortDate: result.effortDate.toISOString().split('T')[0]
+      effortDate: result.effortDate.toISOString().split('T')[0],
+      activityId: `activity_${result.id}`, // Generate activity ID from result ID
+      activityDate: result.effortDate.toISOString().split('T')[0] // Use effort date as activity date
     }));
     
-    console.log('📊 Converted efforts:', dbEfforts);
+    console.log('📊 Converted efforts with activity linking:', dbEfforts);
     
     // Merge database results with sample data
     const allEfforts = [...mockEfforts, ...dbEfforts];
@@ -98,6 +152,86 @@ async function loadEffortsFromDatabase(): Promise<MockEffort[]> {
     // Return sample data if database fails
     return mockEfforts;
   }
+}
+
+/**
+ * Group efforts by activity to get all segments from the same ride
+ */
+function groupEffortsByActivity(efforts: MockEffort[]): ActivitySegments[] {
+  const activityMap = new Map<string, ActivitySegments>();
+  
+  efforts.forEach(effort => {
+    const activityId = effort.activityId || `activity_${effort.id}`;
+    
+    if (!activityMap.has(activityId)) {
+      activityMap.set(activityId, {
+        activityId,
+        activityDate: effort.activityDate || effort.effortDate,
+        riderId: effort.riderId,
+        riderName: effort.riderName,
+        climbingSegments: {},
+        descendingSegments: {}
+      });
+    }
+    
+    const activity = activityMap.get(activityId)!;
+    
+    // Add segment to appropriate category
+    switch (effort.segmentId) {
+      case 7977451: // Overall Loop
+        activity.overallLoop = {
+          segmentId: 7977451,
+          elapsedSec: effort.elapsedSec,
+          effortDate: effort.effortDate
+        };
+        break;
+      case 9589287: // Climbing segment 1
+        activity.climbingSegments.segment9589287 = {
+          elapsedSec: effort.elapsedSec,
+          effortDate: effort.effortDate
+        };
+        break;
+      case 18229887: // Climbing segment 2
+        activity.climbingSegments.segment18229887 = {
+          elapsedSec: effort.elapsedSec,
+          effortDate: effort.effortDate
+        };
+        break;
+      case 2105607: // Descending segment 1
+        activity.descendingSegments.segment2105607 = {
+          elapsedSec: effort.elapsedSec,
+          effortDate: effort.effortDate
+        };
+        break;
+      case 1359027: // Descending segment 2
+        activity.descendingSegments.segment1359027 = {
+          elapsedSec: effort.elapsedSec,
+          effortDate: effort.effortDate
+        };
+        break;
+    }
+  });
+  
+  return Array.from(activityMap.values());
+}
+
+/**
+ * Get the most recent activity with Overall Loop within seasonal window
+ */
+function getMostRecentActivityInSeason(
+  activities: ActivitySegments[], 
+  riderId: string, 
+  season: 'fall' | 'winter' | 'spring' | 'summer'
+): ActivitySegments | null {
+  const riderActivities = activities
+    .filter(activity => 
+      activity.riderId === riderId && 
+      activity.overallLoop && 
+      isWithinSeasonalWindow(activity.overallLoop.effortDate, season)
+    )
+    .sort((a, b) => new Date(b.activityDate).getTime() - new Date(a.activityDate).getTime());
+  
+  return riderActivities[0] || null;
 }
 
 /**
@@ -175,48 +309,25 @@ function hasLoopTimeInSeason(
 }
 
 /**
- * Table 1: Overall Loop Leaderboard
+ * Table 1: Overall Loop Leaderboard (Improved Logic)
+ * Gets most recent effort for Segment 7977451 within seasonal window
  */
 export async function getOverallLoopLeaderboard(): Promise<LeaderboardData> {
   const efforts = await loadEffortsFromDatabase();
-  const loopRiders = getOverallLoopRiders(efforts);
-  const rows: LeaderboardRow[] = [];
+  const activities = groupEffortsByActivity(efforts);
   
-  loopRiders.forEach(riderId => {
-    const riderName = efforts.find(e => e.riderId === riderId)?.riderName || 'Unknown';
-    
-    const row: LeaderboardRow = {
-      riderId,
-      riderName,
-      seasons: {
-        fall: getBestTimeForSegment(efforts, riderId, 7977451, 1),
-        winter: getBestTimeForSegment(efforts, riderId, 7977451, 2),
-        spring: getBestTimeForSegment(efforts, riderId, 7977451, 3),
-        summer: getBestTimeForSegment(efforts, riderId, 7977451, 4),
-      }
-    };
-    
-    rows.push(row);
+  // Get all unique riders who have completed the Overall Loop
+  const riders = new Set<string>();
+  activities.forEach(activity => {
+    if (activity.overallLoop) {
+      riders.add(activity.riderId);
+    }
   });
   
-  return {
-    title: 'Overall Loop',
-    subtitle: 'Best time on segment 7977451 per season',
-    icon: '🏆',
-    rows
-  };
-}
-
-/**
- * Table 2: Climber Score Leaderboard
- */
-export async function getClimberScoreLeaderboard(): Promise<LeaderboardData> {
-  const efforts = await loadEffortsFromDatabase();
-  const loopRiders = getOverallLoopRiders(efforts);
   const rows: LeaderboardRow[] = [];
   
-  loopRiders.forEach(riderId => {
-    const riderName = efforts.find(e => e.riderId === riderId)?.riderName || 'Unknown';
+  riders.forEach(riderId => {
+    const riderName = activities.find(a => a.riderId === riderId)?.riderName || 'Unknown';
     
     const row: LeaderboardRow = {
       riderId,
@@ -229,14 +340,67 @@ export async function getClimberScoreLeaderboard(): Promise<LeaderboardData> {
       }
     };
     
-    // Only include seasons where rider completed the loop
+    // Get most recent activity for each season
     mockStages.forEach(stage => {
-      if (hasLoopTimeInSeason(efforts, riderId, stage.id)) {
-        const climbingSegment1 = getBestTimeForSegment(efforts, riderId, 9589287, stage.id);
-        const climbingSegment2 = getBestTimeForSegment(efforts, riderId, 18229887, stage.id);
+      const mostRecentActivity = getMostRecentActivityInSeason(activities, riderId, stage.season);
+      if (mostRecentActivity?.overallLoop) {
+        row.seasons[stage.season] = mostRecentActivity.overallLoop.elapsedSec;
+      }
+    });
+    
+    rows.push(row);
+  });
+  
+  return {
+    title: 'Overall Loop',
+    subtitle: 'Most recent time on segment 7977451 per season (Four Seasons of Horsetooth Challenge)',
+    icon: '🏆',
+    rows
+  };
+}
+
+/**
+ * Table 2: Climber Score Leaderboard (Improved Logic)
+ * Uses climbing segments from the same activity as the Overall Loop
+ */
+export async function getClimberScoreLeaderboard(): Promise<LeaderboardData> {
+  const efforts = await loadEffortsFromDatabase();
+  const activities = groupEffortsByActivity(efforts);
+  
+  // Get all unique riders who have completed the Overall Loop
+  const riders = new Set<string>();
+  activities.forEach(activity => {
+    if (activity.overallLoop) {
+      riders.add(activity.riderId);
+    }
+  });
+  
+  const rows: LeaderboardRow[] = [];
+  
+  riders.forEach(riderId => {
+    const riderName = activities.find(a => a.riderId === riderId)?.riderName || 'Unknown';
+    
+    const row: LeaderboardRow = {
+      riderId,
+      riderName,
+      seasons: {
+        fall: null,
+        winter: null,
+        spring: null,
+        summer: null,
+      }
+    };
+    
+    // Get climbing segments from the same activity as the Overall Loop
+    mockStages.forEach(stage => {
+      const mostRecentActivity = getMostRecentActivityInSeason(activities, riderId, stage.season);
+      
+      if (mostRecentActivity?.overallLoop && mostRecentActivity.climbingSegments) {
+        const segment1 = mostRecentActivity.climbingSegments.segment9589287;
+        const segment2 = mostRecentActivity.climbingSegments.segment18229887;
         
-        if (climbingSegment1 && climbingSegment2) {
-          row.seasons[stage.season] = climbingSegment1 + climbingSegment2;
+        if (segment1 && segment2) {
+          row.seasons[stage.season] = segment1.elapsedSec + segment2.elapsedSec;
         }
       }
     });
@@ -246,22 +410,32 @@ export async function getClimberScoreLeaderboard(): Promise<LeaderboardData> {
   
   return {
     title: 'Best Climber',
-    subtitle: 'Sum of segments 9589287 + 18229887 (only if completed loop)',
+    subtitle: 'Sum of climbing segments 9589287 + 18229887 from same activity as Overall Loop',
     icon: '🏔️',
     rows
   };
 }
 
 /**
- * Table 3: Downhill Score Leaderboard
+ * Table 3: Downhill Score Leaderboard (Improved Logic)
+ * Uses descending segments from the same activity as the Overall Loop
  */
 export async function getDownhillScoreLeaderboard(): Promise<LeaderboardData> {
   const efforts = await loadEffortsFromDatabase();
-  const loopRiders = getOverallLoopRiders(efforts);
+  const activities = groupEffortsByActivity(efforts);
+  
+  // Get all unique riders who have completed the Overall Loop
+  const riders = new Set<string>();
+  activities.forEach(activity => {
+    if (activity.overallLoop) {
+      riders.add(activity.riderId);
+    }
+  });
+  
   const rows: LeaderboardRow[] = [];
   
-  loopRiders.forEach(riderId => {
-    const riderName = efforts.find(e => e.riderId === riderId)?.riderName || 'Unknown';
+  riders.forEach(riderId => {
+    const riderName = activities.find(a => a.riderId === riderId)?.riderName || 'Unknown';
     
     const row: LeaderboardRow = {
       riderId,
@@ -274,14 +448,16 @@ export async function getDownhillScoreLeaderboard(): Promise<LeaderboardData> {
       }
     };
     
-    // Only include seasons where rider completed the loop
+    // Get descending segments from the same activity as the Overall Loop
     mockStages.forEach(stage => {
-      if (hasLoopTimeInSeason(efforts, riderId, stage.id)) {
-        const downhillSegment1 = getBestTimeForSegment(efforts, riderId, 2105607, stage.id);
-        const downhillSegment2 = getBestTimeForSegment(efforts, riderId, 1359027, stage.id);
+      const mostRecentActivity = getMostRecentActivityInSeason(activities, riderId, stage.season);
+      
+      if (mostRecentActivity?.overallLoop && mostRecentActivity.descendingSegments) {
+        const segment1 = mostRecentActivity.descendingSegments.segment2105607;
+        const segment2 = mostRecentActivity.descendingSegments.segment1359027;
         
-        if (downhillSegment1 && downhillSegment2) {
-          row.seasons[stage.season] = downhillSegment1 + downhillSegment2;
+        if (segment1 && segment2) {
+          row.seasons[stage.season] = segment1.elapsedSec + segment2.elapsedSec;
         }
       }
     });
@@ -291,20 +467,25 @@ export async function getDownhillScoreLeaderboard(): Promise<LeaderboardData> {
   
   return {
     title: 'Fastest Downhill',
-    subtitle: 'Sum of segments 2105607 + 1359027 (only if completed loop)',
+    subtitle: 'Sum of descending segments 2105607 + 1359027 from same activity as Overall Loop',
     icon: '🏂',
     rows
   };
 }
 
 /**
- * Format time in mm:ss format
+ * Format time in Hr:Min:Sec format (improved for longer times)
  */
 export function formatTime(seconds: number | null): string {
   if (seconds === null) return '–';
   
-  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
   const remainingSeconds = seconds % 60;
   
-  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  } else {
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  }
 }
