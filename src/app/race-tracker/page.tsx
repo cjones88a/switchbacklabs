@@ -17,15 +17,66 @@ interface LeaderboardRow {
 
 function AddTimeButton() {
   const [pending, setPending] = useState(false);
+  
+  const handleClick = () => {
+    console.log('🚀 Button clicked! Redirecting to OAuth...');
+    setPending(true);
+    window.location.href = '/api/strava/auth-simple';
+  };
+  
   return (
-    <TeslaButton
-      onClick={() => { setPending(true); window.location.href = '/api/strava/auth-simple'; }}
-      loading={pending}
-      size="lg"
-      variant="primary"
-    >
-      🚀 Connect Strava & Get My Time
-    </TeslaButton>
+    <div className="space-y-4">
+      <TeslaButton
+        onClick={handleClick}
+        loading={pending}
+        size="lg"
+        variant="primary"
+      >
+        🚀 Connect Strava & Get My Time
+      </TeslaButton>
+      
+      {/* Debug buttons */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => {
+            console.log('🔧 Debug button clicked');
+            alert('Debug button works!');
+          }}
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          🔧 Debug Test
+        </button>
+        
+        <button
+          onClick={() => {
+            console.log('🔍 Testing OAuth API...');
+            fetch('/api/debug')
+              .then(r => r.json())
+              .then(data => {
+                console.log('Debug data:', data);
+                alert(`Environment check: ${JSON.stringify(data.environment, null, 2)}`);
+              })
+              .catch(err => {
+                console.error('Debug error:', err);
+                alert('Debug API failed: ' + err.message);
+              });
+          }}
+          className="px-4 py-2 bg-green-500 text-white rounded"
+        >
+          🔍 Check Environment
+        </button>
+        
+        <button
+          onClick={() => {
+            console.log('🚀 Direct OAuth test...');
+            window.location.href = '/api/strava/auth-simple';
+          }}
+          className="px-4 py-2 bg-red-500 text-white rounded"
+        >
+          🚀 Direct OAuth
+        </button>
+      </div>
+    </div>
   );
 }
 
