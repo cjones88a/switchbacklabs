@@ -124,9 +124,23 @@ class MockDatabase {
     }
     const allResults = await this.getAllResults();
     
+    // Filter results by segment type
+    const relevantSegments = Object.values(stageSegments).filter(id => id > 0);
+    const filteredResults = allResults.filter(result => 
+      result.segmentId && relevantSegments.includes(result.segmentId)
+    );
+    
+    console.log(`📊 Filtering results for ${type} leaderboard:`, {
+      totalResults: allResults.length,
+      filteredResults: filteredResults.length,
+      relevantSegments,
+      type,
+      allResults: allResults.map(r => ({ participantId: r.participantId, segmentId: r.segmentId, stageIndex: r.stageIndex, elapsedTime: r.elapsedTime }))
+    });
+    
     // Group results by participant
     const participantResults = new Map<string, RaceResult[]>();
-    for (const result of allResults) {
+    for (const result of filteredResults) {
       const existing = participantResults.get(result.participantId) || [];
       existing.push(result);
       participantResults.set(result.participantId, existing);
@@ -137,11 +151,14 @@ class MockDatabase {
       const participant = await this.getParticipant(participantId);
       if (!participant) continue;
       
-      // Build stages object
+      // Build stages object - map by segment ID to stage index
       const stages: { [key: number]: number | undefined } = {};
       for (let i = 0; i < 4; i++) {
-        const stageResult = results.find(r => r.stageIndex === i);
-        stages[i] = stageResult?.elapsedTime;
+        const segmentId = stageSegments[i];
+        if (segmentId > 0) {
+          const stageResult = results.find(r => r.segmentId === segmentId);
+          stages[i] = stageResult?.elapsedTime;
+        }
       }
       
       // Calculate score based on leaderboard type
