@@ -281,10 +281,55 @@ export default function RaceTrackerPage() {
         <AddTimeButton />
         
         {athleteInfo && (
-          <div className="text-center mt-4">
+          <div className="text-center mt-4 space-y-2">
             <p className="text-sm text-green-400">
               ✅ Connected as {athleteInfo.name}
             </p>
+            <button
+              onClick={async () => {
+                try {
+                  setLoading(true);
+                  setError(null);
+                  
+                  // Get access token from localStorage or prompt user
+                  const accessToken = prompt('Enter your Strava access token to sync data:');
+                  
+                  if (!accessToken) {
+                    setError('Access token required to sync data');
+                    return;
+                  }
+                  
+                  console.log('🔄 Syncing Strava data...');
+                  
+                  const response = await fetch('/api/times/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ accessToken })
+                  });
+                  
+                  if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to sync data');
+                  }
+                  
+                  const result = await response.json();
+                  console.log('✅ Sync successful:', result);
+                  
+                  // Refresh leaderboards after sync
+                  await refreshLeaderboards();
+                  
+                } catch (err) {
+                  console.error('❌ Sync failed:', err);
+                  setError(err instanceof Error ? err.message : 'Failed to sync data');
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              disabled={loading}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 text-sm"
+            >
+              {loading ? '🔄 Syncing...' : '🔄 Sync My Data'}
+            </button>
           </div>
         )}
         
