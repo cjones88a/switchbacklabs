@@ -478,6 +478,50 @@ export default function RaceTrackerPage() {
               >
                 {loading ? '🧹 Clearing...' : '🧹 Fresh Start'}
               </button>
+              
+              <button
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    setError(null);
+                    
+                    // Get access token from localStorage or prompt user
+                    const accessToken = prompt('Enter your Strava access token to get your time:');
+                    
+                    if (!accessToken) {
+                      setError('Access token required');
+                      return;
+                    }
+                    
+                    console.log('🕐 Getting my segment time...');
+                    
+                    const response = await fetch('/api/get-my-time', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ accessToken })
+                    });
+                    
+                    const result = await response.json();
+                    console.log('🕐 Get my time result:', result);
+                    
+                    if (result.success) {
+                      setError(`✅ Your time on segment ${result.segment.id}: ${result.effort.formattedTime} (${result.effort.startDate})`);
+                    } else {
+                      setError(`❌ ${result.message || result.error}`);
+                    }
+                    
+                  } catch (err) {
+                    console.error('❌ Get my time failed:', err);
+                    setError(err instanceof Error ? err.message : 'Get my time failed');
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors disabled:opacity-50 text-sm"
+              >
+                {loading ? '🕐 Getting...' : '🕐 Get My Time'}
+              </button>
             </div>
           </div>
         )}
