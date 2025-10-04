@@ -23,102 +23,17 @@ interface LeaderboardRow {
 
 function AddTimeButton() {
   return (
-    <div className="space-y-4">
-      {/* ELON-READY: Simple HTML button with inline event handler */}
-      <button
-        onClick={() => {
-          console.log('🚀 MAIN BUTTON CLICKED - ELON APPROVED');
-          alert('Button works! Redirecting to Strava...');
-          const clientId = '179098';
-          const redirectUri = 'https://switchbacklabsco.com/api/strava/callback-simple';
-          const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=read,activity:read,activity:read_all&approval_prompt=auto&state=race_tracker`;
-          console.log('🚀 Redirecting to:', authUrl);
-          window.location.href = authUrl;
-        }}
-        style={{
-          padding: '16px 32px',
-          fontSize: '18px',
-          fontWeight: 'bold',
-          backgroundColor: 'white',
-          color: 'black',
-          border: 'none',
-          borderRadius: '16px',
-          cursor: 'pointer',
-          transition: 'all 0.2s ease'
-        }}
-        onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#f0f0f0'}
-        onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = 'white'}
-      >
-        🚀 Connect Strava & Get My Time
-      </button>
-      
-      {/* ELON-READY: Debug buttons with inline handlers */}
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-        <button
-          onClick={() => {
-            console.log('🔧 DEBUG BUTTON CLICKED');
-            alert('✅ JavaScript is working!');
-          }}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer'
-          }}
-        >
-          🔧 Test JavaScript
-        </button>
-        
-        <button
-          onClick={() => {
-            console.log('🔍 ENVIRONMENT CHECK');
-            fetch('/api/debug')
-              .then(r => r.json())
-              .then(data => {
-                console.log('✅ Environment data:', data);
-                alert('✅ Environment OK: ' + JSON.stringify(data.environment));
-              })
-              .catch(err => {
-                console.error('❌ Environment error:', err);
-                alert('❌ Environment failed: ' + err.message);
-              });
-          }}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#10b981',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer'
-          }}
-        >
-          🔍 Check Environment
-        </button>
-        
-        <button
-          onClick={() => {
-            console.log('🚀 DIRECT STRAVA REDIRECT');
-            const clientId = '179098';
-            const redirectUri = 'https://switchbacklabsco.com/api/strava/callback-simple';
-            const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=read,activity:read,activity:read_all&approval_prompt=auto&state=race_tracker`;
-            console.log('🚀 Direct redirect to:', authUrl);
-            window.location.href = authUrl;
-          }}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#8b5cf6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer'
-          }}
-        >
-          🚀 Direct Strava
-        </button>
-      </div>
-    </div>
+    <button
+      onClick={() => {
+        const clientId = '179098';
+        const redirectUri = 'https://switchbacklabsco.com/api/strava/callback-simple';
+        const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=read,activity:read,activity:read_all&approval_prompt=auto&state=race_tracker`;
+        window.location.href = authUrl;
+      }}
+      className="px-8 py-4 bg-white text-black font-bold rounded-xl hover:bg-white/90 transition-colors"
+    >
+      🚀 Connect Strava & Get My Time
+    </button>
   );
 }
 
@@ -166,6 +81,7 @@ export default function RaceTrackerPage() {
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Legacy state variables (kept for compatibility but not used in new implementation)
   const [data, setData] = useState<{ stageNames: string[]; stageSegments: { [key: number]: number }; rows: LeaderboardRow[] } | null>(null);
   const [climbingData, setClimbingData] = useState<{ stageNames: string[]; stageSegments: { [key: number]: number }; rows: LeaderboardRow[] } | null>(null);
   const [descendingData, setDescendingData] = useState<{ stageNames: string[]; stageSegments: { [key: number]: number }; rows: LeaderboardRow[] } | null>(null);
@@ -309,28 +225,6 @@ export default function RaceTrackerPage() {
           Connect your Strava and we&apos;ll pull your latest segment efforts. Complete all stages to earn a <span className="text-white">10-minute bonus</span>.
         </p>
         
-        {/* EMERGENCY: Direct OAuth Link */}
-        <div style={{ padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', marginBottom: '20px' }}>
-          <h3 style={{ color: '#fca5a5', marginBottom: '10px' }}>🚨 EMERGENCY OAUTH LINK</h3>
-          <p style={{ color: 'rgba(255, 255, 255, 0.8)', marginBottom: '15px' }}>
-            If buttons don&apos;t work, click this direct link:
-          </p>
-          <a 
-            href="https://www.strava.com/oauth/authorize?client_id=179098&response_type=code&redirect_uri=https%3A%2F%2Fswitchbacklabsco.com%2Fapi%2Fstrava%2Fcallback-simple&scope=read%2Cactivity%3Aread%2Cactivity%3Aread_all&approval_prompt=auto&state=race_tracker"
-            style={{
-              display: 'inline-block',
-              padding: '15px 30px',
-              backgroundColor: '#ef4444',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              fontSize: '16px'
-            }}
-          >
-            🚀 DIRECT STRAVA OAUTH LINK
-          </a>
-        </div>
         
         <AddTimeButton />
         
