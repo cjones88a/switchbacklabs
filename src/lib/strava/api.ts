@@ -25,6 +25,13 @@ export class StravaAPI {
   }
 
   async exchangeCodeForToken(code: string, redirectUri: string) {
+    console.log('🔄 StravaAPI: Exchanging code for token', { 
+      codeLength: code.length, 
+      redirectUri,
+      clientId: this.clientId ? 'present' : 'missing',
+      clientSecret: this.clientSecret ? 'present' : 'missing'
+    });
+    
     const response = await axios.post('https://www.strava.com/oauth/token', {
       client_id: this.clientId,
       client_secret: this.clientSecret,
@@ -32,6 +39,8 @@ export class StravaAPI {
       grant_type: 'authorization_code',
       redirect_uri: redirectUri
     });
+    
+    console.log('✅ StravaAPI: Token exchange response received');
 
     const data = response.data as {
       access_token: string;
@@ -40,6 +49,7 @@ export class StravaAPI {
       athlete: unknown;
     };
     
+    console.log('✅ StravaAPI: Token data processed successfully');
     return {
       accessToken: data.access_token,
       refreshToken: data.refresh_token,

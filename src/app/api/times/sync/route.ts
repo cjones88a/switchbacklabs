@@ -5,16 +5,32 @@ import { StravaAPI } from '@/lib/strava/api';
 // Exchange Strava code for token, fetch segment efforts, and upsert to database
 export async function POST(req: Request) {
   try {
+    console.log('🔄 Times sync API called');
+    
     const body = await req.json().catch(() => ({}));
+    console.log('📋 Request body:', { hasCode: !!body?.code });
+    
     if (!body?.code) {
+      console.error('❌ Missing authorization code in sync request');
       return NextResponse.json({ error: 'Missing code' }, { status: 400 });
     }
 
     const stravaAPI = new StravaAPI();
     const redirectUri = process.env.STRAVA_REDIRECT_URI!;
+    
+    console.log('🔧 Environment check:', { 
+      redirectUri: redirectUri ? 'present' : 'missing' 
+    });
 
+    if (!redirectUri) {
+      console.error('❌ STRAVA_REDIRECT_URI not configured');
+      return NextResponse.json({ error: 'Redirect URI not configured' }, { status: 500 });
+    }
+
+    console.log('🔄 Exchanging code for tokens...');
     // Exchange code for tokens
     const tokenData = await stravaAPI.exchangeCodeForToken(body.code, redirectUri);
+    console.log('✅ Token exchange successful');
     
     // Get athlete information
     const athlete = await stravaAPI.getAthlete(tokenData.accessToken) as {
