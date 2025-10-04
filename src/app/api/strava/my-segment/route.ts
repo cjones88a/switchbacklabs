@@ -30,17 +30,17 @@ export async function GET(request: NextRequest) {
     let participant;
     
     if (participantId.startsWith('mock_')) {
-      // Mock participant data - in production this would come from database
-      participant = {
-        id: participantId,
-        stravaId: 1007748, // Your Strava ID from the URL
-        firstName: 'Colt',
-        lastName: 'Jones',
-        email: 'colt@example.com',
-        stravaAccessToken: process.env.STRAVA_TEST_ACCESS_TOKEN || '',
-        stravaRefreshToken: 'mock_refresh_token',
-        tokenExpiresAt: new Date('2025-10-04T00:20:26Z')
-      };
+      // For mock participants, we need to get a fresh token via OAuth
+      // Since the test token is expired, we'll redirect to OAuth
+      return NextResponse.json(
+        { 
+          error: 'Token expired - OAuth required',
+          message: 'Your Strava token has expired. Please reconnect your account.',
+          requiresReauth: true,
+          participantId: participantId
+        },
+        { status: 401 }
+      );
     } else {
       return NextResponse.json(
         { error: 'Invalid participant ID format' },

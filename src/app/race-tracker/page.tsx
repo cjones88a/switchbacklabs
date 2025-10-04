@@ -137,6 +137,13 @@ export default function RaceTrackerPage() {
       
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // If token expired, suggest reconnecting
+        if (errorData.requiresReauth) {
+          setError('Your Strava token has expired. Please click "Reconnect Strava" to refresh your connection.');
+          return;
+        }
+        
         throw new Error(errorData.message || 'Failed to fetch segment data');
       }
       
