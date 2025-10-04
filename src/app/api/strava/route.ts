@@ -5,7 +5,7 @@ export async function GET() {
     console.log('🚀 Strava OAuth initiation started');
     
     const clientId = process.env.STRAVA_CLIENT_ID;
-    const redirectUri = process.env.STRAVA_REDIRECT_URI;
+    const redirectUri = process.env.STRAVA_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL}/api/strava/callback`;
     
     console.log('🔧 Environment check:', { 
       clientId: clientId ? 'present' : 'missing', 

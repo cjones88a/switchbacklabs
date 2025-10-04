@@ -18,7 +18,7 @@ function AddTimeButton() {
   const [pending, setPending] = useState(false);
   return (
     <button
-      onClick={() => { setPending(true); window.location.href = '/api/strava'; }}
+      onClick={() => { setPending(true); window.location.href = '/api/strava/auth-simple'; }}
       disabled={pending}
       className="px-5 py-3 rounded-2xl bg-white text-black font-medium hover:opacity-90 disabled:opacity-50"
       aria-label="Add my time via Strava"
@@ -34,34 +34,85 @@ function fmt(sec: number) {
 }
 
 export default function RaceTrackerPage() {
-  const [authorized, setAuthorized] = useState(false);
-  const [code, setCode] = useState<string | null>(null);
+  const [athleteInfo, setAthleteInfo] = useState<{id: string, name: string} | null>(null);
+  const [segmentData, setSegmentData] = useState<{
+    segmentId: number;
+    athlete: {
+      id: number;
+      firstName: string;
+      lastName: string;
+      username?: string;
+      profile?: string;
+    };
+    mostRecentEffort?: {
+      id: number;
+      elapsedTime: number;
+      startDate: string;
+      prRank?: number;
+      activity: {
+        id: number;
+        name: string;
+        type: string;
+        distance: number;
+        startDate: string;
+      };
+    };
+    allEfforts: Array<{
+      id: number;
+      elapsedTime: number;
+      startDate: string;
+      prRank?: number;
+    }>;
+    totalEfforts: number;
+  } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<{ stageNames: string[]; rows: LeaderboardRow[] } | null>(null);
   const [q, setQ] = useState('');
 
   // read query params
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
-    setAuthorized(sp.get('authorized') === '1');
-    setCode(sp.get('code'));
+    const success = sp.get('success') === '1';
+    const token = sp.get('accessToken');
+    const athleteId = sp.get('athleteId');
+    const athleteName = sp.get('athleteName');
+    
+    if (success && token && athleteId && athleteName) {
+      setAthleteInfo({ id: athleteId, name: athleteName });
+      
+      // Clean the URL
+      window.history.replaceState({}, '', '/race-tracker');
+      
+      // Fetch segment data immediately
+      fetchSegmentData(token);
+    }
   }, []);
 
-  // if just authorized, sync immediately
-  useEffect(() => {
-    if (authorized && code) {
-      fetch('/api/times/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code })
-      }).finally(() => {
-        // clean the URL
-        window.history.replaceState({}, '', '/race-tracker');
-        // refresh leaderboard
-        fetch('/api/leaderboard', { cache: 'no-store' })
-          .then(r => r.json()).then(setData).catch(() => {});
-      });
+  const fetchSegmentData = async (token: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('🔄 Fetching segment 7977451 data...');
+      const response = await fetch(`/api/strava/segment-7977451?accessToken=${token}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch segment data');
+      }
+      
+      const segmentData = await response.json();
+      setSegmentData(segmentData);
+      console.log('✅ Segment data fetched successfully');
+      
+    } catch (err) {
+      console.error('❌ Error fetching segment data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch segment data');
+    } finally {
+      setLoading(false);
     }
-  }, [authorized, code]);
+  };
 
   // initial leaderboard load
   useEffect(() => {
@@ -81,7 +132,115 @@ export default function RaceTrackerPage() {
           Connect your Strava and we&apos;ll pull your latest segment efforts. Complete all stages to earn a <span className="text-white">10-minute bonus</span>.
         </p>
         <AddTimeButton />
+        
+        {athleteInfo && (
+          <div className="text-center mt-4">
+            <p className="text-sm text-green-400">
+              ✅ Connected as {athleteInfo.name}
+            </p>
+          </div>
+        )}
+        
+        {error && (
+          <div className="text-center mt-4">
+            <p className="text-sm text-red-400">
+              ❌ {error}
+            </p>
+          </div>
+        )}
       </header>
+
+      {loading && (
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+          <p className="mt-2 text-white/70">Fetching your segment data...</p>
+        </div>
+      )}
+
+      {segmentData && (
+        <section className="rounded-2xl overflow-hidden border border-white/10 bg-white/5">
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4">Your Segment 7977451 Performance</h2>
+            
+            {segmentData.mostRecentEffort ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="p-4 bg-white/10 rounded-lg">
+                    <h3 className="font-semibold text-lg mb-3">Most Recent Effort</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-white/70">Time:</span>
+                        <span className="font-bold text-xl">{fmt(segmentData.mostRecentEffort.elapsedTime)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-white/70">Date:</span>
+                        <span>{new Date(segmentData.mostRecentEffort.startDate).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-white/70">Activity:</span>
+                        <span className="text-sm">{segmentData.mostRecentEffort.activity.name}</span>
+                      </div>
+                      {segmentData.mostRecentEffort.prRank && (
+                        <div className="flex justify-between">
+                          <span className="text-white/70">PR Rank:</span>
+                          <span className="text-green-400 font-semibold">#{segmentData.mostRecentEffort.prRank}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-white/10 rounded-lg">
+                    <h3 className="font-semibold text-lg mb-3">Activity Details</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-white/70">Type:</span>
+                        <span>{segmentData.mostRecentEffort.activity.type}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-white/70">Distance:</span>
+                        <span>{(segmentData.mostRecentEffort.activity.distance / 1000).toFixed(2)} km</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-white/70">Total Efforts:</span>
+                        <span>{segmentData.totalEfforts}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {segmentData.allEfforts.length > 1 && (
+                  <div className="p-4 bg-white/10 rounded-lg">
+                    <h3 className="font-semibold text-lg mb-3">All Efforts on This Segment</h3>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {segmentData.allEfforts.map((effort, index: number) => (
+                        <div key={effort.id} className="flex justify-between items-center p-2 bg-white/5 rounded">
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm text-white/50">#{index + 1}</span>
+                            <span className="font-medium">{fmt(effort.elapsedTime)}</span>
+                          </div>
+                          <div className="text-sm text-white/70">
+                            {new Date(effort.startDate).toLocaleDateString()}
+                            {effort.prRank && (
+                              <span className="ml-2 text-green-400">PR #{effort.prRank}</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-white/70">No efforts found for this segment</p>
+                <p className="text-sm text-white/50 mt-2">
+                  Complete this segment on Strava to see your time here!
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       <section className="flex items-center justify-between gap-4">
         <div className="text-sm text-white/60">Best 3 total • −10:00 bonus if all 4 stages</div>
