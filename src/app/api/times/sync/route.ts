@@ -104,20 +104,31 @@ export async function POST(req: Request) {
     
     for (const segment of segmentsToFetch) {
       try {
-        const segmentResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/strava/segment-${segment.id}?accessToken=${tokenData.accessToken}`);
+        console.log(`🔄 Fetching segment ${segment.id} directly from Strava API...`);
         
-        if (segmentResponse.ok) {
-          const segmentData = await segmentResponse.json();
-          if (segmentData.mostRecentEffort) {
+        // Use Strava API directly instead of internal API calls
+        const stravaSegmentEfforts = await stravaAPI.getSegmentEfforts(segment.id, tokenData.accessToken);
+        
+        if (stravaSegmentEfforts && stravaSegmentEfforts.length > 0) {
+          // Filter for current athlete and get most recent effort
+          const athleteEfforts = stravaSegmentEfforts
+            .filter(effort => effort.athlete?.id === athlete.id)
+            .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+          
+          const mostRecentEffort = athleteEfforts[0];
+          
+          if (mostRecentEffort) {
             segmentEfforts.push({
               stageIndex: segment.stageIndex,
-              elapsedTime: segmentData.mostRecentEffort.elapsedTime,
-              effortDate: segmentData.mostRecentEffort.startDate,
+              elapsedTime: mostRecentEffort.elapsedTime,
+              effortDate: mostRecentEffort.startDate,
               segmentId: segment.id,
-              prRank: segmentData.mostRecentEffort.prRank,
+              prRank: mostRecentEffort.prRank,
               type: segment.type
             });
-            console.log(`✅ Found segment ${segment.id} effort:`, segmentData.mostRecentEffort.elapsedTime);
+            console.log(`✅ Found segment ${segment.id} effort:`, mostRecentEffort.elapsedTime);
+          } else {
+            console.log(`⚠️ No efforts found for athlete on segment ${segment.id}`);
           }
         } else {
           console.log(`⚠️ No data found for segment ${segment.id}`);
