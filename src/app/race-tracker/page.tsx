@@ -388,6 +388,55 @@ export default function RaceTrackerPage() {
               >
                 {loading ? '🧪 Testing...' : '🧪 Test 1 Segment'}
               </button>
+              
+              <button
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    setError(null);
+                    
+                    // Get access token from localStorage or prompt user
+                    const accessToken = prompt('Enter your Strava access token for diagnostic:');
+                    
+                    if (!accessToken) {
+                      setError('Access token required for diagnostic');
+                      return;
+                    }
+                    
+                    console.log('🔍 Running comprehensive diagnostic...');
+                    
+                    const response = await fetch('/api/qa/diagnostic', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ accessToken })
+                    });
+                    
+                    const result = await response.json();
+                    console.log('🔍 Diagnostic results:', result);
+                    
+                    // Display results in a more readable format
+                    const summary = result.summary;
+                    const failedTests = result.tests.filter((t: { status: string }) => t.status === 'fail' || t.status === 'error');
+                    
+                    if (failedTests.length === 0) {
+                      setError(`✅ All tests passed! (${summary.passed} passed)`);
+                    } else {
+                      const errorDetails = failedTests.map((t: { name: string; details: unknown }) => `${t.name}: ${t.details}`).join('; ');
+                      setError(`❌ ${failedTests.length} tests failed: ${errorDetails}`);
+                    }
+                    
+                  } catch (err) {
+                    console.error('❌ Diagnostic failed:', err);
+                    setError(err instanceof Error ? err.message : 'Diagnostic failed');
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 text-sm"
+              >
+                {loading ? '🔍 Diagnosing...' : '🔍 Run Diagnostic'}
+              </button>
             </div>
           </div>
         )}
