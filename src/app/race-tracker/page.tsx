@@ -245,6 +245,30 @@ export default function RaceTrackerPage() {
         <p className="text-white/70 max-w-2xl">
           Connect your Strava and we&apos;ll pull your latest segment efforts. Complete all stages to earn a <span className="text-white">10-minute bonus</span>.
         </p>
+        
+        {/* EMERGENCY: Direct OAuth Link */}
+        <div style={{ padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', marginBottom: '20px' }}>
+          <h3 style={{ color: '#fca5a5', marginBottom: '10px' }}>🚨 EMERGENCY OAUTH LINK</h3>
+          <p style={{ color: 'rgba(255, 255, 255, 0.8)', marginBottom: '15px' }}>
+            If buttons don&apos;t work, click this direct link:
+          </p>
+          <a 
+            href="https://www.strava.com/oauth/authorize?client_id=179098&response_type=code&redirect_uri=https%3A%2F%2Fswitchbacklabsco.com%2Fapi%2Fstrava%2Fcallback-simple&scope=read%2Cactivity%3Aread%2Cactivity%3Aread_all&approval_prompt=auto&state=race_tracker"
+            style={{
+              display: 'inline-block',
+              padding: '15px 30px',
+              backgroundColor: '#ef4444',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              fontSize: '16px'
+            }}
+          >
+            🚀 DIRECT STRAVA OAUTH LINK
+          </a>
+        </div>
+        
         <AddTimeButton />
         
         {athleteInfo && (
