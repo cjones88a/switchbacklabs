@@ -1,6 +1,19 @@
 'use client';
 import { useEffect, useState } from 'react';
 
+interface LeaderboardRow {
+  id: string;
+  name: string;
+  stages: {
+    [key: number]: number | undefined;
+  };
+  score: {
+    best3: number;
+    bonus: number;
+    final: number;
+  };
+}
+
 function AddTimeButton() {
   const [pending, setPending] = useState(false);
   return (
@@ -23,7 +36,7 @@ function fmt(sec: number) {
 export default function RaceTrackerPage() {
   const [authorized, setAuthorized] = useState(false);
   const [code, setCode] = useState<string | null>(null);
-  const [data, setData] = useState<{ stageNames: string[]; rows: any[] } | null>(null);
+  const [data, setData] = useState<{ stageNames: string[]; rows: LeaderboardRow[] } | null>(null);
   const [q, setQ] = useState('');
 
   // read query params

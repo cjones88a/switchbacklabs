@@ -51,7 +51,11 @@ export async function POST(req: Request) {
     // 2. Upsert efforts to database
     // 3. Calculate scores (best 3, bonus, final)
     
-    console.log('Mock participant created:', participant);
+    console.log('Mock participant created:', {
+      id: participant.id,
+      name: participant.name,
+      effortsCount: participant.efforts.length
+    });
 
     return NextResponse.json({ 
       ok: true, 
