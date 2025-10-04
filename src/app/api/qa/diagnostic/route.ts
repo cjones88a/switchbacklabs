@@ -36,9 +36,9 @@ export async function POST(req: Request) {
     }
 
     // Test 2: Environment Variables
-    const clientId = process.env.STRAVA_CLIENT_ID || '179098';
-    const clientSecret = process.env.STRAVA_CLIENT_SECRET || 'e42d5b7d7ce04b98ab1f34a878e66aa12653d9aa';
-    addTest('Environment Variables', 'pass', {
+    const clientId = process.env.STRAVA_CLIENT_ID;
+    const clientSecret = process.env.STRAVA_CLIENT_SECRET;
+    addTest('Environment Variables', clientId && clientSecret ? 'pass' : 'fail', {
       clientId: clientId ? `${clientId.substring(0, 8)}...` : 'MISSING',
       clientSecret: clientSecret ? `${clientSecret.substring(0, 8)}...` : 'MISSING'
     });

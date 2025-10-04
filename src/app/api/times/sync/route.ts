@@ -93,7 +93,7 @@ export async function POST(req: Request) {
       { id: 1359027, stageIndex: 3, type: 'descending' }, // Summer 2026
     ];
     
-    let segmentEfforts: Array<{
+    const segmentEfforts: Array<{
       stageIndex: number;
       elapsedTime: number;
       effortDate: string;
@@ -138,16 +138,15 @@ export async function POST(req: Request) {
       }
     }
     
-    // Fallback to mock data if no segments found
+    // No fallback data - only use real Strava data
     if (segmentEfforts.length === 0) {
-      console.log('⚠️ No segment data found, using mock data for Colt Jones');
-      segmentEfforts = [
-        { stageIndex: 0, elapsedTime: 6557, effortDate: '2025-09-29', segmentId: 7977451, type: 'overall' }, // 1:49:17 (Colt's actual time)
-        { stageIndex: 0, elapsedTime: 1200, effortDate: '2025-09-29', segmentId: 9589287, type: 'climbing' }, // 20:00
-        { stageIndex: 0, elapsedTime: 1800, effortDate: '2025-09-29', segmentId: 18229887, type: 'climbing' }, // 30:00
-        { stageIndex: 0, elapsedTime: 900, effortDate: '2025-09-29', segmentId: 2105607, type: 'descending' }, // 15:00
-        { stageIndex: 0, elapsedTime: 1100, effortDate: '2025-09-29', segmentId: 1359027, type: 'descending' }, // 18:20
-      ];
+      console.log('⚠️ No segment data found from Strava API');
+      return NextResponse.json({
+        success: false,
+        message: 'No segment efforts found for the authenticated athlete',
+        athlete: athlete,
+        segmentsAttempted: segmentsToFetch.length
+      });
     }
 
     // Store participant in database

@@ -229,6 +229,13 @@ class MockDatabase {
     
     return { stageNames, stageSegments, rows };
   }
+
+  // Clear all data for fresh start
+  async clearAllData(): Promise<void> {
+    this.participants.clear();
+    this.results.clear();
+    console.log('🧹 All database data cleared');
+  }
 }
 
 export const raceDatabase = new MockDatabase();

@@ -437,6 +437,47 @@ export default function RaceTrackerPage() {
               >
                 {loading ? '🔍 Diagnosing...' : '🔍 Run Diagnostic'}
               </button>
+              
+              <button
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    setError(null);
+                    
+                    if (!confirm('Are you sure you want to clear all data and start fresh? This cannot be undone.')) {
+                      return;
+                    }
+                    
+                    console.log('🧹 Clearing all data for fresh start...');
+                    
+                    const response = await fetch('/api/qa/fresh-start', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    const result = await response.json();
+                    console.log('🧹 Fresh start result:', result);
+                    
+                    if (result.success) {
+                      setError('✅ All data cleared - fresh start completed');
+                      // Refresh leaderboards after clearing
+                      await refreshLeaderboards();
+                    } else {
+                      setError(`Failed to clear data: ${result.error}`);
+                    }
+                    
+                  } catch (err) {
+                    console.error('❌ Fresh start failed:', err);
+                    setError(err instanceof Error ? err.message : 'Fresh start failed');
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 text-sm"
+              >
+                {loading ? '🧹 Clearing...' : '🧹 Fresh Start'}
+              </button>
             </div>
           </div>
         )}
