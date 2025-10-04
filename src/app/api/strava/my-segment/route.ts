@@ -23,7 +23,10 @@ export async function GET(request: NextRequest) {
     
     if (!testAccessToken) {
       return NextResponse.json(
-        { error: 'Strava access token not configured' },
+        { 
+          error: 'Strava access token not configured',
+          message: 'Please add STRAVA_TEST_ACCESS_TOKEN to Vercel environment variables'
+        },
         { status: 500 }
       );
     }
@@ -111,6 +114,18 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error fetching segment data:', error);
+    
+    // Handle specific Strava API errors
+    if (error instanceof Error && error.message.includes('401')) {
+      return NextResponse.json(
+        { 
+          error: 'Strava authentication failed',
+          message: 'Access token may be expired or invalid. Please check STRAVA_TEST_ACCESS_TOKEN in Vercel environment variables.',
+          details: error.message
+        },
+        { status: 401 }
+      );
+    }
     
     return NextResponse.json(
       { 
