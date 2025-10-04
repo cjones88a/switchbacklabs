@@ -58,9 +58,16 @@ export async function POST(req: Request) {
     
     console.log('✅ Athlete info retrieved:', athlete.firstname, athlete.lastname);
 
-    // Fetch actual segment 7977451 data (Fall 2025 stage)
-    console.log('🔄 Fetching segment 7977451 data for Fall 2025 stage...');
-    const segmentResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/strava/segment-7977451?accessToken=${tokenData.accessToken}`);
+    // Fetch data for all segment types
+    console.log('🔄 Fetching segment data for all categories...');
+    
+    const segmentsToFetch = [
+      { id: 7977451, stageIndex: 0, type: 'overall' }, // Fall 2025 - Overall
+      { id: 9589287, stageIndex: 0, type: 'climbing' }, // Fall 2025 - Climbing
+      { id: 18229887, stageIndex: 1, type: 'climbing' }, // Winter 2025 - Climbing
+      { id: 2105607, stageIndex: 0, type: 'descending' }, // Fall 2025 - Descending
+      { id: 1359027, stageIndex: 1, type: 'descending' }, // Winter 2025 - Descending
+    ];
     
     let segmentEfforts: Array<{
       stageIndex: number;
@@ -68,25 +75,39 @@ export async function POST(req: Request) {
       effortDate: string;
       segmentId?: number;
       prRank?: number;
+      type: string;
     }> = [];
-    if (segmentResponse.ok) {
-      const segmentData = await segmentResponse.json();
-      if (segmentData.mostRecentEffort) {
-        // Convert segment 7977451 to Fall 2025 stage (index 0)
-        segmentEfforts = [{
-          stageIndex: 0, // Fall 2025
-          elapsedTime: segmentData.mostRecentEffort.elapsedTime,
-          effortDate: segmentData.mostRecentEffort.startDate,
-          segmentId: 7977451,
-          prRank: segmentData.mostRecentEffort.prRank
-        }];
-        console.log('✅ Found segment 7977451 effort:', segmentEfforts[0]);
+    
+    for (const segment of segmentsToFetch) {
+      try {
+        const segmentResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/strava/segment-${segment.id}?accessToken=${tokenData.accessToken}`);
+        
+        if (segmentResponse.ok) {
+          const segmentData = await segmentResponse.json();
+          if (segmentData.mostRecentEffort) {
+            segmentEfforts.push({
+              stageIndex: segment.stageIndex,
+              elapsedTime: segmentData.mostRecentEffort.elapsedTime,
+              effortDate: segmentData.mostRecentEffort.startDate,
+              segmentId: segment.id,
+              prRank: segmentData.mostRecentEffort.prRank,
+              type: segment.type
+            });
+            console.log(`✅ Found segment ${segment.id} effort:`, segmentData.mostRecentEffort.elapsedTime);
+          }
+        } else {
+          console.log(`⚠️ No data found for segment ${segment.id}`);
+        }
+      } catch (error) {
+        console.log(`❌ Error fetching segment ${segment.id}:`, error);
       }
-    } else {
-      console.log('⚠️ No segment 7977451 data found, using mock data');
-      // Fallback to mock data if segment fetch fails
+    }
+    
+    // Fallback to mock data if no segments found
+    if (segmentEfforts.length === 0) {
+      console.log('⚠️ No segment data found, using mock data');
       segmentEfforts = [
-        { stageIndex: 0, elapsedTime: 3600 + 2940, effortDate: new Date().toISOString() }, // 1:49:00 (close to your 1:49:17)
+        { stageIndex: 0, elapsedTime: 3600 + 2940, effortDate: new Date().toISOString(), segmentId: 7977451, type: 'overall' }, // 1:49:00 (close to your 1:49:17)
       ];
     }
 

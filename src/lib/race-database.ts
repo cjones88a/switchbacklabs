@@ -83,7 +83,7 @@ class MockDatabase {
   }
 
   // Leaderboard calculation
-  async getLeaderboard(): Promise<{
+  async getLeaderboard(type: 'overall' | 'climbing' | 'descending' = 'overall'): Promise<{
     stageNames: string[];
     stageSegments: { [key: number]: number };
     rows: Array<{
@@ -94,12 +94,34 @@ class MockDatabase {
     }>;
   }> {
     const stageNames = ['Fall 2025', 'Winter 2025', 'Spring 2026', 'Summer 2026'];
-    const stageSegments = {
-      0: 7977451, // Fall 2025 - your segment
-      1: 0, // Winter 2025 - TBD
-      2: 0, // Spring 2026 - TBD  
-      3: 0  // Summer 2026 - TBD
-    };
+    
+    let stageSegments: { [key: number]: number };
+    
+    if (type === 'climbing') {
+      // Top Pogi's - Climbing segments
+      stageSegments = {
+        0: 9589287, // Fall 2025 - Climbing segment 1
+        1: 18229887, // Winter 2025 - Climbing segment 2
+        2: 0, // Spring 2026 - TBD
+        3: 0  // Summer 2026 - TBD
+      };
+    } else if (type === 'descending') {
+      // Top Bruni's - Descending segments
+      stageSegments = {
+        0: 2105607, // Fall 2025 - Descending segment 1
+        1: 1359027, // Winter 2025 - Descending segment 2
+        2: 0, // Spring 2026 - TBD
+        3: 0  // Summer 2026 - TBD
+      };
+    } else {
+      // Overall - Original segments
+      stageSegments = {
+        0: 7977451, // Fall 2025 - your segment
+        1: 0, // Winter 2025 - TBD
+        2: 0, // Spring 2026 - TBD  
+        3: 0  // Summer 2026 - TBD
+      };
+    }
     const allResults = await this.getAllResults();
     
     // Group results by participant
@@ -122,14 +144,27 @@ class MockDatabase {
         stages[i] = stageResult?.elapsedTime;
       }
       
-      // Calculate score
+      // Calculate score based on leaderboard type
       const completedStages = results.map(r => r.elapsedTime).sort((a, b) => a - b);
-      const best3 = completedStages.length >= 3 
-        ? completedStages.slice(0, 3).reduce((sum, time) => sum + time, 0)
-        : 0;
       
-      const bonus = completedStages.length === 4 ? 600 : 0; // 10 minutes = 600 seconds
-      const final = best3 > 0 ? best3 - bonus : 0;
+      let best3: number;
+      let bonus: number;
+      let final: number;
+      
+      if (type === 'climbing' || type === 'descending') {
+        // For climbing/descending: sum all available times (no best 3, no bonus)
+        best3 = completedStages.reduce((sum, time) => sum + time, 0);
+        bonus = 0; // No bonus for climbing/descending
+        final = best3; // Final is just the sum
+      } else {
+        // For overall: best 3 times with bonus
+        best3 = completedStages.length >= 3 
+          ? completedStages.slice(0, 3).reduce((sum, time) => sum + time, 0)
+          : 0;
+        
+        bonus = completedStages.length === 4 ? 600 : 0; // 10 minutes = 600 seconds
+        final = best3 > 0 ? best3 - bonus : 0;
+      }
       
       rows.push({
         id: participantId,

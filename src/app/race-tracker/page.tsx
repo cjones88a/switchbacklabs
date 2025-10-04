@@ -160,6 +160,8 @@ export default function RaceTrackerPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<{ stageNames: string[]; stageSegments: { [key: number]: number }; rows: LeaderboardRow[] } | null>(null);
+  const [climbingData, setClimbingData] = useState<{ stageNames: string[]; stageSegments: { [key: number]: number }; rows: LeaderboardRow[] } | null>(null);
+  const [descendingData, setDescendingData] = useState<{ stageNames: string[]; stageSegments: { [key: number]: number }; rows: LeaderboardRow[] } | null>(null);
   const [q, setQ] = useState('');
 
   // read query params
@@ -230,17 +232,115 @@ export default function RaceTrackerPage() {
 
   // initial leaderboard load
   useEffect(() => {
-    fetch('/api/leaderboard', { cache: 'no-store' })
-      .then(r => r.json())
-      .then(setData)
-      .catch(() => setData({ 
-        stageNames: ['Fall 2025','Winter 2025','Spring 2026','Summer 2026'], 
-        stageSegments: { 0: 7977451, 1: 0, 2: 0, 3: 0 },
-        rows: [] 
-      }));
+    const loadLeaderboards = async () => {
+      try {
+        // Load overall leaderboard
+        const overallResponse = await fetch('/api/leaderboard', { cache: 'no-store' });
+        const overallData = await overallResponse.json();
+        setData(overallData);
+        
+        // Load climbing leaderboard
+        const climbingResponse = await fetch('/api/leaderboard/climbing', { cache: 'no-store' });
+        const climbingData = await climbingResponse.json();
+        setClimbingData(climbingData);
+        
+        // Load descending leaderboard
+        const descendingResponse = await fetch('/api/leaderboard/descending', { cache: 'no-store' });
+        const descendingData = await descendingResponse.json();
+        setDescendingData(descendingData);
+        
+      } catch (error) {
+        console.error('Failed to load leaderboards:', error);
+        // Set fallback data
+        const fallbackData = { 
+          stageNames: ['Fall 2025','Winter 2025','Spring 2026','Summer 2026'], 
+          stageSegments: { 0: 7977451, 1: 0, 2: 0, 3: 0 },
+          rows: [] 
+        };
+        setData(fallbackData);
+        setClimbingData(fallbackData);
+        setDescendingData(fallbackData);
+      }
+    };
+    
+    loadLeaderboards();
   }, []);
 
   const rows = (data?.rows ?? []).filter(r => r.name.toLowerCase().includes(q.toLowerCase()));
+  const climbingRows = (climbingData?.rows ?? []).filter(r => r.name.toLowerCase().includes(q.toLowerCase()));
+  const descendingRows = (descendingData?.rows ?? []).filter(r => r.name.toLowerCase().includes(q.toLowerCase()));
+
+  // Reusable leaderboard component
+  const LeaderboardTable = ({ 
+    title, 
+    subtitle, 
+    data, 
+    rows, 
+    icon 
+  }: { 
+    title: string; 
+    subtitle: string; 
+    data: { stageNames: string[]; stageSegments: { [key: number]: number }; rows: LeaderboardRow[] } | null; 
+    rows: LeaderboardRow[]; 
+    icon: string;
+  }) => (
+    <section className="rounded-2xl overflow-hidden border border-white/10">
+      <div className="px-4 py-3 bg-white/5 backdrop-blur border-b border-white/10">
+        <h2 className="text-xl font-bold flex items-center gap-2">
+          {icon} {title}
+        </h2>
+        <p className="text-sm text-white/60 mt-1">{subtitle}</p>
+      </div>
+      
+      <div className="grid grid-cols-8 gap-4 px-4 py-3 bg-white/5 backdrop-blur sticky top-0">
+        <div>#</div><div>Rider</div>
+        {(data?.stageNames ?? []).map((stageName, i) => (
+          <div key={i} className="text-center text-sm">{stageName}</div>
+        ))}
+        <div className="text-right font-semibold">Total</div>
+      </div>
+      
+      <div>
+        {rows.length === 0 ? (
+          <div className="px-4 py-10 text-center text-white/60">No riders yet. Be the first to add a time!</div>
+        ) : rows.map((r, idx) => (
+          <div key={r.id} className="grid grid-cols-8 gap-4 px-4 py-3 border-t border-white/10 hover:bg-white/5">
+            <div className="font-semibold">{idx+1}</div>
+            <div className="truncate">{r.name}</div>
+            {(data?.stageNames ?? []).map((_, i) => (
+              <div key={i} className="text-center">
+                {r.stages[i] ? (
+                  <a
+                    href={`https://www.strava.com/segments/${data?.stageSegments[i] || 0}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`inline-block min-w-[60px] text-center rounded-md px-2 py-1 text-sm bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer`}
+                    title={`View segment ${data?.stageSegments[i] || 0} on Strava`}
+                  >
+                    {fmt(r.stages[i])}
+                  </a>
+                ) : (
+                  <span className="text-white/30">—</span>
+                )}
+              </div>
+            ))}
+            <div className="text-right font-semibold">
+              {r.score.final > 0 ? (
+                <span className="bg-white/10 rounded-md px-2 py-1 text-sm">
+                  {fmt(r.score.final)}
+                  {r.score.bonus > 0 && (
+                    <span className="text-xs text-green-400 ml-1">(-{fmt(r.score.bonus)})</span>
+                  )}
+                </span>
+              ) : (
+                <span className="text-white/30">—</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 
   return (
     <main className="max-w-6xl mx-auto px-4 py-10 space-y-8 text-white">
@@ -500,54 +600,32 @@ export default function RaceTrackerPage() {
         />
       </section>
 
-      <section className="rounded-2xl overflow-hidden border border-white/10">
-        <div className="grid grid-cols-8 gap-4 px-4 py-3 bg-white/5 backdrop-blur sticky top-0">
-          <div>#</div><div>Rider</div>
-          {(data?.stageNames ?? []).map((stageName, i) => (
-            <div key={i} className="text-center text-sm">{stageName}</div>
-          ))}
-          <div className="text-right font-semibold">Total</div>
-        </div>
-        <div>
-          {rows.length === 0 ? (
-            <div className="px-4 py-10 text-center text-white/60">No riders yet. Be the first to add a time!</div>
-          ) : rows.map((r, idx) => (
-            <div key={r.id} className="grid grid-cols-8 gap-4 px-4 py-3 border-t border-white/10 hover:bg-white/5">
-              <div className="font-semibold">{idx+1}</div>
-              <div className="truncate">{r.name}</div>
-              {(data?.stageNames ?? []).map((_, i) => (
-                <div key={i} className="text-center">
-                  {r.stages[i] ? (
-                    <a
-                      href={`https://www.strava.com/segments/${data?.stageSegments[i] || 0}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`inline-block min-w-[60px] text-center rounded-md px-2 py-1 text-sm bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer`}
-                      title={`View segment ${data?.stageSegments[i] || 0} on Strava`}
-                    >
-                      {fmt(r.stages[i])}
-                    </a>
-                  ) : (
-                    <span className="text-white/30">—</span>
-                  )}
-                </div>
-              ))}
-              <div className="text-right font-semibold">
-                {r.score.final > 0 ? (
-                  <span className="bg-white/10 rounded-md px-2 py-1 text-sm">
-                    {fmt(r.score.final)}
-                    {r.score.bonus > 0 && (
-                      <span className="text-xs text-green-400 ml-1">(-{fmt(r.score.bonus)})</span>
-                    )}
-                  </span>
-                ) : (
-                  <span className="text-white/30">—</span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* Overall Leaderboard */}
+      <LeaderboardTable
+        title="Overall Times"
+        subtitle="Best 3 total • −10:00 bonus if all 4 stages completed"
+        data={data}
+        rows={rows}
+        icon="🏆"
+      />
+
+      {/* Climbing Leaderboard */}
+      <LeaderboardTable
+        title="Top Pogi's - Here to Tear Legs Off"
+        subtitle="Climbing segments • Sum of all times • Fastest wins"
+        data={climbingData}
+        rows={climbingRows}
+        icon="🏔️"
+      />
+
+      {/* Descending Leaderboard */}
+      <LeaderboardTable
+        title="Top Bruni's - Shrediest DownHillers"
+        subtitle="Descending segments • Sum of all times • Fastest wins"
+        data={descendingData}
+        rows={descendingRows}
+        icon="🏂"
+      />
     </main>
   );
 }
