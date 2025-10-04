@@ -95,13 +95,13 @@ export async function GET(request: NextRequest) {
     
     // Get segment efforts for the specific segment
     const segmentEfforts = await stravaAPI.getSegmentEfforts(
-      parseInt(segmentId),
+      parseInt(segmentId!),
       accessToken
     );
 
     if (!segmentEfforts || segmentEfforts.length === 0) {
       return NextResponse.json({
-        segmentId: parseInt(segmentId),
+        segmentId: parseInt(segmentId!),
         athlete: {
           id: athlete.id,
           firstName: athlete.firstname,
@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
 
     if (!mostRecentEffort) {
       return NextResponse.json({
-        segmentId: parseInt(segmentId),
+        segmentId: parseInt(segmentId!),
         athlete: {
           id: athlete.id,
           firstName: athlete.firstname,
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
     const activity = await stravaAPI.getActivity(mostRecentEffort.activityId, accessToken);
 
     return NextResponse.json({
-      segmentId: parseInt(segmentId),
+      segmentId: parseInt(segmentId!),
       athlete: {
         id: athlete.id,
         firstName: athlete.firstname,
