@@ -9,11 +9,11 @@ export async function POST(req: Request) {
     console.log('🔄 Times sync API called');
     
     const body = await req.json().catch(() => ({}));
-    console.log('📋 Request body:', { hasCode: !!body?.code });
+    console.log('📋 Request body:', { hasAccessToken: !!body?.accessToken, hasCode: !!body?.code });
     
-    if (!body?.code) {
-      console.error('❌ Missing authorization code in sync request');
-      return NextResponse.json({ error: 'Missing code' }, { status: 400 });
+    if (!body?.accessToken && !body?.code) {
+      console.error('❌ Missing access token or code in sync request');
+      return NextResponse.json({ error: 'Missing access token or code' }, { status: 400 });
     }
 
     const stravaAPI = new StravaAPI();
@@ -28,18 +28,35 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Redirect URI not configured' }, { status: 500 });
     }
 
-    console.log('🔄 Exchanging code for tokens...');
-    // Exchange code for tokens
-    const tokenData = await stravaAPI.exchangeCodeForToken(body.code, redirectUri);
-    console.log('✅ Token exchange successful');
+    let tokenData;
+    let athlete;
     
-    // Get athlete information
-    const athlete = await stravaAPI.getAthlete(tokenData.accessToken) as {
-      id: number;
-      firstname: string;
-      lastname: string;
-      username?: string;
-    };
+    if (body.accessToken) {
+      // Use provided access token
+      console.log('🔄 Using provided access token...');
+      tokenData = { accessToken: body.accessToken };
+      athlete = await stravaAPI.getAthlete(body.accessToken) as {
+        id: number;
+        firstname: string;
+        lastname: string;
+        username?: string;
+      };
+    } else {
+      // Exchange code for tokens
+      console.log('🔄 Exchanging code for tokens...');
+      tokenData = await stravaAPI.exchangeCodeForToken(body.code, redirectUri);
+      console.log('✅ Token exchange successful');
+      
+      // Get athlete information
+      athlete = await stravaAPI.getAthlete(tokenData.accessToken) as {
+        id: number;
+        firstname: string;
+        lastname: string;
+        username?: string;
+      };
+    }
+    
+    console.log('✅ Athlete info retrieved:', athlete.firstname, athlete.lastname);
 
     // Fetch actual segment 7977451 data (Fall 2025 stage)
     console.log('🔄 Fetching segment 7977451 data for Fall 2025 stage...');
@@ -80,8 +97,8 @@ export async function POST(req: Request) {
       name: `${athlete.firstname} ${athlete.lastname}`,
       username: athlete.username || '',
       accessToken: tokenData.accessToken,
-      refreshToken: tokenData.refreshToken,
-      tokenExpiresAt: tokenData.expiresAt
+      refreshToken: tokenData.refreshToken || '',
+      tokenExpiresAt: tokenData.expiresAt || new Date(Date.now() + (6 * 60 * 60 * 1000)) // 6 hours default
     });
 
     // Store race results in database

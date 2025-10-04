@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     
     // Redirect to race tracker with access token
     const redirectUrl = new URL('/race-tracker', baseUrl);
-    redirectUrl.searchParams.set('success', 'true');
+    redirectUrl.searchParams.set('success', '1');
     redirectUrl.searchParams.set('accessToken', tokenData.accessToken);
     redirectUrl.searchParams.set('athleteId', athlete.id.toString());
     redirectUrl.searchParams.set('athleteName', `${athlete.firstname} ${athlete.lastname}`);

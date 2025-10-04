@@ -191,7 +191,7 @@ export default function RaceTrackerPage() {
       const syncResponse = await fetch('/api/times/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: token })
+        body: JSON.stringify({ accessToken: token })
       });
       
       if (!syncResponse.ok) {
