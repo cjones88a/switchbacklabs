@@ -321,7 +321,7 @@ export default function RaceTrackerPage() {
                   console.log('Result:', result);
                   
                   if (result.success) {
-                    setError(`✅ ${result.athlete}: ${result.time} on ${result.segment} (${result.date})`);
+                    setError(`✅ SUCCESS: ${result.athlete}: ${result.time} on ${result.segment} (${result.date})`);
                   } else {
                     setError(`❌ ${result.error}`);
                   }
