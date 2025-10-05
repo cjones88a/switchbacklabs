@@ -44,6 +44,7 @@ function fmt(sec: number) {
 
 export default function RaceTrackerPage() {
   const [athleteInfo, setAthleteInfo] = useState<{id: string, name: string} | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [segmentData, setSegmentData] = useState<{
     segmentId: number;
     athlete: {
@@ -114,6 +115,7 @@ export default function RaceTrackerPage() {
     
     if (success && token && athleteId && athleteName) {
       setAthleteInfo({ id: athleteId, name: athleteName });
+      setAccessToken(token); // Store the access token for later use
       
       // Clean the URL
       window.history.replaceState({}, '', '/race-tracker');
@@ -302,9 +304,8 @@ export default function RaceTrackerPage() {
                   setLoading(true);
                   setError(null);
                   
-                  const accessToken = prompt('Enter your Strava access token:');
                   if (!accessToken) {
-                    setError('Access token required');
+                    setError('No access token available. Please reconnect to Strava.');
                     return;
                   }
                   
@@ -332,7 +333,7 @@ export default function RaceTrackerPage() {
                   setLoading(false);
                 }
               }}
-              disabled={loading}
+              disabled={loading || !accessToken}
               className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 text-lg font-medium"
             >
               {loading ? 'Getting Time...' : 'Get My Segment Time'}
