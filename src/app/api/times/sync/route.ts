@@ -62,36 +62,38 @@ export async function POST(req: Request) {
     // Fetch data for all segment types
     console.log('🔄 Fetching segment data for all categories...');
     
-    // Fetch all segments for all seasons
+    // Fetch all segments for all seasons - Enhanced with better logging
     const segmentsToFetch = [
       // Overall Loop (7977451) for all seasons
-      { id: 7977451, stageIndex: 0, type: 'overall' }, // Fall 2025
-      { id: 7977451, stageIndex: 1, type: 'overall' }, // Winter 2025
-      { id: 7977451, stageIndex: 2, type: 'overall' }, // Spring 2026
-      { id: 7977451, stageIndex: 3, type: 'overall' }, // Summer 2026
+      { id: 7977451, stageIndex: 0, type: 'overall', season: 'Fall 2025' },
+      { id: 7977451, stageIndex: 1, type: 'overall', season: 'Winter 2025' },
+      { id: 7977451, stageIndex: 2, type: 'overall', season: 'Spring 2026' },
+      { id: 7977451, stageIndex: 3, type: 'overall', season: 'Summer 2026' },
       
       // Climbing segments (9589287 + 18229887) for all seasons
-      { id: 9589287, stageIndex: 0, type: 'climbing' }, // Fall 2025
-      { id: 9589287, stageIndex: 1, type: 'climbing' }, // Winter 2025
-      { id: 9589287, stageIndex: 2, type: 'climbing' }, // Spring 2026
-      { id: 9589287, stageIndex: 3, type: 'climbing' }, // Summer 2026
+      { id: 9589287, stageIndex: 0, type: 'climbing', season: 'Fall 2025' },
+      { id: 9589287, stageIndex: 1, type: 'climbing', season: 'Winter 2025' },
+      { id: 9589287, stageIndex: 2, type: 'climbing', season: 'Spring 2026' },
+      { id: 9589287, stageIndex: 3, type: 'climbing', season: 'Summer 2026' },
       
-      { id: 18229887, stageIndex: 0, type: 'climbing' }, // Fall 2025
-      { id: 18229887, stageIndex: 1, type: 'climbing' }, // Winter 2025
-      { id: 18229887, stageIndex: 2, type: 'climbing' }, // Spring 2026
-      { id: 18229887, stageIndex: 3, type: 'climbing' }, // Summer 2026
+      { id: 18229887, stageIndex: 0, type: 'climbing', season: 'Fall 2025' },
+      { id: 18229887, stageIndex: 1, type: 'climbing', season: 'Winter 2025' },
+      { id: 18229887, stageIndex: 2, type: 'climbing', season: 'Spring 2026' },
+      { id: 18229887, stageIndex: 3, type: 'climbing', season: 'Summer 2026' },
       
       // Descending segments (2105607 + 1359027) for all seasons
-      { id: 2105607, stageIndex: 0, type: 'descending' }, // Fall 2025
-      { id: 2105607, stageIndex: 1, type: 'descending' }, // Winter 2025
-      { id: 2105607, stageIndex: 2, type: 'descending' }, // Spring 2026
-      { id: 2105607, stageIndex: 3, type: 'descending' }, // Summer 2026
+      { id: 2105607, stageIndex: 0, type: 'descending', season: 'Fall 2025' },
+      { id: 2105607, stageIndex: 1, type: 'descending', season: 'Winter 2025' },
+      { id: 2105607, stageIndex: 2, type: 'descending', season: 'Spring 2026' },
+      { id: 2105607, stageIndex: 3, type: 'descending', season: 'Summer 2026' },
       
-      { id: 1359027, stageIndex: 0, type: 'descending' }, // Fall 2025
-      { id: 1359027, stageIndex: 1, type: 'descending' }, // Winter 2025
-      { id: 1359027, stageIndex: 2, type: 'descending' }, // Spring 2026
-      { id: 1359027, stageIndex: 3, type: 'descending' }, // Summer 2026
+      { id: 1359027, stageIndex: 0, type: 'descending', season: 'Fall 2025' },
+      { id: 1359027, stageIndex: 1, type: 'descending', season: 'Winter 2025' },
+      { id: 1359027, stageIndex: 2, type: 'descending', season: 'Spring 2026' },
+      { id: 1359027, stageIndex: 3, type: 'descending', season: 'Summer 2026' },
     ];
+    
+    console.log(`🔄 Will attempt to fetch ${segmentsToFetch.length} segment combinations for ${athlete.firstname} ${athlete.lastname}`);
     
     const segmentEfforts: Array<{
       stageIndex: number;
@@ -104,7 +106,7 @@ export async function POST(req: Request) {
     
     for (const segment of segmentsToFetch) {
       try {
-        console.log(`🔄 Fetching segment ${segment.id} directly from Strava API...`);
+        console.log(`🔄 Fetching segment ${segment.id} (${segment.season}, ${segment.type}) from Strava API...`);
         
         // Use Strava API directly instead of internal API calls
         const stravaSegmentEfforts = await stravaAPI.getSegmentEfforts(segment.id, tokenData.accessToken);
@@ -126,15 +128,15 @@ export async function POST(req: Request) {
               prRank: mostRecentEffort.prRank,
               type: segment.type
             });
-            console.log(`✅ Found segment ${segment.id} effort:`, mostRecentEffort.elapsedTime);
+            console.log(`✅ Found segment ${segment.id} (${segment.season}): ${mostRecentEffort.elapsedTime}s on ${mostRecentEffort.startDate}`);
           } else {
-            console.log(`⚠️ No efforts found for athlete on segment ${segment.id}`);
+            console.log(`⚠️ No efforts found for ${athlete.firstname} on segment ${segment.id} (${segment.season})`);
           }
         } else {
-          console.log(`⚠️ No data found for segment ${segment.id}`);
+          console.log(`⚠️ No data returned from Strava for segment ${segment.id} (${segment.season})`);
         }
       } catch (error) {
-        console.log(`❌ Error fetching segment ${segment.id}:`, error);
+        console.log(`❌ Error fetching segment ${segment.id} (${segment.season}):`, error);
       }
     }
     
@@ -196,12 +198,31 @@ export async function POST(req: Request) {
     const allResults = await raceDatabase.getAllResults();
     updateMockEffortsFromDatabase(allResults);
 
+    // Group efforts by type for summary
+    const effortsByType = segmentEfforts.reduce((acc, effort) => {
+      acc[effort.type] = (acc[effort.type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    console.log('✅ Sync completed successfully:', {
+      participant: participant.name,
+      totalEfforts: segmentEfforts.length,
+      effortsByType,
+      segmentsAttempted: segmentsToFetch.length
+    });
+
     return NextResponse.json({ 
-      ok: true, 
+      success: true,
+      message: `Successfully synced ${segmentEfforts.length} segment efforts for ${participant.name}`,
       participant: {
         id: participant.id,
         name: participant.name,
         effortsCount: segmentEfforts.length
+      },
+      summary: {
+        totalEfforts: segmentEfforts.length,
+        effortsByType,
+        segmentsAttempted: segmentsToFetch.length
       }
     });
 

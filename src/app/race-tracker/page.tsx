@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Table } from '@/components/Table';
 import { 
   getOverallLoopLeaderboard, 
@@ -82,10 +82,7 @@ export default function RaceTrackerPage() {
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Legacy state variables (kept for compatibility but not used in new implementation)
-  const [data, setData] = useState<{ stageNames: string[]; stageSegments: { [key: number]: number }; rows: LeaderboardRow[] } | null>(null);
-  const [climbingData, setClimbingData] = useState<{ stageNames: string[]; stageSegments: { [key: number]: number }; rows: LeaderboardRow[] } | null>(null);
-  const [descendingData, setDescendingData] = useState<{ stageNames: string[]; stageSegments: { [key: number]: number }; rows: LeaderboardRow[] } | null>(null);
+  // Legacy state variables removed - using new leaderboard system
   const [q, setQ] = useState('');
   
   // New leaderboard data using proper Prisma-style logic
@@ -93,6 +90,79 @@ export default function RaceTrackerPage() {
   const [climberLeaderboard, setClimberLeaderboard] = useState<NewLeaderboardRow[]>([]);
   const [downhillLeaderboard, setDownhillLeaderboard] = useState<NewLeaderboardRow[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Function to refresh leaderboard data
+  const refreshLeaderboards = useCallback(async () => {
+    try {
+      setRefreshing(true);
+      console.log('🔄 Refreshing leaderboard data...');
+      
+      const [overallData, climberData, downhillData] = await Promise.all([
+        getOverallLoopLeaderboard(),
+        getClimberScoreLeaderboard(),
+        getDownhillScoreLeaderboard()
+      ]);
+      
+      setOverallLeaderboard(overallData.rows);
+      setClimberLeaderboard(climberData.rows);
+      setDownhillLeaderboard(downhillData.rows);
+      
+      console.log('✅ Leaderboard data refreshed');
+    } catch (error) {
+      console.error('Failed to refresh leaderboards:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  const syncTimesAndFetchData = useCallback(async (token: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // First, sync the times with the database
+      console.log('🔄 Syncing times with database...');
+      const syncResponse = await fetch('/api/times/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessToken: token })
+      });
+      
+      if (!syncResponse.ok) {
+        const errorData = await syncResponse.json();
+        throw new Error(errorData.message || 'Failed to sync times');
+      }
+      
+      const syncData = await syncResponse.json();
+      console.log('✅ Times synced successfully:', syncData);
+      
+      // Show success message with sync summary
+      if (syncData.success && syncData.summary) {
+        setError(`✅ ${syncData.message} (${syncData.summary.totalEfforts} efforts: ${Object.entries(syncData.summary.effortsByType).map(([type, count]) => `${count} ${type}`).join(', ')})`);
+      }
+      
+      // Then fetch the segment data for display
+      console.log('🔄 Fetching segment 7977451 data...');
+      const segmentResponse = await fetch(`/api/strava/segment-7977451?accessToken=${token}`);
+      
+      if (segmentResponse.ok) {
+        const segmentData = await segmentResponse.json();
+        setSegmentData(segmentData);
+        console.log('✅ Segment data fetched successfully');
+      }
+      
+      // Finally, refresh the leaderboard to show the new data
+      console.log('🔄 Refreshing leaderboard...');
+      await refreshLeaderboards();
+      console.log('✅ Leaderboard refreshed with new data');
+      
+    } catch (err) {
+      console.error('❌ Error syncing data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to sync data');
+    } finally {
+      setLoading(false);
+    }
+  }, [refreshLeaderboards]);
 
   // read query params
   useEffect(() => {
@@ -123,114 +193,7 @@ export default function RaceTrackerPage() {
       // Sync times with database and fetch segment data
       syncTimesAndFetchData(token);
     }
-  }, []);
-
-  const syncTimesAndFetchData = async (token: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // First, sync the times with the database
-      console.log('🔄 Syncing times with database...');
-      const syncResponse = await fetch('/api/times/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessToken: token })
-      });
-      
-      if (!syncResponse.ok) {
-        const errorData = await syncResponse.json();
-        throw new Error(errorData.message || 'Failed to sync times');
-      }
-      
-      console.log('✅ Times synced successfully');
-      
-      // Then fetch the segment data for display
-      console.log('🔄 Fetching segment 7977451 data...');
-      const segmentResponse = await fetch(`/api/strava/segment-7977451?accessToken=${token}`);
-      
-      if (segmentResponse.ok) {
-        const segmentData = await segmentResponse.json();
-        setSegmentData(segmentData);
-        console.log('✅ Segment data fetched successfully');
-      }
-      
-      // Finally, refresh the leaderboard to show the new data
-      console.log('🔄 Refreshing leaderboard...');
-      const leaderboardResponse = await fetch('/api/leaderboard', { cache: 'no-store' });
-      if (leaderboardResponse.ok) {
-        const leaderboardData = await leaderboardResponse.json();
-        setData(leaderboardData);
-        console.log('✅ Leaderboard refreshed with new data');
-      }
-      
-    } catch (err) {
-      console.error('❌ Error syncing data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to sync data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // initial leaderboard load
-  useEffect(() => {
-    const loadLeaderboards = async () => {
-      try {
-        // Load overall leaderboard
-        const overallResponse = await fetch('/api/leaderboard', { cache: 'no-store' });
-        const overallData = await overallResponse.json();
-        setData(overallData);
-        
-        // Load climbing leaderboard
-        const climbingResponse = await fetch('/api/leaderboard/climbing', { cache: 'no-store' });
-        const climbingData = await climbingResponse.json();
-        setClimbingData(climbingData);
-        
-        // Load descending leaderboard
-        const descendingResponse = await fetch('/api/leaderboard/descending', { cache: 'no-store' });
-        const descendingData = await descendingResponse.json();
-        setDescendingData(descendingData);
-        
-      } catch (error) {
-        console.error('Failed to load leaderboards:', error);
-        // Set fallback data
-        const fallbackData = { 
-          stageNames: ['Fall 2025','Winter 2025','Spring 2026','Summer 2026'], 
-          stageSegments: { 0: 7977451, 1: 0, 2: 0, 3: 0 },
-          rows: [] 
-        };
-        setData(fallbackData);
-        setClimbingData(fallbackData);
-        setDescendingData(fallbackData);
-      }
-    };
-    
-    loadLeaderboards();
-  }, []);
-
-  // Function to refresh leaderboard data
-  const refreshLeaderboards = async () => {
-    try {
-      setRefreshing(true);
-      console.log('🔄 Refreshing leaderboard data...');
-      
-      const [overallData, climberData, downhillData] = await Promise.all([
-        getOverallLoopLeaderboard(),
-        getClimberScoreLeaderboard(),
-        getDownhillScoreLeaderboard()
-      ]);
-      
-      setOverallLeaderboard(overallData.rows);
-      setClimberLeaderboard(climberData.rows);
-      setDownhillLeaderboard(downhillData.rows);
-      
-      console.log('✅ Leaderboard data refreshed');
-    } catch (error) {
-      console.error('Failed to refresh leaderboards:', error);
-    } finally {
-      setRefreshing(false);
-    }
-  };
+  }, [syncTimesAndFetchData]);
 
   // Load new leaderboard data using proper Prisma-style logic
   useEffect(() => {
