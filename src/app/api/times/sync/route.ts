@@ -18,16 +18,11 @@ export async function POST(req: Request) {
     }
 
     const stravaAPI = new StravaAPI();
-    const redirectUri = process.env.STRAVA_REDIRECT_URI!;
+    const redirectUri = process.env.STRAVA_REDIRECT_URI || 'https://switchbacklabsco.com/api/strava/callback-simple';
     
     console.log('🔧 Environment check:', { 
       redirectUri: redirectUri ? 'present' : 'missing' 
     });
-
-    if (!redirectUri) {
-      console.error('❌ STRAVA_REDIRECT_URI not configured');
-      return NextResponse.json({ error: 'Redirect URI not configured' }, { status: 500 });
-    }
 
     let tokenData;
     let athlete;
