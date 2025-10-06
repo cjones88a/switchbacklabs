@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { StravaActivity, StravaSegmentEffort } from '@/types/race';
+import { StravaActivity, StravaSegmentEffort, StravaActivityDetails } from '@/types/race';
 
 export class StravaAPI {
   private baseURL = 'https://www.strava.com/api/v3';
@@ -143,8 +143,8 @@ export class StravaAPI {
     return this.makeAuthenticatedRequest(`/activities/${activityId}`, accessToken) as Promise<StravaActivity>;
   }
 
-  async getActivityDetails(activityId: number, accessToken: string): Promise<any> {
-    return this.makeAuthenticatedRequest(`/activities/${activityId}?include_all_efforts=true`, accessToken);
+  async getActivityDetails(activityId: number, accessToken: string): Promise<StravaActivityDetails> {
+    return this.makeAuthenticatedRequest(`/activities/${activityId}?include_all_efforts=true`, accessToken) as Promise<StravaActivityDetails>;
   }
 
   async getAthleteActivities(

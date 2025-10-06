@@ -74,6 +74,19 @@ export interface StravaActivity {
   segmentEfforts?: StravaSegmentEffort[];
 }
 
+export interface StravaActivityDetails extends StravaActivity {
+  segment_efforts?: Array<{
+    id: number;
+    segment?: {
+      id: number;
+      name: string;
+    };
+    elapsed_time: number;
+    start_date: string;
+    pr_rank?: number;
+  }>;
+}
+
 export interface RaceConfig {
   id: string;
   name: string;
