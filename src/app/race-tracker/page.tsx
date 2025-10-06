@@ -1,12 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { Table } from '@/components/Table';
-import { 
-  getOverallLoopLeaderboard, 
-  getClimberScoreLeaderboard, 
-  getDownhillScoreLeaderboard,
-  LeaderboardRow as NewLeaderboardRow
-} from '@/lib/leaderboards';
+import { LeaderboardRow as NewLeaderboardRow } from '@/lib/leaderboards';
 
 interface LeaderboardRow {
   id: string;
@@ -91,21 +86,25 @@ export default function RaceTrackerPage() {
   const [downhillLeaderboard, setDownhillLeaderboard] = useState<NewLeaderboardRow[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Function to refresh leaderboard data
+  // Function to refresh leaderboard data (server-driven)
   const refreshLeaderboards = useCallback(async () => {
     try {
       setRefreshing(true);
-      console.log('🔄 Refreshing leaderboard data...');
+      console.log('🔄 Refreshing leaderboard data (server)...');
       
-      const [overallData, climberData, downhillData] = await Promise.all([
-        getOverallLoopLeaderboard(),
-        getClimberScoreLeaderboard(),
-        getDownhillScoreLeaderboard()
+      const [overallRes, climberRes, downhillRes] = await Promise.all([
+        fetch('/api/leaderboard', { cache: 'no-store' }),
+        fetch('/api/leaderboard/climbing', { cache: 'no-store' }),
+        fetch('/api/leaderboard/descending', { cache: 'no-store' })
       ]);
       
-      setOverallLeaderboard(overallData.rows);
-      setClimberLeaderboard(climberData.rows);
-      setDownhillLeaderboard(downhillData.rows);
+      const [overallData, climberData, downhillData] = await Promise.all([
+        overallRes.json(), climberRes.json(), downhillRes.json()
+      ]);
+      
+      setOverallLeaderboard(overallData.rows || []);
+      setClimberLeaderboard(climberData.rows || []);
+      setDownhillLeaderboard(downhillData.rows || []);
       
       console.log('✅ Leaderboard data refreshed');
     } catch (error) {
