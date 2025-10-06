@@ -121,15 +121,16 @@ export default function RaceTrackerPage() {
         } as NewLeaderboardRow;
       };
 
-      const extractRows = (payload: any): ApiRow[] => {
-        if (Array.isArray(payload)) return payload;
-        if (payload?.rows) return payload.rows;
-        if (payload?.data) return payload.data;
-        if (payload?.result) return payload.result;
+      const extractRows = (payload: unknown): ApiRow[] => {
+        if (Array.isArray(payload)) return payload as ApiRow[];
+        if (payload && typeof payload === 'object') {
+          const obj = payload as Record<string, unknown>;
+          return (obj.rows as ApiRow[]) ?? (obj.data as ApiRow[]) ?? (obj.result as ApiRow[]) ?? [];
+        }
         return [];
       };
 
-      const norm = (payload: any) => extractRows(payload).map(toRow) as NewLeaderboardRow[];
+      const norm = (payload: unknown) => extractRows(payload).map(toRow) as NewLeaderboardRow[];
 
       setOverallLeaderboard(norm(overallData));
       setClimberLeaderboard(norm(climberData));
