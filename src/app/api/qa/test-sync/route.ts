@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { raceDatabase } from '@/lib/race-database';
 import { StravaAPI } from '@/lib/strava/api';
 
 export const runtime = 'nodejs';
@@ -18,7 +17,7 @@ export async function POST(req: Request) {
     const stravaAPI = new StravaAPI();
     
     // Get athlete info
-    const athlete = await stravaAPI.getAthlete(accessToken);
+    const athlete = await stravaAPI.getAthlete(accessToken) as any;
     console.log('👤 Athlete:', athlete.firstname, athlete.lastname);
     
     // Define target segments
