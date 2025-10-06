@@ -95,7 +95,7 @@ class MockDatabase {
     
     const existingResults = this.results.get(result.participantId) || [];
     const filteredResults = existingResults.filter(r => 
-      !(r.stageIndex === result.stageIndex && r.leaderboardType === result.leaderboardType)
+      !(r.stageIndex === result.stageIndex && r.leaderboardType === result.leaderboardType && r.segmentId === result.segmentId)
     );
     filteredResults.push(fullResult);
     
