@@ -3,19 +3,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { Table } from '@/components/Table';
 import type { LeaderboardRow as NewLeaderboardRow } from '@/lib/leaderboards';
 
-interface LeaderboardRow {
-  id: string;
-  name: string;
-  stages: {
-    [key: number]: number | undefined;
-  };
-  score: {
-    best3: number;
-    bonus: number;
-    final: number;
-  };
-}
-
 function AddTimeButton() {
   return (
     <button
@@ -102,11 +89,12 @@ export default function RaceTrackerPage() {
         overallRes.json(), climberRes.json(), downhillRes.json()
       ]);
       
-      // Normalize row shape: ensure riderName exists (fallback to name)
-      const norm = (rows: any[] = []) => rows.map(r => ({ ...r, riderName: r.riderName ?? r.name ?? '' }));
-      setOverallLeaderboard(norm(overallData.rows));
-      setClimberLeaderboard(norm(climberData.rows));
-      setDownhillLeaderboard(norm(downhillData.rows));
+      // Normalize: ensure riderName exists but preserve expected row shape
+      const norm = (rows: NewLeaderboardRow[] = []) =>
+        rows.map(r => ({ ...r, riderName: (r.riderName ?? (r as any).name ?? '').toString() })) as NewLeaderboardRow[];
+      setOverallLeaderboard(norm(overallData.rows as NewLeaderboardRow[]));
+      setClimberLeaderboard(norm(climberData.rows as NewLeaderboardRow[]));
+      setDownhillLeaderboard(norm(downhillData.rows as NewLeaderboardRow[]));
       
       console.log('✅ Leaderboard data refreshed');
     } catch (error) {
