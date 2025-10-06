@@ -90,7 +90,14 @@ export default function RaceTrackerPage() {
       ]);
       
       // Normalize: ensure riderName and seasons exist (server may return older shape)
-      const toRow = (r: any): NewLeaderboardRow => {
+      type ApiRow = Partial<NewLeaderboardRow> & {
+        id?: string;
+        name?: string;
+        stages?: { [key: number]: number | null | undefined };
+        score?: { final?: number | null };
+        total?: number | null;
+      };
+      const toRow = (r: ApiRow): NewLeaderboardRow => {
         const riderName = (r?.riderName ?? r?.name ?? '').toString();
         const seasons = r?.seasons ?? {
           fall: r?.stages?.[0] ?? null,
@@ -107,7 +114,7 @@ export default function RaceTrackerPage() {
         } as NewLeaderboardRow;
       };
 
-      const norm = (rows: any[] = []) => rows.map(toRow) as NewLeaderboardRow[];
+      const norm = (rows: ApiRow[] = []) => rows.map(toRow) as NewLeaderboardRow[];
       setOverallLeaderboard(norm(overallData.rows));
       setClimberLeaderboard(norm(climberData.rows));
       setDownhillLeaderboard(norm(downhillData.rows));
