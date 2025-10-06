@@ -105,6 +105,16 @@ export async function POST(req: Request) {
         const activityDetails = await stravaAPI.getActivityDetails(activity.id, tokenData.accessToken);
         
         if (activityDetails.segment_efforts) {
+          // Debug: prove which segments this activity has
+          const activityFound: Record<number, number> = {};
+          for (const effort of activityDetails.segment_efforts) {
+            const segId = Number(effort.segment?.id);
+            if (wanted.has(segId)) {
+              activityFound[segId] = (activityFound[segId] ?? 0) + 1;
+            }
+          }
+          console.log(`[sync] activity ${activity.id} found segments:`, activityFound);
+          
           for (const effort of activityDetails.segment_efforts) {
             const segId = Number(effort.segment?.id);
             if (!wanted.has(segId)) continue;
@@ -114,6 +124,7 @@ export async function POST(req: Request) {
             
             // Add to results
             segmentEfforts.push({
+              effortId: effort.id,
               stageIndex: getSeasonIndex(effort.start_date),
               elapsedTime: effort.elapsed_time,
               effortDate: effort.start_date,
@@ -124,6 +135,8 @@ export async function POST(req: Request) {
             
             console.log(`✅ Found ${groupFor(segId)} segment ${segId}: ${effort.elapsed_time}s on ${effort.start_date}`);
           }
+        } else {
+          console.log(`❌ Activity ${activity.id} has no segment_efforts`);
         }
       } catch (error) {
         console.log(`❌ Error processing activity ${activity.id}:`, error);
@@ -173,6 +186,7 @@ export async function POST(req: Request) {
       }
 
       await raceDatabase.upsertRaceResult({
+        effortId: effort.effortId,
         participantId: participant.id,
         stageIndex: effort.stageIndex,
         elapsedTime: effort.elapsedTime,

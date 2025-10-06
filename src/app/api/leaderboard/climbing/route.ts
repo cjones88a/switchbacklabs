@@ -13,9 +13,9 @@ export async function GET() {
     const MAIN_LOOP = 7977451;
     const all = await raceDatabase.getAllResults();
 
-    // First, get all climbing segment efforts (by segmentId OR leaderboardType)
+    // First, get all climbing segment efforts (by segmentId - more reliable than leaderboardType)
     const climbEfforts = all.filter(r => 
-      CLIMB_IDS.includes(r.segmentId) || r.leaderboardType === 'climbing'
+      CLIMB_IDS.includes(r.segmentId)
     );
     console.log(`Found ${climbEfforts.length} climbing efforts`);
     console.log('Climbing efforts details:', climbEfforts.map(e => ({

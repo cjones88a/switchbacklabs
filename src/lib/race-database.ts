@@ -18,6 +18,7 @@ interface Participant {
 
 interface RaceResult {
   id: string;
+  effortId?: number;
   participantId: string;
   stageIndex: number;
   elapsedTime: number;
@@ -81,7 +82,7 @@ class MockDatabase {
     };
     const svc = getSupabaseService();
     if (svc) {
-      const { error } = await svc.from('efforts').upsert({
+      const upsertData: any = {
         participant_id: result.participantId,
         segment_id: result.segmentId,
         stage_index: result.stageIndex,
@@ -89,6 +90,15 @@ class MockDatabase {
         effort_date: result.effortDate.toISOString(),
         leaderboard_type: result.leaderboardType,
         pr_rank: result.prRank ?? null,
+      };
+      
+      // Add effort_id if provided (for proper upserting)
+      if (result.effortId) {
+        upsertData.effort_id = result.effortId;
+      }
+      
+      const { error } = await svc.from('efforts').upsert(upsertData, {
+        onConflict: result.effortId ? 'effort_id' : 'participant_id,segment_id,stage_index,leaderboard_type'
       });
       if (error) throw error;
     }
@@ -142,6 +152,7 @@ class MockDatabase {
       (participants || []).forEach(p => idToName.set(p.id, p.name));
       return (efforts || []).map(r => ({
         id: String(r.id),
+        effortId: r.effort_id ?? undefined,
         participantId: r.participant_id,
         stageIndex: r.stage_index,
         elapsedTime: r.elapsed_time,

@@ -13,9 +13,9 @@ export async function GET() {
     const MAIN_LOOP = 7977451;
     const all = await raceDatabase.getAllResults();
 
-    // First, get all descending segment efforts (by segmentId OR leaderboardType)
+    // First, get all descending segment efforts (by segmentId - more reliable than leaderboardType)
     const dhEfforts = all.filter(r => 
-      DH_IDS.includes(r.segmentId) || r.leaderboardType === 'descending'
+      DH_IDS.includes(r.segmentId)
     );
     console.log(`Found ${dhEfforts.length} descending efforts`);
     console.log('Descending efforts details:', dhEfforts.map(e => ({
