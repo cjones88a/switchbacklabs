@@ -82,11 +82,11 @@ export async function GET() {
         const seasonKey = `season_${seasonIndex}`;
         const seasonSegments = riderSeasons.get(seasonIndex);
 
-        // Only include this rider in this season if they completed the loop AND have both descending segments
+        // Only include this rider in this season if they completed the loop AND have at least one descending segment
         if (loopRidersBySeason.get(seasonKey)?.has(riderId) && seasonSegments) {
-          const hasBothSegments = DH_IDS.every(segmentId => seasonSegments.has(segmentId));
+          const hasAnyDescendingSegment = DH_IDS.some(segmentId => seasonSegments.has(segmentId));
           
-          if (hasBothSegments) {
+          if (hasAnyDescendingSegment) {
             const seasonSum = DH_IDS.reduce((sum, segmentId) => sum + (seasonSegments.get(segmentId) || 0), 0);
             
             if (seasonIndex === 0) seasons.fall = seasonSum;

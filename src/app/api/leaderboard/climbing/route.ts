@@ -82,11 +82,11 @@ export async function GET() {
         const seasonKey = `season_${seasonIndex}`;
         const seasonSegments = riderSeasons.get(seasonIndex);
 
-        // Only include this rider in this season if they completed the loop AND have both climbing segments
+        // Only include this rider in this season if they completed the loop AND have at least one climbing segment
         if (loopRidersBySeason.get(seasonKey)?.has(riderId) && seasonSegments) {
-          const hasBothSegments = CLIMB_IDS.every(segmentId => seasonSegments.has(segmentId));
+          const hasAnyClimbingSegment = CLIMB_IDS.some(segmentId => seasonSegments.has(segmentId));
           
-          if (hasBothSegments) {
+          if (hasAnyClimbingSegment) {
             const seasonSum = CLIMB_IDS.reduce((sum, segmentId) => sum + (seasonSegments.get(segmentId) || 0), 0);
             
             if (seasonIndex === 0) seasons.fall = seasonSum;
