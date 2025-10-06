@@ -310,7 +310,7 @@ export default function RaceTrackerPage() {
                   
                   console.log('Getting segment time...');
                   
-                  const { res: response, data: result } = await debugFetch('/api/my-segment-time', {
+                  const { data: result } = await debugFetch('/api/my-segment-time', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ accessToken }),

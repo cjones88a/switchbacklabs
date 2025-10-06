@@ -99,10 +99,13 @@ export class StravaAPI {
       });
 
       return response.data;
-    } catch (error: any) {
-      if (error.response?.status === 429) {
-        const retryAfter = error.response.headers['retry-after'] || '900';
-        throw new Error(`Rate limit exceeded. Please try again in ${Math.ceil(parseInt(retryAfter) / 60)} minutes.`);
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { status?: number; headers?: Record<string, string> } };
+        if (axiosError.response?.status === 429) {
+          const retryAfter = axiosError.response.headers?.['retry-after'] || '900';
+          throw new Error(`Rate limit exceeded. Please try again in ${Math.ceil(parseInt(retryAfter) / 60)} minutes.`);
+        }
       }
       throw error;
     }

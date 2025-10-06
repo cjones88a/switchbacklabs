@@ -98,19 +98,6 @@ function isWithinSeasonalWindow(effortDate: string, season: 'fall' | 'winter' | 
   }
 }
 
-/**
- * Get the current season based on today's date
- */
-function getCurrentSeason(): 'fall' | 'winter' | 'spring' | 'summer' {
-  const today = new Date();
-  const currentStage = mockStages.find(stage => {
-    const startDate = new Date(stage.startDate);
-    const endDate = new Date(stage.endDate);
-    return today >= startDate && today <= endDate;
-  });
-  
-  return currentStage?.season || 'fall'; // Default to fall if not found
-}
 
 // This will be populated from the actual database - starting fresh with no mock data
 let mockEfforts: MockEffort[] = [];
@@ -272,56 +259,8 @@ export function updateMockEffortsFromDatabase(databaseResults: Array<{
   console.log('✅ Updated efforts with real data:', mockEfforts.length, 'efforts');
 }
 
-/**
- * Get best time for a rider on a specific segment in a specific season
- */
-function getBestTimeForSegment(
-  efforts: MockEffort[], 
-  riderId: string, 
-  segmentId: number, 
-  stageId: number
-): number | null {
-  const relevantEfforts = efforts.filter(effort => 
-    effort.riderId === riderId && 
-    effort.segmentId === segmentId && 
-    effort.stageId === stageId
-  );
-  
-  if (relevantEfforts.length === 0) return null;
-  
-  // Return MIN elapsedSec (best time)
-  return Math.min(...relevantEfforts.map(effort => effort.elapsedSec));
-}
 
-/**
- * Get all riders who completed the Overall Loop (segment 7977451) in any season
- */
-function getOverallLoopRiders(efforts: MockEffort[]): Set<string> {
-  const loopRiders = new Set<string>();
-  
-  efforts.forEach(effort => {
-    if (effort.segmentId === 7977451) {
-      loopRiders.add(effort.riderId);
-    }
-  });
-  
-  return loopRiders;
-}
 
-/**
- * Check if rider completed the loop in a specific season
- */
-function hasLoopTimeInSeason(
-  efforts: MockEffort[], 
-  riderId: string, 
-  stageId: number
-): boolean {
-  return efforts.some(effort => 
-    effort.riderId === riderId && 
-    effort.segmentId === 7977451 && 
-    effort.stageId === stageId
-  );
-}
 
 /**
  * Table 1: Overall Loop Leaderboard (Improved Logic)
