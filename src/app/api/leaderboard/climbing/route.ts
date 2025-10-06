@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { raceDatabase } from '@/lib/race-database';
 
+export const dynamic = 'force-dynamic'; // disable static cache
+
 // GET /api/leaderboard/climbing
 // Returns climbing leaderboard (Top Pogi's)
 export async function GET() {

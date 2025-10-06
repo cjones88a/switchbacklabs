@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { raceDatabase } from '@/lib/race-database';
 
+export const dynamic = 'force-dynamic'; // disable static cache
+
 // GET /api/leaderboard
 // Returns leaderboard with proper scoring (best 3, bonus, final)
 export async function GET() {

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { raceDatabase } from '@/lib/race-database';
 
+export const dynamic = 'force-dynamic'; // disable static cache
+
 // GET /api/leaderboard/descending
 // Returns descending leaderboard (Top Bruni's)
 export async function GET() {

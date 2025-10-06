@@ -80,22 +80,15 @@ export default function RaceTrackerPage() {
       setRefreshing(true);
       console.log('🔄 Refreshing leaderboard data (server)...');
       
+      // Use absolute URLs to avoid origin issues
+      const base = typeof window !== 'undefined' 
+        ? window.location.origin 
+        : 'https://switchbacklabsco.com';
+      
       const [overallRes, climberRes, downhillRes] = await Promise.all([
-        debugFetch('/api/leaderboard', { 
-          method: 'GET',
-          cache: 'no-store',
-          headers: { 'X-Debug-Client': 'true' }
-        }),
-        debugFetch('/api/leaderboard/climbing', { 
-          method: 'GET',
-          cache: 'no-store',
-          headers: { 'X-Debug-Client': 'true' }
-        }),
-        debugFetch('/api/leaderboard/descending', { 
-          method: 'GET',
-          cache: 'no-store',
-          headers: { 'X-Debug-Client': 'true' }
-        })
+        debugFetch(`${base}/api/leaderboard`),
+        debugFetch(`${base}/api/leaderboard/climbing`),
+        debugFetch(`${base}/api/leaderboard/descending`)
       ]);
       
       const [overallData, climberData, downhillData] = await Promise.all([
@@ -128,16 +121,15 @@ export default function RaceTrackerPage() {
         } as NewLeaderboardRow;
       };
 
-      const extractRows = (payload: unknown): ApiRow[] => {
-        if (Array.isArray(payload)) return payload as ApiRow[];
-        if (payload && typeof payload === 'object') {
-          const obj = payload as Record<string, unknown>;
-          return (obj.rows as ApiRow[]) ?? (obj.data as ApiRow[]) ?? (obj.result as ApiRow[]) ?? [];
-        }
+      const extractRows = (payload: any): ApiRow[] => {
+        if (Array.isArray(payload)) return payload;
+        if (payload?.rows) return payload.rows;
+        if (payload?.data) return payload.data;
+        if (payload?.result) return payload.result;
         return [];
       };
 
-      const norm = (payload: unknown) => extractRows(payload).map(toRow) as NewLeaderboardRow[];
+      const norm = (payload: any) => extractRows(payload).map(toRow) as NewLeaderboardRow[];
 
       setOverallLeaderboard(norm(overallData));
       setClimberLeaderboard(norm(climberData));
@@ -158,7 +150,11 @@ export default function RaceTrackerPage() {
       
       // First, sync the times with the database
       console.log('🔄 Syncing times with database...');
-      const syncResponse = await debugFetch('/api/times/sync', {
+      const base = typeof window !== 'undefined' 
+        ? window.location.origin 
+        : 'https://switchbacklabsco.com';
+        
+      const syncResponse = await debugFetch(`${base}/api/times/sync`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -183,7 +179,7 @@ export default function RaceTrackerPage() {
       
       // Then fetch the segment data for display
       console.log('🔄 Fetching segment 7977451 data...');
-      const segmentResponse = await debugFetch(`/api/strava/segment-7977451?accessToken=${token}`, { 
+      const segmentResponse = await debugFetch(`${base}/api/strava/segment-7977451?accessToken=${token}`, { 
         method: 'GET',
         cache: 'no-store',
         headers: { 'X-Debug-Client': 'true' }
@@ -318,7 +314,11 @@ export default function RaceTrackerPage() {
                   
                   console.log('Getting segment time...');
                   
-                  const response = await debugFetch('/api/my-segment-time', {
+                  const base = typeof window !== 'undefined' 
+                    ? window.location.origin 
+                    : 'https://switchbacklabsco.com';
+                    
+                  const response = await debugFetch(`${base}/api/my-segment-time`, {
                     method: 'POST',
                     headers: { 
                       'Content-Type': 'application/json',
