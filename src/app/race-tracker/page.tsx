@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Table } from '@/components/Table';
 import type { LeaderboardRow as NewLeaderboardRow } from '@/lib/leaderboards';
-import { debugFetch } from '@/lib/fetchDebug';
+import { debugFetch } from '@/lib/debugFetch';
 
 function AddTimeButton() {
   return (
@@ -80,20 +80,12 @@ export default function RaceTrackerPage() {
       setRefreshing(true);
       console.log('🔄 Refreshing leaderboard data (server)...');
       
-      // Use absolute URLs to avoid origin issues
-      const base = typeof window !== 'undefined' 
-        ? window.location.origin 
-        : 'https://switchbacklabsco.com';
-      
-      const [overallRes, climberRes, downhillRes] = await Promise.all([
-        debugFetch(`${base}/api/leaderboard`),
-        debugFetch(`${base}/api/leaderboard/climbing`),
-        debugFetch(`${base}/api/leaderboard/descending`)
-      ]);
-      
-      const [overallData, climberData, downhillData] = await Promise.all([
-        overallRes.json(), climberRes.json(), downhillRes.json()
-      ]);
+      const [{ data: overallData }, { data: climberData }, { data: downhillData }] =
+        await Promise.all([
+          debugFetch('/api/leaderboard'),
+          debugFetch('/api/leaderboard/climbing'),
+          debugFetch('/api/leaderboard/descending'),
+        ]);
       console.log({ overallData, climberData, downhillData });
       
       // Normalize: ensure riderName and seasons exist (server may return older shape)
@@ -151,26 +143,19 @@ export default function RaceTrackerPage() {
       
       // First, sync the times with the database
       console.log('🔄 Syncing times with database...');
-      const base = typeof window !== 'undefined' 
-        ? window.location.origin 
-        : 'https://switchbacklabsco.com';
-        
-      const syncResponse = await debugFetch(`${base}/api/times/sync`, {
+      const { res: syncRes, data: syncData } = await debugFetch('/api/times/sync', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'X-Debug-Client': 'true'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ accessToken: token }),
-        cache: 'no-store'
       });
-      
-      if (!syncResponse.ok) {
-        const errorData = await syncResponse.json();
-        throw new Error(errorData.message || 'Failed to sync times');
+      if (!syncRes.ok) {
+        // syncData may be object or string
+        const message =
+          typeof syncData === 'object' && syncData && 'message' in syncData
+            ? (syncData as any).message
+            : String(syncData ?? 'Failed to sync times');
+        throw new Error(message);
       }
-      
-      const syncData = await syncResponse.json();
       console.log('✅ Times synced successfully:', syncData);
       
       // Show success message with sync summary
@@ -180,15 +165,11 @@ export default function RaceTrackerPage() {
       
       // Then fetch the segment data for display
       console.log('🔄 Fetching segment 7977451 data...');
-      const segmentResponse = await debugFetch(`${base}/api/strava/segment-7977451?accessToken=${token}`, { 
-        method: 'GET',
-        cache: 'no-store',
-        headers: { 'X-Debug-Client': 'true' }
-      });
-      
-      if (segmentResponse.ok) {
-        const segmentData = await segmentResponse.json();
-        setSegmentData(segmentData);
+      const { res: segRes, data: segData } = await debugFetch(
+        `/api/strava/segment-7977451?accessToken=${encodeURIComponent(token)}`
+      );
+      if (segRes.ok && segData) {
+        setSegmentData(segData as typeof segmentData);
         console.log('✅ Segment data fetched successfully');
       }
       
@@ -315,21 +296,11 @@ export default function RaceTrackerPage() {
                   
                   console.log('Getting segment time...');
                   
-                  const base = typeof window !== 'undefined' 
-                    ? window.location.origin 
-                    : 'https://switchbacklabsco.com';
-                    
-                  const response = await debugFetch(`${base}/api/my-segment-time`, {
+                  const { res: response, data: result } = await debugFetch('/api/my-segment-time', {
                     method: 'POST',
-                    headers: { 
-                      'Content-Type': 'application/json',
-                      'X-Debug-Client': 'true'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ accessToken }),
-                    cache: 'no-store'
                   });
-                  
-                  const result = await response.json();
                   console.log('Result:', result);
                   
                   if (result.success) {
