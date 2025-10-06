@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     const stravaAPI = new StravaAPI();
     
     // Get athlete info
-    const athlete = await stravaAPI.getAthlete(accessToken) as any;
+    const athlete = await stravaAPI.getAthlete(accessToken) as { firstname: string; lastname: string; id: number };
     console.log('👤 Athlete:', athlete.firstname, athlete.lastname);
     
     // Define target segments
