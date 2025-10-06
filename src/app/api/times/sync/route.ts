@@ -3,6 +3,9 @@ import { StravaAPI } from '@/lib/strava/api';
 import { raceDatabase } from '@/lib/race-database';
 import { updateMockEffortsFromDatabase } from '@/lib/leaderboards';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // POST /api/times/sync
 // Exchange Strava code for token, fetch segment efforts, and upsert to database
 export async function POST(req: Request) {
@@ -238,7 +241,7 @@ export async function POST(req: Request) {
         effortsByType,
         segmentsAttempted: wanted.size
       }
-    });
+    }, { headers: { 'cache-control': 'no-store' } });
 
   } catch (error) {
     console.error('💥 Sync error:', error);
