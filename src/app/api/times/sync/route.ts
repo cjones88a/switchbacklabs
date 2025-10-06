@@ -54,86 +54,85 @@ export async function POST(req: Request) {
     
     console.log('✅ Athlete info retrieved:', athlete.firstname, athlete.lastname);
 
-    // Fetch data for all segment types
-    console.log('🔄 Fetching segment data for all categories...');
+    // Define target segments
+    const MAIN = 7977451;
+    const CLIMB = [9589287, 18229887];
+    const DESC = [2105607, 1359027];
+    const wanted = new Set([MAIN, ...CLIMB, ...DESC]);
     
-    // Fetch all segments for all seasons - Enhanced with better logging
-    const segmentsToFetch = [
-      // Overall Loop (7977451) for all seasons
-      { id: 7977451, stageIndex: 0, type: 'overall', season: 'Fall 2025' },
-      { id: 7977451, stageIndex: 1, type: 'overall', season: 'Winter 2025' },
-      { id: 7977451, stageIndex: 2, type: 'overall', season: 'Spring 2026' },
-      { id: 7977451, stageIndex: 3, type: 'overall', season: 'Summer 2026' },
-      
-      // Climbing segments (9589287 + 18229887) for all seasons
-      { id: 9589287, stageIndex: 0, type: 'climbing', season: 'Fall 2025' },
-      { id: 9589287, stageIndex: 1, type: 'climbing', season: 'Winter 2025' },
-      { id: 9589287, stageIndex: 2, type: 'climbing', season: 'Spring 2026' },
-      { id: 9589287, stageIndex: 3, type: 'climbing', season: 'Summer 2026' },
-      
-      { id: 18229887, stageIndex: 0, type: 'climbing', season: 'Fall 2025' },
-      { id: 18229887, stageIndex: 1, type: 'climbing', season: 'Winter 2025' },
-      { id: 18229887, stageIndex: 2, type: 'climbing', season: 'Spring 2026' },
-      { id: 18229887, stageIndex: 3, type: 'climbing', season: 'Summer 2026' },
-      
-      // Descending segments (2105607 + 1359027) for all seasons
-      { id: 2105607, stageIndex: 0, type: 'descending', season: 'Fall 2025' },
-      { id: 2105607, stageIndex: 1, type: 'descending', season: 'Winter 2025' },
-      { id: 2105607, stageIndex: 2, type: 'descending', season: 'Spring 2026' },
-      { id: 2105607, stageIndex: 3, type: 'descending', season: 'Summer 2026' },
-      
-      { id: 1359027, stageIndex: 0, type: 'descending', season: 'Fall 2025' },
-      { id: 1359027, stageIndex: 1, type: 'descending', season: 'Winter 2025' },
-      { id: 1359027, stageIndex: 2, type: 'descending', season: 'Spring 2026' },
-      { id: 1359027, stageIndex: 3, type: 'descending', season: 'Summer 2026' },
-    ];
+    console.log(`🔄 Fetching activities for ${athlete.firstname} ${athlete.lastname} to find segments:`, Array.from(wanted));
     
-    console.log(`🔄 Will attempt to fetch ${segmentsToFetch.length} segment combinations for ${athlete.firstname} ${athlete.lastname}`);
+    // Get recent activities (last 6 months)
+    const sixMonthsAgo = new Date(Date.now() - (6 * 30 * 24 * 60 * 60 * 1000));
+    const activities = await stravaAPI.getAthleteActivities(tokenData.accessToken, undefined, sixMonthsAgo);
+    console.log(`📊 Found ${activities.length} activities in last 6 months`);
     
+    // Instrument: count segments found per type
+    const found: Record<number, number> = {};
     const segmentEfforts: Array<{
       stageIndex: number;
       elapsedTime: number;
       effortDate: string;
-      segmentId?: number;
+      segmentId: number;
       prRank?: number;
       type: string;
     }> = [];
     
-    for (const segment of segmentsToFetch) {
+    // Helper function to determine leaderboard type
+    function groupFor(segId: number): 'overall'|'climbing'|'descending' {
+      if (segId === MAIN) return 'overall';
+      if (CLIMB.includes(segId)) return 'climbing';
+      if (DESC.includes(segId)) return 'descending';
+      return 'overall';
+    }
+    
+    // Helper function to map date to season index
+    function getSeasonIndex(dateStr: string): number {
+      const dt = new Date(dateStr);
+      const m = dt.getUTCMonth(); // 0=Jan
+      return (m >= 8 && m <= 10) ? 0 // Sep-Nov: Fall
+           : (m === 11 || m <= 1) ? 1 // Dec-Feb: Winter
+           : (m >= 2 && m <= 4) ? 2   // Mar-May: Spring
+           : 3;                       // Jun-Aug: Summer
+    }
+    
+    // Process each activity to find segment efforts
+    for (const activity of activities) {
       try {
-        console.log(`🔄 Fetching segment ${segment.id} (${segment.season}, ${segment.type}) from Strava API...`);
+        console.log(`🔄 Checking activity ${activity.id} (${activity.name}) for target segments...`);
         
-        // Use the same endpoint as the simple production-working flow
-        const stravaSegmentEfforts = await stravaAPI.getSegmentAllEfforts(segment.id, tokenData.accessToken);
+        // Get activity details with segment efforts
+        const activityDetails = await stravaAPI.getActivityDetails(activity.id, tokenData.accessToken);
         
-        if (stravaSegmentEfforts && stravaSegmentEfforts.length > 0) {
-          // Filter for current athlete and get most recent effort
-          const athleteEfforts = stravaSegmentEfforts
-            .filter(effort => effort.athlete?.id === athlete.id)
-            .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
-          
-          const mostRecentEffort = athleteEfforts[0];
-          
-          if (mostRecentEffort) {
+        if (activityDetails.segment_efforts) {
+          for (const effort of activityDetails.segment_efforts) {
+            const segId = Number(effort.segment?.id);
+            if (!wanted.has(segId)) continue;
+            
+            // Count for instrumentation
+            found[segId] = (found[segId] ?? 0) + 1;
+            
+            // Add to results
             segmentEfforts.push({
-              stageIndex: segment.stageIndex,
-              elapsedTime: mostRecentEffort.elapsedTime,
-              effortDate: mostRecentEffort.startDate,
-              segmentId: segment.id,
-              prRank: mostRecentEffort.prRank,
-              type: segment.type
+              stageIndex: getSeasonIndex(effort.start_date),
+              elapsedTime: effort.elapsed_time,
+              effortDate: effort.start_date,
+              segmentId: segId,
+              prRank: effort.pr_rank,
+              type: groupFor(segId)
             });
-            console.log(`✅ Found segment ${segment.id} (${segment.season}): ${mostRecentEffort.elapsedTime}s on ${mostRecentEffort.startDate}`);
-          } else {
-            console.log(`⚠️ No efforts found for ${athlete.firstname} on segment ${segment.id} (${segment.season})`);
+            
+            console.log(`✅ Found ${groupFor(segId)} segment ${segId}: ${effort.elapsed_time}s on ${effort.start_date}`);
           }
-        } else {
-          console.log(`⚠️ No data returned from Strava for segment ${segment.id} (${segment.season})`);
         }
       } catch (error) {
-        console.log(`❌ Error fetching segment ${segment.id} (${segment.season}):`, error);
+        console.log(`❌ Error processing activity ${activity.id}:`, error);
       }
     }
+    
+    // Log instrumentation results
+    console.log('[sync] segment counts found:', found);
+    console.log(`[sync] total efforts collected: ${segmentEfforts.length}`);
     
     // No fallback data - only use real Strava data
     if (segmentEfforts.length === 0) {
@@ -142,7 +141,7 @@ export async function POST(req: Request) {
         success: false,
         message: 'No segment efforts found for the authenticated athlete',
         athlete: athlete,
-        segmentsAttempted: segmentsToFetch.length
+        segmentsAttempted: wanted.size
       });
     }
 
@@ -158,6 +157,7 @@ export async function POST(req: Request) {
     });
 
     // Store race results in database
+    const storedByType: Record<string, number> = {};
     for (const effort of segmentEfforts) {
       // Validate and parse the date safely
       let effortDate: Date;
@@ -177,16 +177,21 @@ export async function POST(req: Request) {
         stageIndex: effort.stageIndex,
         elapsedTime: effort.elapsedTime,
         effortDate: effortDate,
-        segmentId: effort.segmentId || 7977451,
+        segmentId: effort.segmentId,
         prRank: effort.prRank,
         leaderboardType: effort.type as 'overall' | 'climbing' | 'descending'
       });
+      
+      // Count by type for logging
+      storedByType[effort.type] = (storedByType[effort.type] || 0) + 1;
+      console.log(`💾 Stored ${effort.type} effort: segment ${effort.segmentId}, ${effort.elapsedTime}s, season ${effort.stageIndex}`);
     }
     
     console.log('✅ Participant and results stored:', {
       id: participant.id,
       name: participant.name,
-      effortsCount: segmentEfforts.length
+      effortsCount: segmentEfforts.length,
+      storedByType
     });
 
     // Update the leaderboard data with new results
@@ -203,7 +208,7 @@ export async function POST(req: Request) {
       participant: participant.name,
       totalEfforts: segmentEfforts.length,
       effortsByType,
-      segmentsAttempted: segmentsToFetch.length
+      segmentsAttempted: wanted.size
     });
 
     return NextResponse.json({ 
@@ -217,7 +222,7 @@ export async function POST(req: Request) {
       summary: {
         totalEfforts: segmentEfforts.length,
         effortsByType,
-        segmentsAttempted: segmentsToFetch.length
+        segmentsAttempted: wanted.size
       }
     });
 

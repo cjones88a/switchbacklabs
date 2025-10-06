@@ -143,6 +143,10 @@ export class StravaAPI {
     return this.makeAuthenticatedRequest(`/activities/${activityId}`, accessToken) as Promise<StravaActivity>;
   }
 
+  async getActivityDetails(activityId: number, accessToken: string): Promise<any> {
+    return this.makeAuthenticatedRequest(`/activities/${activityId}?include_all_efforts=true`, accessToken);
+  }
+
   async getAthleteActivities(
     accessToken: string, 
     before?: Date, 
