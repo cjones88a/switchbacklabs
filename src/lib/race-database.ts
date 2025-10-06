@@ -4,6 +4,17 @@
  * Currently mocked, but ready for real database integration
  */
 
+export type EffortRow = {
+  id: string;                 // uuid
+  participant_id: string;
+  segment_id: number;
+  stage_index: number;
+  elapsed_time: number;
+  effort_date: string;        // ISO timestamptz
+  leaderboard_type: 'overall' | 'climbing' | 'descending';
+  pr_rank: number | null;
+};
+
 interface Participant {
   id: string;
   stravaId: number;
@@ -82,7 +93,7 @@ class MockDatabase {
     };
     const svc = getSupabaseService();
     if (svc) {
-      const upsertData: any = {
+      const upsertData: Record<string, unknown> = {
         participant_id: result.participantId,
         segment_id: result.segmentId,
         stage_index: result.stageIndex,

@@ -4,6 +4,16 @@ import { Table } from '@/components/Table';
 import type { LeaderboardRow as NewLeaderboardRow } from '@/lib/leaderboards';
 import { debugFetch } from '@/lib/debugFetch';
 
+// Helps avoid `any` when reading `.message` off unknown responses
+function messageFromUnknown(x: unknown): string | null {
+  if (typeof x === 'string') return x;
+  if (x && typeof x === 'object' && 'message' in x) {
+    const m = (x as { message?: unknown }).message;
+    return typeof m === 'string' ? m : null;
+  }
+  return null;
+}
+
 function AddTimeButton() {
   return (
     <button
@@ -149,12 +159,8 @@ export default function RaceTrackerPage() {
         body: JSON.stringify({ accessToken: token }),
       });
       if (!syncRes.ok) {
-        // syncData may be object or string
-        const message =
-          typeof syncData === 'object' && syncData && 'message' in syncData
-            ? (syncData as any).message
-            : String(syncData ?? 'Failed to sync times');
-        throw new Error(message);
+        const msg = messageFromUnknown(syncData) ?? 'Failed to sync times';
+        throw new Error(msg);
       }
       console.log('✅ Times synced successfully:', syncData);
       
@@ -220,7 +226,7 @@ export default function RaceTrackerPage() {
   // Load new leaderboard data using proper Prisma-style logic
   useEffect(() => {
     refreshLeaderboards();
-  }, []);
+  }, [refreshLeaderboards]);
 
   // Add refresh on page visibility change (when user comes back to tab)
   useEffect(() => {
@@ -233,7 +239,7 @@ export default function RaceTrackerPage() {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
+  }, [refreshLeaderboards]);
 
   // Add keyboard shortcut for refresh (F5 or Ctrl+R)
   useEffect(() => {
@@ -248,7 +254,7 @@ export default function RaceTrackerPage() {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [refreshLeaderboards]);
 
   // Force refresh on page load (handles browser refresh)
   useEffect(() => {
@@ -263,7 +269,7 @@ export default function RaceTrackerPage() {
     // Also listen for page load events
     window.addEventListener('load', handlePageLoad);
     return () => window.removeEventListener('load', handlePageLoad);
-  }, []);
+  }, [refreshLeaderboards]);
 
 
 
