@@ -89,13 +89,28 @@ export default function RaceTrackerPage() {
         overallRes.json(), climberRes.json(), downhillRes.json()
       ]);
       
-      // Normalize: ensure riderName exists but preserve expected row shape
-      type RowLike = NewLeaderboardRow & { name?: string };
-      const norm = (rows: RowLike[] = []) =>
-        rows.map(r => ({ ...r, riderName: (r.riderName ?? r.name ?? '').toString() })) as NewLeaderboardRow[];
-      setOverallLeaderboard(norm(overallData.rows as NewLeaderboardRow[]));
-      setClimberLeaderboard(norm(climberData.rows as NewLeaderboardRow[]));
-      setDownhillLeaderboard(norm(downhillData.rows as NewLeaderboardRow[]));
+      // Normalize: ensure riderName and seasons exist (server may return older shape)
+      const toRow = (r: any): NewLeaderboardRow => {
+        const riderName = (r?.riderName ?? r?.name ?? '').toString();
+        const seasons = r?.seasons ?? {
+          fall: r?.stages?.[0] ?? null,
+          winter: r?.stages?.[1] ?? null,
+          spring: r?.stages?.[2] ?? null,
+          summer: r?.stages?.[3] ?? null
+        };
+        const total = r?.total ?? r?.score?.final ?? null;
+        return {
+          riderId: r?.riderId ?? r?.id ?? riderName,
+          riderName,
+          seasons,
+          total
+        } as NewLeaderboardRow;
+      };
+
+      const norm = (rows: any[] = []) => rows.map(toRow) as NewLeaderboardRow[];
+      setOverallLeaderboard(norm(overallData.rows));
+      setClimberLeaderboard(norm(climberData.rows));
+      setDownhillLeaderboard(norm(downhillData.rows));
       
       console.log('✅ Leaderboard data refreshed');
     } catch (error) {
