@@ -200,7 +200,7 @@ export async function POST(req: Request) {
         elapsedTime: effort.elapsedTime,
         effortDate: effortDate,
         segmentId: effort.segmentId,
-        prRank: effort.prRank,
+        prRank: effort.prRank ?? undefined,
         leaderboardType: effort.leaderboardType
       });
       
