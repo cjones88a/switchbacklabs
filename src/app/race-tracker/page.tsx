@@ -81,9 +81,21 @@ export default function RaceTrackerPage() {
       console.log('🔄 Refreshing leaderboard data (server)...');
       
       const [overallRes, climberRes, downhillRes] = await Promise.all([
-        debugFetch('/api/leaderboard', { method: 'GET' }),
-        debugFetch('/api/leaderboard/climbing', { method: 'GET' }),
-        debugFetch('/api/leaderboard/descending', { method: 'GET' })
+        debugFetch('/api/leaderboard', { 
+          method: 'GET',
+          cache: 'no-store',
+          headers: { 'X-Debug-Client': 'true' }
+        }),
+        debugFetch('/api/leaderboard/climbing', { 
+          method: 'GET',
+          cache: 'no-store',
+          headers: { 'X-Debug-Client': 'true' }
+        }),
+        debugFetch('/api/leaderboard/descending', { 
+          method: 'GET',
+          cache: 'no-store',
+          headers: { 'X-Debug-Client': 'true' }
+        })
       ]);
       
       const [overallData, climberData, downhillData] = await Promise.all([
@@ -148,8 +160,12 @@ export default function RaceTrackerPage() {
       console.log('🔄 Syncing times with database...');
       const syncResponse = await debugFetch('/api/times/sync', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessToken: token })
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Debug-Client': 'true'
+        },
+        body: JSON.stringify({ accessToken: token }),
+        cache: 'no-store'
       });
       
       if (!syncResponse.ok) {
@@ -167,7 +183,11 @@ export default function RaceTrackerPage() {
       
       // Then fetch the segment data for display
       console.log('🔄 Fetching segment 7977451 data...');
-      const segmentResponse = await debugFetch(`/api/strava/segment-7977451?accessToken=${token}`, { method: 'GET' });
+      const segmentResponse = await debugFetch(`/api/strava/segment-7977451?accessToken=${token}`, { 
+        method: 'GET',
+        cache: 'no-store',
+        headers: { 'X-Debug-Client': 'true' }
+      });
       
       if (segmentResponse.ok) {
         const segmentData = await segmentResponse.json();
@@ -300,8 +320,12 @@ export default function RaceTrackerPage() {
                   
                   const response = await debugFetch('/api/my-segment-time', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ accessToken })
+                    headers: { 
+                      'Content-Type': 'application/json',
+                      'X-Debug-Client': 'true'
+                    },
+                    body: JSON.stringify({ accessToken }),
+                    cache: 'no-store'
                   });
                   
                   const result = await response.json();
