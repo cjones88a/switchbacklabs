@@ -27,8 +27,9 @@ export async function POST(req: Request) {
     console.log('Athlete:', athlete.firstname, athlete.lastname);
 
     // Get segment efforts for segment 7977451
+    const segmentId = 7977451;
     const segmentResponse = await fetch(
-      `https://www.strava.com/api/v3/segments/7977451/all_efforts?per_page=10`,
+      `https://www.strava.com/api/v3/segments/${segmentId}/all_efforts?per_page=10`,
       {
         headers: { 'Authorization': `Bearer ${accessToken}` }
       }
