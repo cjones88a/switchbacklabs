@@ -88,6 +88,7 @@ export default function RaceTrackerPage() {
       const [overallData, climberData, downhillData] = await Promise.all([
         overallRes.json(), climberRes.json(), downhillRes.json()
       ]);
+      console.log({ overallData, climberData, downhillData });
       
       // Normalize: ensure riderName and seasons exist (server may return older shape)
       type ApiRow = Partial<NewLeaderboardRow> & {
@@ -114,10 +115,20 @@ export default function RaceTrackerPage() {
         } as NewLeaderboardRow;
       };
 
-      const norm = (rows: ApiRow[] = []) => rows.map(toRow) as NewLeaderboardRow[];
-      setOverallLeaderboard(norm(overallData.rows));
-      setClimberLeaderboard(norm(climberData.rows));
-      setDownhillLeaderboard(norm(downhillData.rows));
+      const extractRows = (payload: unknown): ApiRow[] => {
+        if (Array.isArray(payload)) return payload as ApiRow[];
+        if (payload && typeof payload === 'object') {
+          const obj = payload as Record<string, unknown>;
+          return (obj.rows as ApiRow[]) ?? (obj.data as ApiRow[]) ?? (obj.result as ApiRow[]) ?? [];
+        }
+        return [];
+      };
+
+      const norm = (payload: unknown) => extractRows(payload).map(toRow) as NewLeaderboardRow[];
+
+      setOverallLeaderboard(norm(overallData));
+      setClimberLeaderboard(norm(climberData));
+      setDownhillLeaderboard(norm(downhillData));
       
       console.log('✅ Leaderboard data refreshed');
     } catch (error) {
