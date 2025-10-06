@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Table } from '@/components/Table';
 import type { LeaderboardRow as NewLeaderboardRow } from '@/lib/leaderboards';
+import { debugFetch } from '@/lib/fetchDebug';
 
 function AddTimeButton() {
   return (
@@ -80,9 +81,9 @@ export default function RaceTrackerPage() {
       console.log('🔄 Refreshing leaderboard data (server)...');
       
       const [overallRes, climberRes, downhillRes] = await Promise.all([
-        fetch('/api/leaderboard', { cache: 'no-store' }),
-        fetch('/api/leaderboard/climbing', { cache: 'no-store' }),
-        fetch('/api/leaderboard/descending', { cache: 'no-store' })
+        debugFetch('/api/leaderboard', { method: 'GET' }),
+        debugFetch('/api/leaderboard/climbing', { method: 'GET' }),
+        debugFetch('/api/leaderboard/descending', { method: 'GET' })
       ]);
       
       const [overallData, climberData, downhillData] = await Promise.all([
@@ -145,7 +146,7 @@ export default function RaceTrackerPage() {
       
       // First, sync the times with the database
       console.log('🔄 Syncing times with database...');
-      const syncResponse = await fetch('/api/times/sync', {
+      const syncResponse = await debugFetch('/api/times/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ accessToken: token })
@@ -166,7 +167,7 @@ export default function RaceTrackerPage() {
       
       // Then fetch the segment data for display
       console.log('🔄 Fetching segment 7977451 data...');
-      const segmentResponse = await fetch(`/api/strava/segment-7977451?accessToken=${token}`);
+      const segmentResponse = await debugFetch(`/api/strava/segment-7977451?accessToken=${token}`, { method: 'GET' });
       
       if (segmentResponse.ok) {
         const segmentData = await segmentResponse.json();
@@ -297,7 +298,7 @@ export default function RaceTrackerPage() {
                   
                   console.log('Getting segment time...');
                   
-                  const response = await fetch('/api/my-segment-time', {
+                  const response = await debugFetch('/api/my-segment-time', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ accessToken })
