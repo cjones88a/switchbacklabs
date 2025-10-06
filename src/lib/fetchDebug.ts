@@ -8,13 +8,9 @@ export async function debugFetch(url: string, options: RequestInit = {}) {
     },
     // ensure no caching so requests show in Network tab
     cache: 'no-store',
-    // @ts-expect-error next runtime option
-    next: { revalidate: 0 },
   };
-  // eslint-disable-next-line no-console
   console.log(`🛰️ [${id}] Fetching`, url, opts);
   const res = await fetch(url, opts);
-  // eslint-disable-next-line no-console
   console.log(`✅ [${id}] Response`, res.status, res.statusText);
   const cloned = res.clone();
   let data: unknown = null;
@@ -23,7 +19,6 @@ export async function debugFetch(url: string, options: RequestInit = {}) {
   } catch {
     data = null;
   }
-  // eslint-disable-next-line no-console
   console.log(`📦 [${id}] Data`, data);
   return res;
 }
