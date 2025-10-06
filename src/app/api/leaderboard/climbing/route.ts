@@ -62,7 +62,7 @@ export async function GET() {
       const sampleEffort = climbEfforts.find(e => e.participantId === riderId);
       const riderName = sampleEffort?.participantName || 'Unknown';
 
-      const seasons = { fall: null, winter: null, spring: null, summer: null };
+      const seasons: { fall: number | null; winter: number | null; spring: number | null; summer: number | null } = { fall: null, winter: null, spring: null, summer: null };
       let totalSum = 0;
       let hasAnySeason = false;
 
