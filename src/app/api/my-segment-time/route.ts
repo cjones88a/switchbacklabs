@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { raceDatabase } from '@/lib/race-database';
 
 // POST /api/my-segment-time
 // Absolute simplest endpoint to get segment time
@@ -66,6 +67,39 @@ export async function POST(req: Request) {
     const formattedTime = hours > 0 
       ? `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
       : `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+
+    // Persist to DB so leaderboards can populate (overall loop only)
+    try {
+      // Map date to season index (0..3)
+      const dt = new Date(mostRecent.start_date);
+      const m = dt.getUTCMonth(); // 0=Jan
+      const stageIndex = (m >= 8 && m <= 10) ? 0 // Sep-Nov: Fall
+                        : (m === 11 || m <= 1) ? 1 // Dec-Feb: Winter
+                        : (m >= 2 && m <= 4) ? 2   // Mar-May: Spring
+                        : 3;                       // Jun-Aug: Summer
+
+      await raceDatabase.upsertParticipant({
+        id: `athlete_${athlete.id}`,
+        stravaId: athlete.id,
+        name: `${athlete.firstname} ${athlete.lastname}`,
+        username: athlete.username || '',
+        accessToken,
+        refreshToken: '',
+        tokenExpiresAt: new Date(Date.now() + 6*60*60*1000)
+      });
+
+      await raceDatabase.upsertRaceResult({
+        participantId: `athlete_${athlete.id}`,
+        stageIndex,
+        elapsedTime: seconds,
+        effortDate: new Date(mostRecent.start_date),
+        segmentId: segmentId,
+        prRank: mostRecent.pr_rank ?? undefined,
+        leaderboardType: 'overall'
+      });
+    } catch (e) {
+      console.error('DB upsert failed (non-fatal):', e);
+    }
 
     return NextResponse.json({
       success: true,
