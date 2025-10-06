@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { StravaAPI } from '@/lib/strava/api';
 import { raceDatabase } from '@/lib/race-database';
 import { updateMockEffortsFromDatabase } from '@/lib/leaderboards';

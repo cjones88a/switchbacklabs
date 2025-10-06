@@ -90,8 +90,9 @@ export default function RaceTrackerPage() {
       ]);
       
       // Normalize: ensure riderName exists but preserve expected row shape
-      const norm = (rows: NewLeaderboardRow[] = []) =>
-        rows.map(r => ({ ...r, riderName: (r.riderName ?? (r as any).name ?? '').toString() })) as NewLeaderboardRow[];
+      type RowLike = NewLeaderboardRow & { name?: string };
+      const norm = (rows: RowLike[] = []) =>
+        rows.map(r => ({ ...r, riderName: (r.riderName ?? r.name ?? '').toString() })) as NewLeaderboardRow[];
       setOverallLeaderboard(norm(overallData.rows as NewLeaderboardRow[]));
       setClimberLeaderboard(norm(climberData.rows as NewLeaderboardRow[]));
       setDownhillLeaderboard(norm(downhillData.rows as NewLeaderboardRow[]));
