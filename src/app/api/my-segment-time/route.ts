@@ -18,6 +18,14 @@ export async function POST(req: Request) {
     });
     
     if (!athleteResponse.ok) {
+      if (athleteResponse.status === 429) {
+        const retryAfter = athleteResponse.headers.get('Retry-After') || '900'; // 15 min default
+        return NextResponse.json({
+          error: 'Rate limit exceeded',
+          retryAfter: parseInt(retryAfter),
+          message: `Strava API rate limit exceeded. Please try again in ${Math.ceil(parseInt(retryAfter) / 60)} minutes.`
+        }, { status: 429 });
+      }
       return NextResponse.json({ 
         error: `Athlete API failed: ${athleteResponse.status}` 
       }, { status: athleteResponse.status });
@@ -36,6 +44,14 @@ export async function POST(req: Request) {
     );
     
     if (!segmentResponse.ok) {
+      if (segmentResponse.status === 429) {
+        const retryAfter = segmentResponse.headers.get('Retry-After') || '900'; // 15 min default
+        return NextResponse.json({
+          error: 'Rate limit exceeded',
+          retryAfter: parseInt(retryAfter),
+          message: `Strava API rate limit exceeded. Please try again in ${Math.ceil(parseInt(retryAfter) / 60)} minutes.`
+        }, { status: 429 });
+      }
       return NextResponse.json({ 
         error: `Segment API failed: ${segmentResponse.status}` 
       }, { status: segmentResponse.status });

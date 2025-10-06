@@ -260,6 +260,18 @@ export async function POST(req: Request) {
       });
     }
     
+    // Handle rate limiting specifically
+    if (error instanceof Error && error.message.includes('Rate limit exceeded')) {
+      return NextResponse.json(
+        { 
+          error: 'Rate limit exceeded',
+          message: error.message,
+          retryAfter: 900 // 15 minutes default
+        },
+        { status: 429 }
+      );
+    }
+    
     return NextResponse.json(
       { 
         error: 'Failed to sync times',

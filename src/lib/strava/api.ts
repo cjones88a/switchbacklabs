@@ -90,14 +90,22 @@ export class StravaAPI {
     accessToken: string, 
     params?: Record<string, string | number>
   ) {
-    const response = await axios.get(`${this.baseURL}${endpoint}`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`
-      },
-      params
-    });
+    try {
+      const response = await axios.get(`${this.baseURL}${endpoint}`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        },
+        params
+      });
 
-    return response.data;
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 429) {
+        const retryAfter = error.response.headers['retry-after'] || '900';
+        throw new Error(`Rate limit exceeded. Please try again in ${Math.ceil(parseInt(retryAfter) / 60)} minutes.`);
+      }
+      throw error;
+    }
   }
 
   async getAthlete(accessToken: string) {

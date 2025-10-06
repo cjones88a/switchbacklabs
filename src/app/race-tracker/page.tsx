@@ -159,6 +159,11 @@ export default function RaceTrackerPage() {
         body: JSON.stringify({ accessToken: token }),
       });
       if (!syncRes.ok) {
+        if (syncRes.status === 429) {
+          const data = syncData as { error?: string; message?: string; retryAfter?: number };
+          const msg = data.message || 'Rate limit exceeded. Please try again later.';
+          throw new Error(`⏰ ${msg}`);
+        }
         const msg = messageFromUnknown(syncData) ?? 'Failed to sync times';
         throw new Error(msg);
       }
@@ -318,6 +323,13 @@ export default function RaceTrackerPage() {
                       setError(`✅ SUCCESS: ${data.athlete}: ${data.time} on ${data.segment} (${data.date})`);
                     } else {
                       setError(`❌ ${data.error || 'Unknown error'}`);
+                    }
+                  } else if (result && typeof result === 'object' && 'error' in result) {
+                    const data = result as { error: string; retryAfter?: number; message?: string };
+                    if (data.error === 'Rate limit exceeded') {
+                      setError(`⏰ ${data.message || 'Rate limit exceeded. Please try again later.'}`);
+                    } else {
+                      setError(`❌ ${data.error}`);
                     }
                   }
                   
