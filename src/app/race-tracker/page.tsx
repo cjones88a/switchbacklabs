@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { Table } from '@/components/Table';
-import { LeaderboardRow as NewLeaderboardRow } from '@/lib/leaderboards';
+import type { LeaderboardRow as NewLeaderboardRow } from '@/lib/leaderboards';
 
 interface LeaderboardRow {
   id: string;
@@ -102,9 +102,11 @@ export default function RaceTrackerPage() {
         overallRes.json(), climberRes.json(), downhillRes.json()
       ]);
       
-      setOverallLeaderboard(overallData.rows || []);
-      setClimberLeaderboard(climberData.rows || []);
-      setDownhillLeaderboard(downhillData.rows || []);
+      // Normalize row shape: ensure riderName exists (fallback to name)
+      const norm = (rows: any[] = []) => rows.map(r => ({ ...r, riderName: r.riderName ?? r.name ?? '' }));
+      setOverallLeaderboard(norm(overallData.rows));
+      setClimberLeaderboard(norm(climberData.rows));
+      setDownhillLeaderboard(norm(downhillData.rows));
       
       console.log('✅ Leaderboard data refreshed');
     } catch (error) {
