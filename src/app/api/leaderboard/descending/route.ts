@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { raceDatabase } from '@/lib/race-database';
 
-export const dynamic = 'force-dynamic'; // disable static cache
+export const runtime = 'nodejs';         // ensure Node runtime for server libs
+export const dynamic = 'force-dynamic';  // disable static caching
 
 // GET /api/leaderboard/descending
 // Returns descending leaderboard (Top Bruni's)
@@ -106,7 +107,9 @@ export async function GET() {
     finalRows.sort((a, b) => (a.total || Infinity) - (b.total || Infinity));
 
     console.log(`✅ Descending rows: ${finalRows.length} (riders with both segments + loop completion)`);
-    return NextResponse.json({ rows: finalRows });
+    return NextResponse.json({ rows: finalRows }, { 
+      headers: { 'cache-control': 'no-store' } 
+    });
   } catch (error) {
     console.error('💥 Descending leaderboard error:', error);
     return NextResponse.json(

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { raceDatabase } from '@/lib/race-database';
 
-export const dynamic = 'force-dynamic'; // disable static cache
+export const runtime = 'nodejs';         // ensure Node runtime for server libs
+export const dynamic = 'force-dynamic';  // disable static caching
 
 // GET /api/leaderboard
 // Returns leaderboard with proper scoring (best 3, bonus, final)
@@ -30,7 +31,9 @@ export async function GET() {
     const rows = Array.from(byRider.values()).map(r => ({ ...r, total: null }));
 
     console.log('[leaderboard] overall rows', rows.length);
-    return NextResponse.json({ rows });
+    return NextResponse.json({ rows }, { 
+      headers: { 'cache-control': 'no-store' } 
+    });
   } catch (error) {
     console.error('Leaderboard error:', error);
     return NextResponse.json(
