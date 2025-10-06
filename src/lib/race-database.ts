@@ -28,7 +28,9 @@ interface RaceResult {
   createdAt: Date;
 }
 
-// Mock database storage (in production, this would be Supabase/PostgreSQL)
+import { getSupabaseService, getSupabaseAnon } from './db';
+
+// Hybrid DB: Supabase in production, in-memory fallback locally
 class MockDatabase {
   private participants: Map<string, Participant> = new Map();
   private results: Map<string, RaceResult[]> = new Map();
@@ -36,6 +38,22 @@ class MockDatabase {
   // Participant management
   async upsertParticipant(participant: Omit<Participant, 'createdAt' | 'updatedAt'>): Promise<Participant> {
     const now = new Date();
+    const svc = getSupabaseService();
+    if (svc) {
+      const { data, error } = await svc
+        .from('participants')
+        .upsert({
+          id: participant.id,
+          strava_id: participant.stravaId,
+          name: participant.name,
+          username: participant.username,
+        }, { onConflict: 'id' })
+        .select()
+        .single();
+      if (error) throw error;
+      console.log('✅ Participant upserted (supabase):', data?.name);
+    }
+
     const existing = this.participants.get(participant.id);
     
     const fullParticipant: Participant = {
@@ -61,6 +79,19 @@ class MockDatabase {
       id: `${result.participantId}_${result.stageIndex}_${Date.now()}`,
       createdAt: now
     };
+    const svc = getSupabaseService();
+    if (svc) {
+      const { error } = await svc.from('efforts').upsert({
+        participant_id: result.participantId,
+        segment_id: result.segmentId,
+        stage_index: result.stageIndex,
+        elapsed_time: result.elapsedTime,
+        effort_date: result.effortDate.toISOString(),
+        leaderboard_type: result.leaderboardType,
+        pr_rank: result.prRank ?? null,
+      });
+      if (error) throw error;
+    }
     
     const existingResults = this.results.get(result.participantId) || [];
     const filteredResults = existingResults.filter(r => 
@@ -74,10 +105,54 @@ class MockDatabase {
   }
 
   async getResultsByParticipant(participantId: string): Promise<RaceResult[]> {
+    const anon = getSupabaseAnon();
+    if (anon) {
+      const { data, error } = await anon
+        .from('efforts')
+        .select('*')
+        .eq('participant_id', participantId);
+      if (error) throw error;
+      return (data || []).map(r => ({
+        id: String(r.id),
+        participantId: r.participant_id,
+        stageIndex: r.stage_index,
+        elapsedTime: r.elapsed_time,
+        effortDate: new Date(r.effort_date),
+        segmentId: r.segment_id,
+        prRank: r.pr_rank ?? undefined,
+        leaderboardType: r.leaderboard_type,
+        createdAt: new Date(r.created_at)
+      }));
+    }
     return this.results.get(participantId) || [];
   }
 
   async getAllResults(): Promise<Array<RaceResult & { participantName?: string }>> {
+    const anon = getSupabaseAnon();
+    if (anon) {
+      const { data: efforts, error: e1 } = await anon
+        .from('efforts')
+        .select('*');
+      if (e1) throw e1;
+      const { data: participants, error: e2 } = await anon
+        .from('participants')
+        .select('*');
+      if (e2) throw e2;
+      const idToName = new Map<string, string>();
+      (participants || []).forEach(p => idToName.set(p.id, p.name));
+      return (efforts || []).map(r => ({
+        id: String(r.id),
+        participantId: r.participant_id,
+        stageIndex: r.stage_index,
+        elapsedTime: r.elapsed_time,
+        effortDate: new Date(r.effort_date),
+        segmentId: r.segment_id,
+        prRank: r.pr_rank ?? undefined,
+        leaderboardType: r.leaderboard_type,
+        createdAt: new Date(r.created_at),
+        participantName: idToName.get(r.participant_id)
+      }));
+    }
     const allResults: Array<RaceResult & { participantName?: string }> = [];
     for (const [participantId, results] of this.results.entries()) {
       const participant = this.participants.get(participantId);
@@ -232,6 +307,11 @@ class MockDatabase {
 
   // Clear all data for fresh start
   async clearAllData(): Promise<void> {
+    const svc = getSupabaseService();
+    if (svc) {
+      await svc.from('efforts').delete().neq('participant_id', '');
+      await svc.from('participants').delete().neq('id', '');
+    }
     this.participants.clear();
     this.results.clear();
     console.log('🧹 All database data cleared');

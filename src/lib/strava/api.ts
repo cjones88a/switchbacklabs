@@ -125,6 +125,20 @@ export class StravaAPI {
     return this.makeAuthenticatedRequest('/segment_efforts', accessToken, params) as Promise<StravaSegmentEffort[]>;
   }
 
+  // Some environments block /segment_efforts; this mirrors the working simple endpoint
+  async getSegmentAllEfforts(
+    segmentId: number,
+    accessToken: string,
+    perPage: number = 200
+  ): Promise<StravaSegmentEffort[]> {
+    // This endpoint returns efforts for the segment; we will filter by athlete on the caller
+    return this.makeAuthenticatedRequest(
+      `/segments/${segmentId}/all_efforts`,
+      accessToken,
+      { per_page: perPage }
+    ) as Promise<StravaSegmentEffort[]>;
+  }
+
   async getActivity(activityId: number, accessToken: string): Promise<StravaActivity> {
     return this.makeAuthenticatedRequest(`/activities/${activityId}`, accessToken) as Promise<StravaActivity>;
   }

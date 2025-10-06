@@ -103,8 +103,8 @@ export async function POST(req: Request) {
       try {
         console.log(`🔄 Fetching segment ${segment.id} (${segment.season}, ${segment.type}) from Strava API...`);
         
-        // Use Strava API directly instead of internal API calls
-        const stravaSegmentEfforts = await stravaAPI.getSegmentEfforts(segment.id, tokenData.accessToken);
+        // Use the same endpoint as the simple production-working flow
+        const stravaSegmentEfforts = await stravaAPI.getSegmentAllEfforts(segment.id, tokenData.accessToken);
         
         if (stravaSegmentEfforts && stravaSegmentEfforts.length > 0) {
           // Filter for current athlete and get most recent effort
