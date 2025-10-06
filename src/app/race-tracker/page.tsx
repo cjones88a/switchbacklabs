@@ -165,8 +165,11 @@ export default function RaceTrackerPage() {
       console.log('✅ Times synced successfully:', syncData);
       
       // Show success message with sync summary
-      if (syncData.success && syncData.summary) {
-        setError(`✅ ${syncData.message} (${syncData.summary.totalEfforts} efforts: ${Object.entries(syncData.summary.effortsByType).map(([type, count]) => `${count} ${type}`).join(', ')})`);
+      if (syncData && typeof syncData === 'object' && 'success' in syncData && 'summary' in syncData) {
+        const data = syncData as { success: boolean; message?: string; summary?: { totalEfforts: number; effortsByType: Record<string, number> } };
+        if (data.success && data.summary) {
+          setError(`✅ ${data.message || 'Success'} (${data.summary.totalEfforts} efforts: ${Object.entries(data.summary.effortsByType).map(([type, count]) => `${count} ${type}`).join(', ')})`);
+        }
       }
       
       // Then fetch the segment data for display
@@ -309,10 +312,13 @@ export default function RaceTrackerPage() {
                   });
                   console.log('Result:', result);
                   
-                  if (result.success) {
-                    setError(`✅ SUCCESS: ${result.athlete}: ${result.time} on ${result.segment} (${result.date})`);
-                  } else {
-                    setError(`❌ ${result.error}`);
+                  if (result && typeof result === 'object' && 'success' in result) {
+                    const data = result as { success: boolean; athlete?: string; time?: string; segment?: string; date?: string; error?: string };
+                    if (data.success) {
+                      setError(`✅ SUCCESS: ${data.athlete}: ${data.time} on ${data.segment} (${data.date})`);
+                    } else {
+                      setError(`❌ ${data.error || 'Unknown error'}`);
+                    }
                   }
                   
                 } catch (err) {

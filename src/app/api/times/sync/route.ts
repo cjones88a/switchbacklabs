@@ -6,6 +6,18 @@ import { updateMockEffortsFromDatabase } from '@/lib/leaderboards';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+type StageKind = 'overall' | 'climbing' | 'descending';
+
+interface EffortPayload {
+  effortId: number;           // Strava segment_effort.id
+  stageIndex: number;         // your season index (0..3)
+  elapsedTime: number;        // seconds
+  effortDate: string;         // ISO timestamp from Strava
+  segmentId: number;          // Strava segment id
+  prRank?: number | null;
+  leaderboardType: StageKind; // maps to DB column "leaderboard_type"
+}
+
 // POST /api/times/sync
 // Exchange Strava code for token, fetch segment efforts, and upsert to database
 export async function POST(req: Request) {
@@ -72,14 +84,7 @@ export async function POST(req: Request) {
     
     // Instrument: count segments found per type
     const found: Record<number, number> = {};
-    const segmentEfforts: Array<{
-      stageIndex: number;
-      elapsedTime: number;
-      effortDate: string;
-      segmentId: number;
-      prRank?: number;
-      type: string;
-    }> = [];
+    const segmentEfforts: EffortPayload[] = [];
     
     // Helper function to determine leaderboard type
     function groupFor(segId: number): 'overall'|'climbing'|'descending' {
@@ -132,8 +137,8 @@ export async function POST(req: Request) {
               elapsedTime: effort.elapsed_time,
               effortDate: effort.start_date,
               segmentId: segId,
-              prRank: effort.pr_rank,
-              type: groupFor(segId)
+              prRank: effort.pr_rank ?? null,
+              leaderboardType: groupFor(segId)
             });
             
             console.log(`✅ Found ${groupFor(segId)} segment ${segId}: ${effort.elapsed_time}s on ${effort.start_date}`);
@@ -196,12 +201,12 @@ export async function POST(req: Request) {
         effortDate: effortDate,
         segmentId: effort.segmentId,
         prRank: effort.prRank,
-        leaderboardType: effort.type as 'overall' | 'climbing' | 'descending'
+        leaderboardType: effort.leaderboardType
       });
       
       // Count by type for logging
-      storedByType[effort.type] = (storedByType[effort.type] || 0) + 1;
-      console.log(`💾 Stored ${effort.type} effort: segment ${effort.segmentId}, ${effort.elapsedTime}s, season ${effort.stageIndex}`);
+      storedByType[effort.leaderboardType] = (storedByType[effort.leaderboardType] || 0) + 1;
+      console.log(`💾 Stored ${effort.leaderboardType} effort: segment ${effort.segmentId}, ${effort.elapsedTime}s, season ${effort.stageIndex}`);
     }
     
     console.log('✅ Participant and results stored:', {
@@ -217,7 +222,7 @@ export async function POST(req: Request) {
 
     // Group efforts by type for summary
     const effortsByType = segmentEfforts.reduce((acc, effort) => {
-      acc[effort.type] = (acc[effort.type] || 0) + 1;
+      acc[effort.leaderboardType] = (acc[effort.leaderboardType] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
