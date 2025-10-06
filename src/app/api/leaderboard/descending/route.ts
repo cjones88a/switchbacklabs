@@ -13,9 +13,17 @@ export async function GET() {
     const MAIN_LOOP = 7977451;
     const all = await raceDatabase.getAllResults();
 
-    // First, get all descending segment efforts
-    const dhEfforts = all.filter(r => DH_IDS.includes(r.segmentId));
+    // First, get all descending segment efforts (by segmentId OR leaderboardType)
+    const dhEfforts = all.filter(r => 
+      DH_IDS.includes(r.segmentId) || r.leaderboardType === 'descending'
+    );
     console.log(`Found ${dhEfforts.length} descending efforts`);
+    console.log('Descending efforts details:', dhEfforts.map(e => ({
+      segmentId: e.segmentId,
+      leaderboardType: e.leaderboardType,
+      participantId: e.participantId,
+      elapsedTime: e.elapsedTime
+    })));
 
     // Get all loop completion efforts (to filter riders who completed the loop)
     const loopEfforts = all.filter(r => r.segmentId === MAIN_LOOP);
