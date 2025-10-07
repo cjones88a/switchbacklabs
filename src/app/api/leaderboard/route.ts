@@ -29,7 +29,7 @@ export async function GET(req: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const rows = (data ?? []) as Row[];
+  const rows = (data ?? []) as unknown as Row[];
 
   const byRider = new Map<string, {
     rider: { name: string; avatar: string | null };
