@@ -8,9 +8,9 @@ export default function HomePage() {
           Product Strategy & Technical PM for teams that need momentum
         </h1>
         <p className="text-gray-700">
-          I’m Colt Jones, a senior Product Manager with principal-level engineering skills.
-          I help startups and product teams clarify strategy, validate with research, design the right thing,
-          and ship clean requirements—with hands-on build support when needed.
+          I'm Colt Jones, a senior Product Manager with principal-level engineering chops.
+          I help startups and product teams move from fuzzy ideas to shippable products: 
+          clear strategy, validated design, crisp requirements, and smooth delivery—with hands-on build support when needed.
         </p>
         <ul className="text-sm text-gray-800 space-y-1">
           <li>• Strategy: positioning, goals, success metrics</li>
@@ -36,7 +36,8 @@ export default function HomePage() {
         <div className="space-y-2 text-sm">
           <p><strong>Horsetooth Four-Seasons Race Tracker</strong></p>
           <p className="text-gray-700">
-            OAuth with Strava, segment parsing, Supabase, Vercel. Mobile-first leaderboard. Admin controls for race windows.
+            Full-stack race tracking app with Strava OAuth, real-time leaderboards, and admin controls. 
+            Built with Next.js, Supabase, and deployed on Vercel.
           </p>
           <div className="flex gap-2">
             <Link href="/projects/4soh" className="underline">Project details</Link>
