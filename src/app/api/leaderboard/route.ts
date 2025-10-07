@@ -29,7 +29,7 @@ export async function GET(req: Request) {
     .in("season_key", seasonKeys);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  const rows = (data ?? []) as Row[];
+  const rows = (data ?? []) as unknown as Row[];
 
   // group by rider
   const byRider = new Map<
