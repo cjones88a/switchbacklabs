@@ -4,7 +4,7 @@ import ThemeToggle from "./ThemeToggle";
 export default function SiteHeader() {
   return (
     <header className="border-b bg-white/60 backdrop-blur dark:bg-surface/60">
-      <div className="container-std py-3 flex items-center justify-between">
+      <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
         <Link href="/" className="font-semibold tracking-tight">Switchback Labs</Link>
         <nav className="flex items-center gap-4 text-sm">
           <Link href="/" className="hover:underline">Home</Link>

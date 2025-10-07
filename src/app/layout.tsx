@@ -24,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ToastProvider>
             <SiteHeader />
             <main className="flex-1">
-              <div className="container-std py-8">{children}</div>
+              <div className="mx-auto max-w-5xl px-4 py-8">{children}</div>
             </main>
             <SiteFooter />
           </ToastProvider>
