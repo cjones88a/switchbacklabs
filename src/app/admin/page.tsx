@@ -58,7 +58,9 @@ export default function AdminPage() {
     setOverrides(ovJson?.overrides ?? []);
   }
 
-  useEffect(() => { fetchWindows(); /* eslint-disable-next-line */ }, [authed, season_key]);
+  useEffect(() => { 
+    fetchWindows(); 
+  }, [authed, season_key, adminKey]);
 
   // auth submit
   function submitPassword(e: React.FormEvent) {
@@ -143,7 +145,7 @@ export default function AdminPage() {
         <div>
           <label className="block text-xs text-gray-600">Season</label>
           <select className="rounded-md border px-3 py-2"
-                  value={season} onChange={(e) => setSeason(e.target.value as any)}>
+                  value={season} onChange={(e) => setSeason(e.target.value as typeof SEASONS[number])}>
             {SEASONS.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
