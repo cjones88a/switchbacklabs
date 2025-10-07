@@ -1,14 +1,21 @@
 import { env } from './env';
 
-export function getAuthorizeURL(state: string) {
+export function getAuthorizeURL(stateObj: unknown) {
   const url = new URL('https://www.strava.com/oauth/authorize');
   url.searchParams.set('client_id', env.STRAVA_CLIENT_ID);
   url.searchParams.set('redirect_uri', env.STRAVA_REDIRECT_URI);
   url.searchParams.set('response_type', 'code');
   url.searchParams.set('approval_prompt', 'auto');
   url.searchParams.set('scope', 'read,activity:read_all');
+  const state = Buffer.from(JSON.stringify(stateObj ?? {})).toString('base64url');
   url.searchParams.set('state', state);
   return url.toString();
+}
+
+export function decodeState(state?: string | null): any | null {
+  if (!state) return null;
+  try { return JSON.parse(Buffer.from(state, 'base64url').toString('utf8')); }
+  catch { return null; }
 }
 
 export async function exchangeCodeForToken(code: string) {

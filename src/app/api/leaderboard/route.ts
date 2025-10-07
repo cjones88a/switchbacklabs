@@ -9,7 +9,7 @@ type Row = {
   main_ms: number | null;
   climb_sum_ms: number | null;
   desc_sum_ms: number | null;
-  riders: { firstname: string | null; lastname: string | null; profile: string | null } | null;
+  riders: { firstname: string | null; lastname: string | null; profile: string | null; consent_public?: boolean | null } | null;
 };
 
 const SEASONS = ["FALL", "WINTER", "SPRING", "SUMMER"] as const;
@@ -24,7 +24,7 @@ export async function GET(req: Request) {
 
   const { data, error } = await supabase
     .from("attempts")
-    .select("rider_id, season_key, main_ms, climb_sum_ms, desc_sum_ms, riders ( firstname, lastname, profile )")
+    .select("rider_id, season_key, main_ms, climb_sum_ms, desc_sum_ms, riders ( firstname, lastname, profile, consent_public )")
     .in("season_key", seasonKeys);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -41,6 +41,8 @@ export async function GET(req: Request) {
   }>();
 
   for (const r of rows) {
+    // hide riders who have not consented for public display
+    if (!r.riders?.consent_public) continue;
     const season = r.season_key.split("_")[1] as typeof SEASONS[number];
     if (!SEASONS.includes(season)) continue;
     if (!byRider.has(r.rider_id)) {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { exchangeCodeForToken } from '@/lib/strava';
+import { exchangeCodeForToken, decodeState } from '@/lib/strava';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
@@ -7,6 +7,8 @@ export const runtime = 'nodejs';
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
+  const stateRaw = searchParams.get('state');
+  const state = decodeState(stateRaw);
   if (!code) return NextResponse.redirect(new URL('/race-trackingV2?error=missing_code', req.url));
 
   const data = await exchangeCodeForToken(code);
@@ -20,6 +22,8 @@ export async function GET(req: Request) {
       firstname: athlete.firstname,
       lastname: athlete.lastname,
       profile: athlete.profile,
+      consent_public: !!state?.consent_public,
+      consent_public_at: state?.consent_public ? new Date().toISOString() : null,
     }, { onConflict: 'strava_athlete_id' })
     .select('id, strava_athlete_id')
     .single();
