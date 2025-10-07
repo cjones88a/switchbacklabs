@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const SEASONS = ["FALL", "WINTER", "SPRING", "SUMMER"] as const;
 
@@ -42,7 +42,7 @@ export default function AdminPage() {
     }
   }, []);
 
-  async function fetchWindows() {
+  const fetchWindows = useCallback(async () => {
     if (!authed) return;
     const headers = { "x-admin-key": adminKey };
     const [baseRes, ovRes] = await Promise.all([
@@ -56,11 +56,11 @@ export default function AdminPage() {
     setBaseStart(fmtLocal(base?.start_at ?? ""));
     setBaseEnd(fmtLocal(base?.end_at ?? ""));
     setOverrides(ovJson?.overrides ?? []);
-  }
+  }, [authed, season_key, adminKey]);
 
   useEffect(() => { 
     fetchWindows(); 
-  }, [authed, season_key, adminKey]);
+  }, [fetchWindows]);
 
   // auth submit
   function submitPassword(e: React.FormEvent) {
