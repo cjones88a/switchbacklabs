@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import { summarizeFromActivity } from '@/lib/strava';
 import { getWindowsForSeason } from '@/lib/windows';
 
 export const runtime = 'nodejs';
 
 async function getValidAccessToken(riderId: string) {
-  const { data: tokenRow } = await supabaseAdmin
+  const supabase = getSupabaseAdmin();
+  const { data: tokenRow } = await supabase
     .from('oauth_tokens')
     .select('access_token, refresh_token, expires_at')
     .eq('rider_id', riderId)
@@ -120,17 +121,18 @@ export async function POST(req: Request) {
       current.main_ms < best.main_ms ? current : best
     );
 
-    // Insert the attempt
-    const { error: insertError } = await supabaseAdmin
-      .from('attempts')
-      .upsert({
-        rider_id: rid,
-        season_key: seasonKey,
-        activity_id: bestAttempt.activity_id,
-        main_ms: bestAttempt.main_ms,
-        climb_sum_ms: bestAttempt.climb_sum_ms,
-        desc_sum_ms: bestAttempt.desc_sum_ms,
-      }, { onConflict: 'rider_id,season_key' });
+        // Insert the attempt
+        const supabase = getSupabaseAdmin();
+        const { error: insertError } = await supabase
+          .from('attempts')
+          .upsert({
+            rider_id: rid,
+            season_key: seasonKey,
+            activity_id: bestAttempt.activity_id,
+            main_ms: bestAttempt.main_ms,
+            climb_sum_ms: bestAttempt.climb_sum_ms,
+            desc_sum_ms: bestAttempt.desc_sum_ms,
+          }, { onConflict: 'rider_id,season_key' });
 
     if (insertError) {
       return NextResponse.json({ recorded: false, reason: 'insert_failed', detail: insertError.message }, { status: 500 });

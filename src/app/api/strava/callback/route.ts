@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { exchangeCodeForToken } from '@/lib/strava';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
 
@@ -11,8 +11,9 @@ export async function GET(req: Request) {
 
   const data = await exchangeCodeForToken(code);
   const athlete = data?.athlete;
+  const supabase = getSupabaseAdmin();
 
-  const { data: riderRow, error: rErr } = await supabaseAdmin
+  const { data: riderRow, error: rErr } = await supabase
     .from('riders')
     .upsert({
       strava_athlete_id: athlete.id,
@@ -26,7 +27,7 @@ export async function GET(req: Request) {
   if (rErr || !riderRow) return NextResponse.redirect(new URL('/race-trackingV2?error=rider_upsert_failed', req.url));
 
   const expires_at = new Date(Date.now() + data.expires_in * 1000).toISOString();
-  await supabaseAdmin.from('oauth_tokens').upsert({
+  await supabase.from('oauth_tokens').upsert({
     rider_id: riderRow.id,
     access_token: data.access_token,
     refresh_token: data.refresh_token,
