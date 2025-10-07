@@ -8,7 +8,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
   const stateRaw = searchParams.get('state');
-  const state = decodeState(stateRaw);
+  const state = decodeState<{ consent_public?: boolean }>(stateRaw);
   if (!code) return NextResponse.redirect(new URL('/race-trackingV2?error=missing_code', req.url));
 
   const data = await exchangeCodeForToken(code);

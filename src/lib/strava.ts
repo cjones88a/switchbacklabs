@@ -12,9 +12,9 @@ export function getAuthorizeURL(stateObj: unknown) {
   return url.toString();
 }
 
-export function decodeState(state?: string | null): any | null {
+export function decodeState<T extends object = Record<string, unknown>>(state?: string | null): T | null {
   if (!state) return null;
-  try { return JSON.parse(Buffer.from(state, 'base64url').toString('utf8')); }
+  try { return JSON.parse(Buffer.from(state, 'base64url').toString('utf8')) as T; }
   catch { return null; }
 }
 
