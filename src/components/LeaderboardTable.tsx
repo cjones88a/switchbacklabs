@@ -78,7 +78,7 @@ export default function LeaderboardTable({ seasonKey }: { seasonKey: string }) {
             {!isLoading && rows.length === 0 && (
               <tr><td className="p-2 text-gray-500" colSpan={8}>No entries yet.</td></tr>
             )}
-            {rows.map((r: any, i: number) => (
+                {rows.map((r: { rider?: { name: string }; by_season: Record<string, number | null>; total_ms: number; climb_sum_ms: number | null; desc_sum_ms: number | null }, i: number) => (
               <tr key={i} className="border-t">
                 <td className="p-2">{r.rider?.name}</td>
                 <td className="p-2 text-right">{fmt(r.by_season.FALL)}</td>

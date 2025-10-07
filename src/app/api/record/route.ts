@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     // 2) token
     const access = await getValidAccessToken(rid);
 
-    let summaries: any[] = [];
+    let summaries: Array<{ activity_id: number; main_ms: number; climb_sum_ms: number | null; desc_sum_ms: number | null }> = [];
 
     if (force_activity_id) {
       // Force test with specific activity ID
