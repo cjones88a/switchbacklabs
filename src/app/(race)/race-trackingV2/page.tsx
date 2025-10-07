@@ -1,7 +1,7 @@
 "use client";
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import LeaderboardTable from '@/components/LeaderboardTable';
 
 function base64url(s: string) {
@@ -27,7 +27,7 @@ export default function Page() {
 
   return (
     <main className="mx-auto max-w-3xl p-4 space-y-6">
-      <p className="text-xs"><a href="/" className="underline">← Back to home</a></p>
+      <p className="text-xs"><Link href="/" className="underline">← Back to home</Link></p>
       <h1 className="text-2xl font-semibold">Horsetooth Four-Seasons Challenge</h1>
       <p className="text-sm">Authenticate with Strava to log your time for the season window.</p>
 
