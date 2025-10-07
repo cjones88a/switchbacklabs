@@ -1,50 +1,186 @@
 import Link from "next/link";
+import { ArrowRight, FlaskConical, FileText, Sparkles, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader } from "@/components/ui/card";
 
-export default function HomePage() {
+export const metadata = {
+  title: "Switchback Labs — Product Strategy & Technical PM",
+  description:
+    "Helping teams turn ambiguity into shipped products—strategy, research, design, requirements, and hands-on delivery.",
+};
+
+const Pill = ({ children }: { children: React.ReactNode }) => (
+  <span className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs text-muted">
+    {children}
+  </span>
+);
+
+export default function Home() {
   return (
-    <section className="grid gap-10 md:grid-cols-2 items-start">
-      <div className="space-y-5">
-        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
-          Product Strategy & Technical PM for teams that need momentum
-        </h1>
-        <p className="text-gray-700">
-          I'm Colt Jones, a senior Product Manager with principal-level engineering chops.
-          I help startups and product teams move from fuzzy ideas to shippable products: 
-          clear strategy, validated design, crisp requirements, and smooth delivery—with hands-on build support when needed.
-        </p>
-        <ul className="text-sm text-gray-800 space-y-1">
-          <li>• Strategy: positioning, goals, success metrics</li>
-          <li>• Research: discovery, user interviews, insight synthesis</li>
-          <li>• Design: IA, flows, low/hi-fi prototypes</li>
-          <li>• Requirements: PRDs, specs, acceptance tests</li>
-          <li>• Delivery: backlog, dev handoff, quality bars</li>
-        </ul>
-        <div className="flex flex-wrap gap-3">
-          <Link href="/services" className="rounded-md border px-4 py-2 hover:bg-gray-50">Services</Link>
-          <Link href="/projects" className="rounded-md border px-4 py-2 hover:bg-gray-50">Projects</Link>
-          <a href="mailto:switchbacklabsco@gmail.com" className="rounded-md border px-4 py-2 bg-black text-white hover:opacity-90">
-            Get in touch
-          </a>
-        </div>
-        <p className="text-xs text-gray-500">
-          Consulting availability: fractional PM or project-based.
-        </p>
-      </div>
+    <div className="space-y-16">
+      {/* HERO */}
+      <section className="relative overflow-hidden rounded-2xl border bg-[radial-gradient(1200px_500px_at_20%_-20%,hsl(var(--ring)/0.25),transparent),linear-gradient(180deg,hsl(var(--surface)),hsl(var(--bg)))]">
+        <div className="container-std py-14 md:py-20">
+          <div className="max-w-3xl space-y-6">
+            <div className="flex flex-wrap gap-2">
+              <Pill>Product Strategy</Pill>
+              <Pill>Research</Pill>
+              <Pill>Design</Pill>
+              <Pill>Requirements</Pill>
+              <Pill>Delivery</Pill>
+            </div>
 
-      <div className="rounded-xl border p-5">
-        <h2 className="font-medium mb-2">Featured project</h2>
-        <div className="space-y-2 text-sm">
-          <p><strong>Horsetooth Four-Seasons Race Tracker</strong></p>
-          <p className="text-gray-700">
-            Full-stack race tracking app with Strava OAuth, real-time leaderboards, and admin controls. 
-            Built with Next.js, Supabase, and deployed on Vercel.
-          </p>
-          <div className="flex gap-2">
-            <Link href="/projects/4soh" className="underline">Project details</Link>
-            <Link href="/race-trackingV2" className="underline">Live tracker</Link>
+            <h1 className="text-4xl font-semibold leading-tight md:text-5xl">
+              Build the <span className="text-[hsl(var(--brand))]">right</span> product—faster and with less thrash.
+            </h1>
+
+            <p className="max-w-2xl text-lg text-muted">
+              I'm <strong>Colt Jones</strong>, a senior PM helping founders and product teams move from fuzzy ideas to shipped experiences:
+              crisp strategy, evidence-based decisions, and specs developers love.
+            </p>
+
+            <div className="flex flex-wrap gap-3">
+              <a
+                className="btn btn-primary"
+                href="mailto:switchbacklabsco@gmail.com?subject=Project%20inquiry%20—%20Switchback%20Labs"
+              >
+                Start a project
+              </a>
+              <Link href="/projects" className="btn btn-ghost">
+                See projects <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+
+            <p className="text-xs text-muted">
+              Availability: fractional PM or project-based sprints. Response within 1 business day.
+            </p>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {/* THREE OUTCOMES */}
+      <section className="container-std">
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold">What you get</h2>
+          <p className="text-muted">
+            Clear decisions, fewer cycles, and documentation that accelerates engineering.
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="hover:shadow-pop transition hover:-translate-y-0.5">
+            <CardHeader title="Clarity & focus" subtitle="Strategy that ties features to outcomes." />
+            <div className="mt-3 flex items-start gap-3">
+              <Target className="mt-0.5 h-5 w-5 text-[hsl(var(--brand))]" />
+              <p className="text-sm text-muted">
+                Positioning, goals, and success metrics. A roadmap that explains "why this, why now."
+              </p>
+            </div>
+          </Card>
+
+          <Card className="hover:shadow-pop transition hover:-translate-y-0.5">
+            <CardHeader title="Evidence over opinion" subtitle="Research that de-risks decisions." />
+            <div className="mt-3 flex items-start gap-3">
+              <FlaskConical className="mt-0.5 h-5 w-5 text-[hsl(var(--brand))]" />
+              <p className="text-sm text-muted">
+                Discovery interviews, JTBD, rapid validation with prototypes. Insights you can act on.
+              </p>
+            </div>
+          </Card>
+
+          <Card className="hover:shadow-pop transition hover:-translate-y-0.5">
+            <CardHeader title="Specs devs love" subtitle="Crisp requirements, faster delivery." />
+            <div className="mt-3 flex items-start gap-3">
+              <FileText className="mt-0.5 h-5 w-5 text-[hsl(var(--brand))]" />
+              <p className="text-sm text-muted">
+                PRDs, flows, and acceptance criteria that remove ambiguity and speed up implementation.
+              </p>
+            </div>
+          </Card>
+        </div>
+      </section>
+
+      {/* PROCESS */}
+      <section className="container-std">
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold">How we'll work</h2>
+          <p className="text-muted">A simple, time-boxed engagement that moves fast.</p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-5">
+          {[
+            ["Discover", "Context, goals, users, constraints."],
+            ["Decide", "Prioritize opportunities against outcomes."],
+            ["Design", "Flows & prototypes to validate direction."],
+            ["Define", "PRDs, acceptance tests, instrumentation."],
+            ["Deliver", "Handoff, backlog, and launch support."],
+          ].map(([t, d], i) => (
+            <Card key={i} className="p-4">
+              <span className="text-xs text-muted">Step {i + 1}</span>
+              <div className="mt-1 font-medium">{t}</div>
+              <div className="mt-1 text-sm text-muted">{d}</div>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* FEATURED PROJECT */}
+      <section className="container-std">
+        <div className="mb-6 flex items-end justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-semibold">Featured project</h2>
+            <p className="text-muted">A small, purposeful build showcasing hands-on execution.</p>
+          </div>
+          <Link href="/projects" className="text-sm underline">
+            All projects
+          </Link>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card className="p-5 md:col-span-2 hover:shadow-pop transition hover:-translate-y-0.5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="max-w-2xl">
+                <div className="flex items-center gap-2 text-xs">
+                  <Sparkles className="h-4 w-4 text-[hsl(var(--brand))]" />
+                  <span className="text-muted">Demo / Personal</span>
+                </div>
+                <h3 className="mt-1 text-xl font-semibold">Horsetooth Four-Seasons Race Tracker</h3>
+                <p className="mt-1 text-sm text-muted">
+                  OAuth with Strava, segment parsing, Supabase, Vercel. Mobile-first leaderboard with admin
+                  controls for date windows. A quick example of strategy → schema → API → UI → deployment.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Link href="/projects/4soh" className="btn btn-ghost">
+                  Project details
+                </Link>
+                <Link href="/race-trackingV2" className="btn btn-primary">
+                  Live tracker
+                </Link>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="container-std">
+        <Card className="p-6 md:p-8 items-center text-center hover:shadow-pop transition">
+          <h3 className="text-xl font-semibold">Have a product to move forward?</h3>
+          <p className="mt-2 text-sm text-muted">
+            Let's align on outcomes and carve a path from ambiguity to shipped.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+            <a
+              className="btn btn-primary"
+              href="mailto:switchbacklabsco@gmail.com?subject=Project%20inquiry%20—%20Switchback%20Labs"
+            >
+              Book a working session
+            </a>
+            <Link href="/services" className="btn btn-ghost">
+              Explore services
+            </Link>
+          </div>
+        </Card>
+      </section>
+    </div>
   );
 }
