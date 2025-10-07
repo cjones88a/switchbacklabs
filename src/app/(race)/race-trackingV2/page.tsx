@@ -12,15 +12,19 @@ export default function Page() {
   const seasonKey = `${new Date().getFullYear()}_FALL`;
   const [consent, setConsent] = useState(false);
 
-  // Build state client-side so we can link directly to Strava's authorize URL
-  const authorizeUrl = useMemo(() => {
-    const stateObj = { consent_public: !!consent, ts: Date.now() };
-    const state = base64url(JSON.stringify(stateObj));
-    const cid = process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID!;
-    const redir = encodeURIComponent(process.env.NEXT_PUBLIC_STRAVA_REDIRECT_URI!);
-    const scope = encodeURIComponent("read,activity:read_all");
-    return `https://www.strava.com/oauth/authorize?client_id=${cid}&redirect_uri=${redir}&response_type=code&approval_prompt=auto&scope=${scope}&state=${state}`;
-  }, [consent]);
+      // Build state client-side so we can link directly to Strava's authorize URL
+      const authorizeUrl = useMemo(() => {
+        const stateObj = { consent_public: !!consent, ts: Date.now() };
+        const state = base64url(JSON.stringify(stateObj));
+        const cid = process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID || "";
+        const redir = encodeURIComponent(process.env.NEXT_PUBLIC_STRAVA_REDIRECT_URI || "");
+        const scope = encodeURIComponent("read,activity:read_all");
+        return `https://www.strava.com/oauth/authorize?client_id=${cid}&redirect_uri=${redir}&response_type=code&approval_prompt=auto&scope=${scope}&state=${state}`;
+      }, [consent]);
+
+      const cid = process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID || "";
+      const redir = process.env.NEXT_PUBLIC_STRAVA_REDIRECT_URI || "";
+      const enabled = Boolean(cid && redir);
 
   return (
     <main className="space-y-6">
@@ -40,20 +44,22 @@ export default function Page() {
       </label>
 
       {/* OFFICIAL BUTTON (48px high), links directly to Strava authorize */}
-      <a
-        href={authorizeUrl}
-        className={`inline-block ${consent ? "" : "pointer-events-none opacity-50"}`}
-        aria-disabled={!consent}
-      >
-        <img
-          src="/strava/buttons/connect-with-strava_orange.svg"
-          alt="Connect with Strava"
-          height={48}
-        />
-      </a>
+          <a
+            href={enabled ? authorizeUrl : "#"}
+            className={`inline-block ${enabled && consent ? "" : "pointer-events-none opacity-50"}`}
+            aria-disabled={!enabled || !consent}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/strava/buttons/connect-with-strava_orange.svg"
+              alt="Connect with Strava"
+              height={48}
+            />
+          </a>
 
       {/* Subtle "Powered by Strava" mark (separate from our brand; not prominent) */}
       <div className="pt-2">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/strava/logos/powered-by-strava_orange.svg"
           alt="Powered by Strava"
