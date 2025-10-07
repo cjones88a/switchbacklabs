@@ -3,6 +3,8 @@ import useSWR from "swr";
 import { useEffect, useState } from "react";
 
 const fetcher = (u: string) => fetch(u).then((r) => r.json());
+const STRAVA_ORANGE = "#FC5200";
+
 function fmt(ms: number | null | undefined) {
   if (ms == null) return "—";
   const s = Math.floor(ms / 1000);
@@ -18,6 +20,7 @@ export default function LeaderboardTable({ seasonKey }: { seasonKey: string }) {
 
   const rows = data?.rows ?? [];
   const [debug, setDebug] = useState("");
+  const [lastActivityId, setLastActivityId] = useState<number | null>(null);
 
   // fire once after OAuth to record in the current season
   useEffect(() => {
@@ -47,6 +50,7 @@ export default function LeaderboardTable({ seasonKey }: { seasonKey: string }) {
             });
             const j = await r.json();
             setDebug(JSON.stringify(j, null, 2));
+            setLastActivityId(j?.activity_id ?? null);
             mutate();
           }}
           className="text-xs rounded border px-2 py-1"
@@ -56,6 +60,19 @@ export default function LeaderboardTable({ seasonKey }: { seasonKey: string }) {
       </div>
 
       {debug && <pre className="text-xs bg-gray-50 border rounded p-2 overflow-x-auto">{debug}</pre>}
+
+      {lastActivityId && (
+        <div className="text-sm">
+          <a
+            href={`https://www.strava.com/activities/${lastActivityId}`}
+            target="_blank" rel="noopener noreferrer"
+            className="underline"
+            style={{ color: STRAVA_ORANGE }}
+          >
+            View on Strava
+          </a>
+        </div>
+      )}
 
       <div className="overflow-x-auto border rounded-md">
         <table className="min-w-full text-sm">
@@ -94,6 +111,24 @@ export default function LeaderboardTable({ seasonKey }: { seasonKey: string }) {
         </table>
       </div>
       <p className="text-xs text-gray-500">Descent Sum = 3 descents from the same activity as your overall time.</p>
+
+      <div className="text-xs text-gray-600 space-x-3 pt-2">
+        <span>Segments:</span>
+        <a
+          href={`https://www.strava.com/segments/${process.env.NEXT_PUBLIC_MAIN_SEGMENT_ID}`}
+          target="_blank" rel="noopener noreferrer" className="underline" style={{ color: STRAVA_ORANGE }}
+        >View on Strava</a>
+        <span>•</span>
+        <a href={`https://www.strava.com/segments/${process.env.NEXT_PUBLIC_CLIMB_1}`} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: STRAVA_ORANGE }}>View on Strava</a>
+        <span>•</span>
+        <a href={`https://www.strava.com/segments/${process.env.NEXT_PUBLIC_CLIMB_2}`} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: STRAVA_ORANGE }}>View on Strava</a>
+        <span>•</span>
+        <a href={`https://www.strava.com/segments/${process.env.NEXT_PUBLIC_DESC_1}`} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: STRAVA_ORANGE }}>View on Strava</a>
+        <span>•</span>
+        <a href={`https://www.strava.com/segments/${process.env.NEXT_PUBLIC_DESC_2}`} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: STRAVA_ORANGE }}>View on Strava</a>
+        <span>•</span>
+        <a href={`https://www.strava.com/segments/${process.env.NEXT_PUBLIC_DESC_3}`} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: STRAVA_ORANGE }}>View on Strava</a>
+      </div>
     </div>
   );
 }
