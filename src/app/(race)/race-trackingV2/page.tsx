@@ -1,8 +1,10 @@
 "use client";
-import { useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import LeaderboardTable from '@/components/LeaderboardTable';
+
+// Make this page dynamic to avoid prerender errors
+export const dynamic = "force-dynamic";
 
 function base64url(s: string) {
   return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -11,8 +13,15 @@ function base64url(s: string) {
 export default function Page() {
   const seasonKey = `${new Date().getFullYear()}_FALL`;
   const [consent, setConsent] = useState(false);
-  const sp = useSearchParams();
-  const debug = sp.get("debug") === "1";
+
+  // NEW: replace useSearchParams() with a mounted flag
+  const [debug, setDebug] = useState(false);
+  useEffect(() => {
+    try {
+      const d = new URLSearchParams(window.location.search).get("debug") === "1";
+      setDebug(d);
+    } catch {}
+  }, []);
 
   const cid   = process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID || "";
   const redir = process.env.NEXT_PUBLIC_STRAVA_REDIRECT_URI || "";
@@ -22,7 +31,9 @@ export default function Page() {
     if (!envOk) return "";
     const state = base64url(JSON.stringify({ consent_public: !!consent, ts: Date.now() }));
     const scope = encodeURIComponent("read,activity:read_all");
-    return `https://www.strava.com/oauth/authorize?client_id=${cid}&redirect_uri=${encodeURIComponent(redir)}&response_type=code&approval_prompt=auto&scope=${scope}&state=${state}`;
+    return `https://www.strava.com/oauth/authorize?client_id=${cid}&redirect_uri=${encodeURIComponent(
+      redir
+    )}&response_type=code&approval_prompt=auto&scope=${scope}&state=${state}`;
   }, [consent, cid, redir, envOk]);
 
   return (
