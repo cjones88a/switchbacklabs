@@ -31,7 +31,14 @@ export async function GET(req: Request) {
 
   const rows = (data ?? []) as Row[];
 
-  const byRider = new Map<string, any>();
+  const byRider = new Map<string, {
+    rider: { name: string; avatar: string | null };
+    by_season: Record<string, number | null>;
+    climb_sum_ms: number | null;
+    desc_sum_ms: number | null;
+    total_ms: number;
+    best_season_ms: number | null;
+  }>();
 
   for (const r of rows) {
     const season = r.season_key.split("_")[1] as typeof SEASONS[number];
