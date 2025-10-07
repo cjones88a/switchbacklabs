@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@reference;
+
 /* Design tokens (HSL so we can shade/tint) */
 :root {
   --bg: 0 0% 100%;
