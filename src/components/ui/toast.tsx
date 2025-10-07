@@ -16,7 +16,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       <div className="fixed right-4 bottom-4 space-y-2 z-50">
         {items.map(i => (
-          <div key={i.id} className="card px-3 py-2 shadow-pop">
+          <div key={i.id} className="bg-[hsl(var(--surface))] border rounded-2xl shadow-[0_1px_0_0_hsl(var(--border)),0_8px_24px_-12px_hsl(var(--shadow))] px-3 py-2 shadow-[0_0_0_8px_hsl(var(--ring)/0.15)]">
             <div className="text-sm font-medium">{i.title}</div>
             {i.message && <div className="text-xs text-muted">{i.message}</div>}
           </div>

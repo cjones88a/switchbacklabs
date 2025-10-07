@@ -14,8 +14,8 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
     const base = "btn rounded-xl";
     const v = {
       primary: "btn-primary shadow-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]",
-      secondary: "btn-ghost bg-surface border hover:bg-[hsl(var(--surface))/0.9]",
-      ghost: "btn-ghost hover:bg-[hsl(var(--surface))/0.6]",
+      secondary: "border bg-[hsl(var(--surface))] border hover:bg-[hsl(var(--surface))/0.9]",
+      ghost: "border hover:bg-[hsl(var(--surface))/0.6]",
     }[variant];
     return <button ref={ref} className={clsx(base, v, sizeCls[size], className)} {...props} />;
   }
