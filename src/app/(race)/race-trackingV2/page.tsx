@@ -23,9 +23,20 @@ export default function Page() {
     } catch {}
   }, []);
 
-  const cid   = process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID || "";
-  const redir = process.env.NEXT_PUBLIC_STRAVA_REDIRECT_URI || "";
-  const envOk = Boolean(cid && redir);
+  // Prefer NEXT_PUBLIC_* (client-visible). Fallback to server vars if present.
+  const cid =
+    process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID ||
+    process.env.STRAVA_CLIENT_ID ||
+    "";
+  const redir =
+    process.env.NEXT_PUBLIC_STRAVA_REDIRECT_URI ||
+    process.env.STRAVA_REDIRECT_URI ||
+    "";
+
+  const envIssues: string[] = [];
+  if (!cid) envIssues.push("client_id");
+  if (!redir) envIssues.push("redirect_uri");
+  const envOk = envIssues.length === 0;
 
   const authorizeUrl = useMemo(() => {
     if (!envOk) return "";
@@ -50,22 +61,39 @@ export default function Page() {
         </span>
       </label>
 
-      {/* Official button — disabled if consent or env are missing */}
-      <a
-        href={authorizeUrl || "#"}
-        target="_self"
-        rel="nofollow"
-        className={`inline-block ${(consent && envOk) ? "" : "pointer-events-none opacity-50"}`}
+      {/* Official Strava button, but as a <button> so we can truly disable it */}
+      <button
+        type="button"
+        id="strava-auth-btn"
+        disabled={!consent || !envOk}
+        className={`inline-block ${(!consent || !envOk) ? "opacity-50" : ""}`}
         aria-disabled={!consent || !envOk}
-        onClick={(e) => {
-          if (!consent) { e.preventDefault(); console.warn("Consent required"); }
-          if (!envOk) { e.preventDefault(); console.error("Missing NEXT_PUBLIC_STRAVA_CLIENT_ID or NEXT_PUBLIC_STRAVA_REDIRECT_URI"); }
-          if (debug) console.log("[auth] navigate →", authorizeUrl);
+        title={
+          !consent ? "Check the consent box to enable" :
+          !envOk ? `Missing config: ${envIssues.join(", ")}` :
+          "Connect with Strava"
+        }
+        onClick={() => {
+          if (!consent || !envOk) return;
+          console.log("[auth] navigating →", authorizeUrl);
+          // Direct navigation to Strava OAuth endpoint (brand-compliant)
+          window.location.assign(authorizeUrl);
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/strava/buttons/connect-with-strava_orange.svg" alt="Connect with Strava" height={48} />
-      </a>
+        <img
+          src="/strava/buttons/connect-with-strava_orange.svg"
+          alt="Connect with Strava"
+          height={48}
+        />
+      </button>
+
+      {(!consent || !envOk) && (
+        <div className="text-xs text-red-600 mt-1">
+          {!consent ? "Check the consent box to enable the button." :
+            <>Missing config in env: <code>{envIssues.join(", ")}</code></>}
+        </div>
+      )}
 
       <div className="pt-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
