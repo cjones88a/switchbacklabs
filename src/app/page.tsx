@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ArrowRight, FlaskConical, FileText, Sparkles, Target } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 
 export const metadata = {
@@ -35,7 +34,7 @@ export default function Home() {
             </h1>
 
             <p className="max-w-2xl text-lg text-muted">
-              I'm <strong>Colt Jones</strong>, a senior PM helping founders and product teams move from fuzzy ideas to shipped experiences:
+              I&apos;m <strong>Colt Jones</strong>, a senior PM helping founders and product teams move from fuzzy ideas to shipped experiences:
               crisp strategy, evidence-based decisions, and specs developers love.
             </p>
 
@@ -72,7 +71,7 @@ export default function Home() {
             <div className="mt-3 flex items-start gap-3">
               <Target className="mt-0.5 h-5 w-5 text-[hsl(var(--brand))]" />
               <p className="text-sm text-muted">
-                Positioning, goals, and success metrics. A roadmap that explains "why this, why now."
+                Positioning, goals, and success metrics. A roadmap that explains &quot;why this, why now.&quot;
               </p>
             </div>
           </Card>
@@ -102,7 +101,7 @@ export default function Home() {
       {/* PROCESS */}
       <section className="container-std">
         <div className="mb-6">
-          <h2 className="text-2xl font-semibold">How we'll work</h2>
+          <h2 className="text-2xl font-semibold">How we&apos;ll work</h2>
           <p className="text-muted">A simple, time-boxed engagement that moves fast.</p>
         </div>
         <div className="grid gap-4 md:grid-cols-5">
@@ -166,7 +165,7 @@ export default function Home() {
         <Card className="p-6 md:p-8 items-center text-center hover:shadow-pop transition">
           <h3 className="text-xl font-semibold">Have a product to move forward?</h3>
           <p className="mt-2 text-sm text-muted">
-            Let's align on outcomes and carve a path from ambiguity to shipped.
+            Let&apos;s align on outcomes and carve a path from ambiguity to shipped.
           </p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
             <a
