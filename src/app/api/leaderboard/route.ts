@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
+import { traceHeaders } from "@/lib/trace";
 
 export const runtime = "nodejs";
 
@@ -16,11 +17,15 @@ const SEASONS = ["FALL", "WINTER", "SPRING", "SUMMER"] as const;
 const keysForYear = (y: number) => SEASONS.map(s => `${y}_${s}`);
 
 export async function GET(req: Request) {
+  const t = traceHeaders("leaderboard");
+  console.time(`[${t.name}] ${t.id}`);
+  
   const supabase = getSupabaseAdmin();
 
   const { searchParams } = new URL(req.url);
   const year = Number(searchParams.get("year") || new Date().getFullYear());
   const seasonKeys = keysForYear(year);
+  console.log(`[${t.name}] ${t.id} year`, year);
 
   const { data, error } = await supabase
     .from("attempts")
@@ -68,5 +73,9 @@ export async function GET(req: Request) {
     return { ...b, total_ms, best_season_ms };
   });
 
-  return NextResponse.json({ year, rows: out });
+  const res = NextResponse.json({ year, rows: out });
+  res.headers.set("x-trace-id", t.id);
+  res.headers.set("x-handler", t.name);
+  console.timeEnd(`[${t.name}] ${t.id}`);
+  return res;
 }

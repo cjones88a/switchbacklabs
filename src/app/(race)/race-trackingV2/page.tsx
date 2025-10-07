@@ -1,40 +1,36 @@
 "use client";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import LeaderboardTable from '@/components/LeaderboardTable';
 
 function base64url(s: string) {
-  if (typeof window === "undefined") return "";
   return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 export default function Page() {
   const seasonKey = `${new Date().getFullYear()}_FALL`;
   const [consent, setConsent] = useState(false);
+  const sp = useSearchParams();
+  const debug = sp.get("debug") === "1";
 
-      // Build state client-side so we can link directly to Strava's authorize URL
-      const authorizeUrl = useMemo(() => {
-        const stateObj = { consent_public: !!consent, ts: Date.now() };
-        const state = base64url(JSON.stringify(stateObj));
-        const cid = process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID || "";
-        const redir = encodeURIComponent(process.env.NEXT_PUBLIC_STRAVA_REDIRECT_URI || "");
-        const scope = encodeURIComponent("read,activity:read_all");
-        return `https://www.strava.com/oauth/authorize?client_id=${cid}&redirect_uri=${redir}&response_type=code&approval_prompt=auto&scope=${scope}&state=${state}`;
-      }, [consent]);
+  const cid   = process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID || "";
+  const redir = process.env.NEXT_PUBLIC_STRAVA_REDIRECT_URI || "";
+  const envOk = Boolean(cid && redir);
 
-      const cid = process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID || "";
-      const redir = process.env.NEXT_PUBLIC_STRAVA_REDIRECT_URI || "";
-      const enabled = Boolean(cid && redir);
+  const authorizeUrl = useMemo(() => {
+    if (!envOk) return "";
+    const state = base64url(JSON.stringify({ consent_public: !!consent, ts: Date.now() }));
+    const scope = encodeURIComponent("read,activity:read_all");
+    return `https://www.strava.com/oauth/authorize?client_id=${cid}&redirect_uri=${encodeURIComponent(redir)}&response_type=code&approval_prompt=auto&scope=${scope}&state=${state}`;
+  }, [consent, cid, redir, envOk]);
 
   return (
-    <main className="space-y-6">
-      <p className="text-xs">
-        <Link href="/" className="underline">← Back to home</Link>
-      </p>
+    <main className="mx-auto max-w-3xl p-4 space-y-6">
+      <p className="text-xs"><a href="/" className="underline">← Back to home</a></p>
       <h1 className="text-2xl font-semibold">Horsetooth Four-Seasons Challenge</h1>
       <p className="text-sm">Authenticate with Strava to log your time for the season window.</p>
 
-      {/* Consent is required for public display, per our policy */}
       <label className="flex items-start gap-2 text-sm">
         <input type="checkbox" className="mt-1" checked={consent} onChange={(e)=>setConsent(e.target.checked)} />
         <span>
@@ -43,31 +39,40 @@ export default function Page() {
         </span>
       </label>
 
-      {/* OFFICIAL BUTTON (48px high), links directly to Strava authorize */}
-          <a
-            href={enabled ? authorizeUrl : "#"}
-            className={`inline-block ${enabled && consent ? "" : "pointer-events-none opacity-50"}`}
-            aria-disabled={!enabled || !consent}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/strava/buttons/connect-with-strava_orange.svg"
-              alt="Connect with Strava"
-              height={48}
-            />
-          </a>
+      {/* Official button — disabled if consent or env are missing */}
+      <a
+        href={authorizeUrl || "#"}
+        target="_self"
+        rel="nofollow"
+        className={`inline-block ${(consent && envOk) ? "" : "pointer-events-none opacity-50"}`}
+        aria-disabled={!consent || !envOk}
+        onClick={(e) => {
+          if (!consent) { e.preventDefault(); console.warn("Consent required"); }
+          if (!envOk) { e.preventDefault(); console.error("Missing NEXT_PUBLIC_STRAVA_CLIENT_ID or NEXT_PUBLIC_STRAVA_REDIRECT_URI"); }
+          if (debug) console.log("[auth] navigate →", authorizeUrl);
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/strava/buttons/connect-with-strava_orange.svg" alt="Connect with Strava" height={48} />
+      </a>
 
-      {/* Subtle "Powered by Strava" mark (separate from our brand; not prominent) */}
       <div className="pt-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/strava/logos/powered-by-strava_orange.svg"
-          alt="Powered by Strava"
-          height={18}
-        />
+        <img src="/strava/logos/powered-by-strava_orange.svg" alt="Powered by Strava" height={18} />
       </div>
 
       <div className="text-xs opacity-70">Season key: {seasonKey}</div>
+
+      {debug && (
+        <div className="border rounded-xl p-3 text-xs space-y-1">
+          <div><strong>Debug</strong></div>
+          <div>envOk: {String(envOk)}</div>
+          <div>client_id: {cid || "(missing)"}</div>
+          <div>redirect_uri: {redir || "(missing)"} </div>
+          <div className="break-all">authorizeUrl: {authorizeUrl || "(not built)"}</div>
+          <div className="text-[10px] text-gray-500">Tip: add <code>?debug=1</code> to the URL anytime.</div>
+        </div>
+      )}
       
       <LeaderboardTable seasonKey={seasonKey} />
     </main>

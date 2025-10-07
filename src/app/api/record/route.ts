@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { summarizeFromActivity } from '@/lib/strava';
 import { getWindowsForSeason } from '@/lib/windows';
+import { traceHeaders } from '@/lib/trace';
 
 export const runtime = 'nodejs';
 
@@ -41,9 +42,13 @@ async function withRetry(url: string, options: RequestInit, maxRetries = 3) {
 }
 
 export async function POST(req: Request) {
+  const t = traceHeaders("record");
+  console.time(`[${t.name}] ${t.id}`);
+  
   try {
     const body = await req.json();
     const seasonKey = body.season_key;
+    console.log(`[${t.name}] ${t.id} body`, body);
     const force_activity_id = process.env.NODE_ENV !== "production"
       ? (body?.force_activity_id as number | undefined)
       : undefined;
@@ -138,13 +143,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ recorded: false, reason: 'insert_failed', detail: insertError.message }, { status: 500 });
     }
 
-    return NextResponse.json({ 
+    const res = NextResponse.json({ 
       recorded: true, 
       activity_id: bestAttempt.activity_id,
       main_ms: bestAttempt.main_ms,
       climb_sum_ms: bestAttempt.climb_sum_ms,
       desc_sum_ms: bestAttempt.desc_sum_ms
     });
+    res.headers.set("x-trace-id", t.id);
+    res.headers.set("x-handler", t.name);
+    console.timeEnd(`[${t.name}] ${t.id}`);
+    return res;
 
   } catch (error) {
     console.error('Record API error:', error);

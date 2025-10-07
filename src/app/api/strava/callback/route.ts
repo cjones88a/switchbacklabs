@@ -1,14 +1,19 @@
 import { NextResponse } from 'next/server';
 import { exchangeCodeForToken, decodeState } from '@/lib/strava';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { traceHeaders } from '@/lib/trace';
 
 export const runtime = 'nodejs';
 
 export async function GET(req: Request) {
+  const t = traceHeaders("strava-callback");
+  console.time(`[${t.name}] ${t.id}`);
+  
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
   const stateRaw = searchParams.get('state');
   const state = decodeState<{ consent_public?: boolean }>(stateRaw);
+  console.log(`[${t.name}] ${t.id} query params`, { code: code ? `${code.substring(0, 8)}...` : null, state: stateRaw });
   if (!code) return NextResponse.redirect(new URL('/race-trackingV2?error=missing_code', req.url));
 
   const data = await exchangeCodeForToken(code);
@@ -47,5 +52,8 @@ export async function GET(req: Request) {
     path: '/',
     maxAge: 60 * 60 * 24 * 30,
   });
+  res.headers.set("x-trace-id", t.id);
+  res.headers.set("x-handler", t.name);
+  console.timeEnd(`[${t.name}] ${t.id}`);
   return res;
 }
