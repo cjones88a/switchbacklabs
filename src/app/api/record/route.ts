@@ -76,9 +76,32 @@ export async function POST(req: Request) {
     }
 
     // 1) gather windows
-    const windows = await getWindowsForSeason(seasonKey);
+    let windows = await getWindowsForSeason(seasonKey);
     if (!windows.length) {
-      return NextResponse.json({ recorded: false, reason: 'no_season_window' }, { status: 400 });
+      // Create a default season window for demo purposes
+      const supabase = getSupabaseAdmin();
+      const now = new Date();
+      const startDate = new Date(now.getFullYear(), 0, 1); // January 1st of current year
+      const endDate = new Date(now.getFullYear(), 11, 31); // December 31st of current year
+      
+      const { error: insertError } = await supabase
+        .from('season_windows')
+        .insert({
+          season_key: seasonKey,
+          start_at: startDate.toISOString(),
+          end_at: endDate.toISOString()
+        });
+      
+      if (insertError) {
+        console.error('Failed to create default season window:', insertError);
+        return NextResponse.json({ recorded: false, reason: 'no_season_window' }, { status: 400 });
+      }
+      
+      // Retry getting windows
+      windows = await getWindowsForSeason(seasonKey);
+      if (!windows.length) {
+        return NextResponse.json({ recorded: false, reason: 'no_season_window' }, { status: 400 });
+      }
     }
 
     // 2) token

@@ -37,7 +37,7 @@ export default function RaceTracker() {
   React.useEffect(() => {
     (async () => {
       try {
-        const s = await fetch("/api/season-key").then(r => r.ok ? r.text() : ""); // if you have this; otherwise hardcode
+        const s = await fetch("/api/season-key").then(r => r.ok ? r.text() : "");
         if (s) setSeasonKey(s);
       } catch {}
       await refresh();
@@ -89,7 +89,7 @@ export default function RaceTracker() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          season_key: seasonKey || "2025"
+          season_key: seasonKey || "2025_FALL"
         })
       });
       const json = await res.json();
