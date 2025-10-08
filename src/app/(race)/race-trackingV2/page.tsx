@@ -1,131 +1,181 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+
+import * as React from "react";
 import Link from "next/link";
-import LeaderboardTable from '@/components/LeaderboardTable';
-import TrackerBackground from '@/components/race/TrackerBackground';
+import SiteHeader from "@/components/layout/SiteHeader";
+import Consent from "@/components/race/Consent";
+import StravaConnect from "@/components/race/StravaConnect";
+import Alert from "@/components/ui/Alert";
+import Leaderboard from "@/components/race/Leaderboard";
+import TrackerBackground from "@/components/race/TrackerBackground";
 
-// Make this page dynamic to avoid prerender errors
-export const dynamic = "force-dynamic";
+type AttemptStatus = {
+  recorded: boolean;
+  reason?: string;
+  activity_id?: number;
+  main_ms?: number;
+  climb_sum_ms?: number;
+  desc_sum_ms?: number;
+};
 
-function base64url(s: string) {
-  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
+const fmt = (ms?: number | null) => {
+  if (!ms && ms !== 0) return null;
+  const total = Math.floor(ms / 1000);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  return [h, m, s].map((v, i) => (i === 0 ? String(v) : String(v).padStart(2, "0"))).join(":").replace(/^0:/, "");
+};
 
-export default function Page() {
-  const seasonKey = `${new Date().getFullYear()}_FALL`;
-  const [consent, setConsent] = useState(false);
+export default function RaceTracker() {
+  const [consent, setConsent] = React.useState(false);
+  const [seasonKey, setSeasonKey] = React.useState<string>(""); // server returns this on page load in your impl
+  const [status, setStatus] = React.useState<AttemptStatus | null>(null);
+  const [busy, setBusy] = React.useState(false);
+  const [rows, setRows] = React.useState<
+    { rider: string; fall?: string | null; winter?: string | null; spring?: string | null; summer?: string | null; total?: string | null; climbSum?: string | null; descSum?: string | null; profileUrl?: string | null; }[]
+  >([]);
 
-  // NEW: replace useSearchParams() with a mounted flag
-  const [debug, setDebug] = useState(false);
-  useEffect(() => {
-    try {
-      const d = new URLSearchParams(window.location.search).get("debug") === "1";
-      setDebug(d);
-    } catch {}
+  // initial fetches (season + leaderboard)
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const s = await fetch("/api/season-key").then(r => r.ok ? r.text() : ""); // if you have this; otherwise hardcode
+        if (s) setSeasonKey(s);
+      } catch {}
+      await refresh();
+    })();
   }, []);
 
-  // Prefer NEXT_PUBLIC_* (client-visible). Fallback to server vars if present.
-  const cid =
-    process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID ||
-    process.env.STRAVA_CLIENT_ID ||
-    "";
-  const redir =
-    process.env.NEXT_PUBLIC_STRAVA_REDIRECT_URI ||
-    process.env.STRAVA_REDIRECT_URI ||
-    "";
+  const refresh = async () => {
+    try {
+      const res = await fetch("/api/leaderboard", { cache: "no-store" });
+      if (!res.ok) return;
 
-  const envIssues: string[] = [];
-  if (!cid) envIssues.push("client_id");
-  if (!redir) envIssues.push("redirect_uri");
-  const envOk = envIssues.length === 0;
+      const data = await res.json();
+      // adapt to your API shape
+      const mapped = (data?.rows || data || []).map((r: Record<string, unknown>) => ({
+        rider: r.rider_name ?? r.rider ?? "Unknown",
+        fall: r.fall ?? r["2025_FALL"] ?? null,
+        winter: r.winter ?? null,
+        spring: r.spring ?? null,
+        summer: r.summer ?? null,
+        total: r.total ?? (r.total_ms ? fmt(r.total_ms as number) : null),
+        climbSum: r.climb_sum ?? (r.climb_sum_ms ? fmt(r.climb_sum_ms as number) : null),
+        descSum: r.desc_sum ?? (r.desc_sum_ms ? fmt(r.desc_sum_ms as number) : null),
+        profileUrl: r.profile ?? r.profile_url ?? null,
+      }));
+      setRows(mapped);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
-  const authorizeUrl = useMemo(() => {
-    if (!envOk) return "";
-    const state = base64url(JSON.stringify({ consent_public: !!consent, ts: Date.now() }));
-    const scope = encodeURIComponent("read,activity:read_all");
-    return `https://www.strava.com/oauth/authorize?client_id=${cid}&redirect_uri=${encodeURIComponent(
-      redir
-    )}&response_type=code&approval_prompt=auto&scope=${scope}&state=${state}`;
-  }, [consent, cid, redir, envOk]);
+  const recordNow = async () => {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/record", { method: "POST" });
+      const json = await res.json();
+      setStatus(json as AttemptStatus);
+      await refresh();
+    } catch (e) {
+      console.error(e);
+      setStatus({ recorded: false, reason: "client_error" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const viewActivityUrl = status?.activity_id
+    ? `https://www.strava.com/activities/${status.activity_id}`
+    : null;
 
   return (
-        <div className="relative min-h-[calc(100svh-56px)] -mx-4 -my-8">
-          {/* Pencil-drawing background (uses webp if available) */}
-          <TrackerBackground
-            src={
-              process.env.NEXT_PUBLIC_USE_PNG === "1"
-                ? "/race/4soh-background.png"
-                : "/race/4soh-background.webp"
-            }
-          />
+    <>
+      <SiteHeader />
+      <main className="relative">
+        <TrackerBackground />
+        <section className="container-std py-10 md:py-14 space-y-8">
+          <Link href="/" className="underline text-sm">← Back to home</Link>
 
-          <div className="container-std py-8 space-y-6 relative z-10">
-        <p className="text-xs"><Link href="/" className="underline">← Back to home</Link></p>
-        <h1 className="text-2xl font-semibold">Horsetooth Four-Seasons Challenge</h1>
-        <p className="text-sm">Authenticate with Strava to log your time for the season window.</p>
+          <header className="space-y-2">
+            <h1 className="h2">Horsetooth Four-Seasons Challenge</h1>
+            <p className="text-muted">Authenticate with Strava to log your time for the season window.</p>
+          </header>
 
-        <label className="flex items-start gap-2 text-sm">
-          <input type="checkbox" className="mt-1" checked={consent} onChange={(e)=>setConsent(e.target.checked)} />
-          <span>
-            I agree to display my name and race times on the public leaderboard.
-            <br/><span className="text-xs text-gray-500">You can withdraw consent anytime by emailing us.</span>
-          </span>
-        </label>
-
-        {/* Official Strava button, but as a <button> so we can truly disable it */}
-        <button
-          type="button"
-          id="strava-auth-btn"
-          disabled={!consent || !envOk}
-          className={`inline-block ${(!consent || !envOk) ? "opacity-50" : ""}`}
-          aria-disabled={!consent || !envOk}
-          title={
-            !consent ? "Check the consent box to enable" :
-            !envOk ? `Missing config: ${envIssues.join(", ")}` :
-            "Connect with Strava"
-          }
-          onClick={() => {
-            if (!consent || !envOk) return;
-            console.log("[auth] navigating →", authorizeUrl);
-            // Direct navigation to Strava OAuth endpoint (brand-compliant)
-            window.location.assign(authorizeUrl);
-          }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/strava/buttons/connect-with-strava_orange.svg"
-            alt="Connect with Strava"
-            height={48}
-          />
-        </button>
-
-        {(!consent || !envOk) && (
-          <div className="text-xs text-red-600 mt-1">
-            {!consent ? "Check the consent box to enable the button." :
-              <>Missing config in env: <code>{envIssues.join(", ")}</code></>}
+          {/* Consent + Connect */}
+          <div className="space-y-4">
+            <Consent onChange={setConsent} />
+            <div className="flex flex-wrap items-center gap-4">
+              <StravaConnect enabled={consent} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/strava/powered-by-strava-black.svg"
+                alt="Powered by Strava"
+                className="h-8 w-auto opacity-90"
+                height={32}
+              />
+            </div>
+            {seasonKey && (
+              <div className="text-xs text-muted">Season key: <span className="font-mono">{seasonKey}</span></div>
+            )}
           </div>
-        )}
 
-        <div className="pt-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/strava/logos/powered-by-strava_orange.svg" alt="Powered by Strava" height={18} />
-        </div>
-
-        <div className="text-xs opacity-70">Season key: {seasonKey}</div>
-
-        {debug && (
-          <div className="border rounded-xl p-3 text-xs space-y-1">
-            <div><strong>Debug</strong></div>
-            <div>envOk: {String(envOk)}</div>
-            <div>client_id: {cid || "(missing)"}</div>
-            <div>redirect_uri: {redir || "(missing)"} </div>
-            <div className="break-all">authorizeUrl: {authorizeUrl || "(not built)"}</div>
-            <div className="text-[10px] text-gray-500">Tip: add <code>?debug=1</code> to the URL anytime.</div>
+          {/* Actions */}
+          <div className="flex flex-wrap gap-3">
+            <button onClick={refresh} className="btn btn-ghost" disabled={busy}>Refresh</button>
+            <button onClick={recordNow} className="btn btn-primary" disabled={busy}>
+              {busy ? "Recording…" : "Record now"}
+            </button>
           </div>
-        )}
-        
-        <LeaderboardTable seasonKey={seasonKey} />
-      </div>
-    </div>
+
+          {/* Status / JSON */}
+          {status && (
+            <Alert variant={status.recorded ? "success" : "warning"}>
+              <pre className="text-sm overflow-x-auto">{JSON.stringify({
+                recorded: status.recorded,
+                activity_id: status.activity_id,
+                main_ms: status.main_ms,
+                climb_sum_ms: status.climb_sum_ms,
+                desc_sum_ms: status.desc_sum_ms,
+                reason: status.reason,
+              }, null, 2)}</pre>
+
+              {viewActivityUrl && (
+                <div className="mt-3">
+                  <a href={viewActivityUrl} className="underline">View on Strava</a>
+                </div>
+              )}
+            </Alert>
+          )}
+
+          {/* Guidance */}
+          <p className="text-xs text-muted">
+            Descent Sum = 3 descents from the same activity as your overall time.
+          </p>
+
+          {/* Leaderboard */}
+          <div className="space-y-3">
+            <Leaderboard rows={rows} />
+          </div>
+
+          {/* Segment links (optional—kept from your old UI) */}
+          <div className="text-xs text-muted">
+            Segments:&nbsp;
+            <a className="underline" href="https://www.strava.com/segments/7977451">View on Strava</a>
+            &nbsp;·&nbsp;
+            <a className="underline" href="https://www.strava.com/segments/9589287">View on Strava</a>
+            &nbsp;·&nbsp;
+            <a className="underline" href="https://www.strava.com/segments/18229887">View on Strava</a>
+            &nbsp;·&nbsp;
+            <a className="underline" href="https://www.strava.com/segments/21056071">View on Strava</a>
+            &nbsp;·&nbsp;
+            <a className="underline" href="https://www.strava.com/segments/19057702">View on Strava</a>
+            &nbsp;·&nbsp;
+            <a className="underline" href="https://www.strava.com/segments/13590275">View on Strava</a>
+          </div>
+        </section>
+      </main>
+    </>
   );
 }
