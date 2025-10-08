@@ -18,7 +18,8 @@ export async function GET() {
   const t = traceHeaders("my-times");
   console.time(`[${t.name}] ${t.id}`);
   
-  const rid = cookies().get("rider_id")?.value;
+  const cookieStore = await cookies();
+  const rid = cookieStore.get("rider_id")?.value;
   if (!rid) {
     return NextResponse.json({ error: "not_authenticated" }, { status: 401 });
   }
