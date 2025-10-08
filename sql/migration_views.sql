@@ -6,7 +6,11 @@
 create index if not exists idx_attempts_rider_season_time
   on public.attempts (rider_id, season_key, main_ms, created_at);
 
--- 2. View: best attempt per rider per season (picks the fastest main time)
+-- 2. Unique index to avoid duplicate caching of the same activity for a rider
+create unique index if not exists uniq_attempts_rider_activity
+  on public.attempts (rider_id, activity_id);
+
+-- 3. View: best attempt per rider per season (picks the fastest main time)
 create or replace view public.rider_season_best_attempt as
 select distinct on (a.rider_id, a.season_key)
        a.rider_id,
@@ -19,7 +23,7 @@ select distinct on (a.rider_id, a.season_key)
 from public.attempts a
 order by a.rider_id, a.season_key, a.main_ms asc, a.created_at asc;
 
--- 3. View: pivot best season times into race-year rows
+-- 4. View: pivot best season times into race-year rows
 create or replace view public.rider_yearly_times as
 with norm as (
   select
