@@ -1,36 +1,20 @@
+import type { Metadata } from "next";
 import "./globals.css";
-import SiteHeader from "@/components/SiteHeader";
-import SiteFooter from "@/components/SiteFooter";
-import ThemeProvider from "@/components/ThemeProvider";
-import { ToastProvider } from "@/components/ui/toast";
-import StickyCallout from "@/components/layout/StickyCallout";
+import { Inter, Archivo_Black } from "next/font/google";
 
-export const metadata = {
-  metadataBase: new URL("https://switchbacklabsco.com"),
-  title: "Switchback Labs — Product Strategy & Technical PM",
-  description: "Consulting in strategy, research, design, and requirements. Built by a senior PM with principal-level engineering chops.",
-  openGraph: {
-    title: "Switchback Labs",
-    description: "Product Strategy & Technical PM Consulting",
-    url: "https://switchbacklabsco.com",
-    siteName: "Switchback Labs",
-  },
+const inter = Inter({ subsets: ["latin"], variable: "--font-body" });
+const archivoBlack = Archivo_Black({ weight: "400", subsets: ["latin"], variable: "--font-display" });
+
+export const metadata: Metadata = {
+  title: "Switchback Labs",
+  description: "Product strategy & technical PM",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen antialiased flex flex-col" suppressHydrationWarning>
-        <ThemeProvider>
-          <ToastProvider>
-            <SiteHeader />
-            <main className="flex-1">
-              <div className="container-std py-8">{children}</div>
-            </main>
-            <SiteFooter />
-            <StickyCallout />
-          </ToastProvider>
-        </ThemeProvider>
+    <html lang="en">
+      <body className={`${inter.variable} ${archivoBlack.variable} font-sans`}>
+        {children}
       </body>
     </html>
   );

@@ -49,17 +49,17 @@ export default function Page() {
   }, [consent, cid, redir, envOk]);
 
   return (
-    <div className="relative min-h-[calc(100svh-56px)] -mx-4 -my-8">
-      {/* Pencil-drawing background (uses webp if available) */}
-      <TrackerBackground
-        src={
-          process.env.NEXT_PUBLIC_USE_PNG === "1"
-            ? "/race/4soh-background.png"
-            : "/race/4soh-background.webp"
-        }
-      />
+        <div className="relative min-h-[calc(100svh-56px)] -mx-4 -my-8">
+          {/* Pencil-drawing background (uses webp if available) */}
+          <TrackerBackground
+            src={
+              process.env.NEXT_PUBLIC_USE_PNG === "1"
+                ? "/race/4soh-background.png"
+                : "/race/4soh-background.webp"
+            }
+          />
 
-      <div className="mx-auto max-w-3xl p-4 space-y-6 relative z-10">
+          <div className="container-std py-8 space-y-6 relative z-10">
         <p className="text-xs"><Link href="/" className="underline">← Back to home</Link></p>
         <h1 className="text-2xl font-semibold">Horsetooth Four-Seasons Challenge</h1>
         <p className="text-sm">Authenticate with Strava to log your time for the season window.</p>

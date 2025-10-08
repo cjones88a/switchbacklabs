@@ -3,110 +3,114 @@
 @tailwind utilities;
 @reference tailwind;
 
-/* ---- Design tokens ---- */
-:root {
-  --bg: 0 0% 100%;
-  --fg: 220 35% 10%;
-  --muted: 220 8% 46%;
-  --surface: 0 0% 100%;
-  --border: 220 16% 90%;
-  --shadow: 220 50% 30%;
-  --brand: 158 64% 45%;
-  --brand2: 200 100% 50%;
-  --brand-fg: 160 84% 98%;
-  --ring: 160 84% 40%;
-}
-.dark {
-  --bg: 220 18% 8%;
-  --fg: 210 20% 96%;
-  --muted: 210 10% 70%;
-  --surface: 220 14% 12%;
-  --border: 220 12% 20%;
-  --shadow: 220 50% 2%;
-  --brand: 158 64% 45%;
-  --brand2: 200 100% 50%;
-  --brand-fg: 160 84% 10%;
-  --ring: 160 84% 35%;
+/* Light, punchy palette */
+:root{
+  --pb-bg:      0 0% 100%;   /* white */
+  --pb-ink:     150 22% 8%;  /* very dark green/black */
+  --pb-muted:   150 9% 40%;  /* muted ink */
+  --pb-line:    150 12% 90%; /* soft gray lines */
+  --pb-accent:  78 100% 60%; /* neon-lime */
 }
 
-/* Base */
 html, body { 
-  background: hsl(var(--bg)); 
-  color: hsl(var(--fg)); 
-}
-* { 
-  border-color: hsl(var(--border)); 
+  height: 100%; 
+  background: hsl(var(--pb-bg));
+  color: hsl(var(--pb-ink));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ---- Utility classes ---- */
-.container-std {
+/* Links feel bold but simple */
+a { 
+  text-underline-offset: 4px;
+  text-decoration-thickness: 2px;
+}
+
+/* Shared layout/utilities */
+.container-std { 
+  max-width: 1140px;
   margin-left: auto;
   margin-right: auto;
-  max-width: 64rem;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
 }
 
-.card {
-  background: hsl(var(--surface));
-  border: 1px solid hsl(var(--border));
-  border-radius: 1.25rem;
-  box-shadow: 0 1px 0 0 hsl(var(--border)), 0 8px 24px -12px hsl(var(--shadow));
-}
-
-.btn {
+.btn { 
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  font-weight: 600;
   border-radius: 0.75rem;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  font-weight: 500;
   transition: all 0.2s ease;
 }
 
-.btn-primary {
-  background: hsl(var(--brand));
-  color: hsl(var(--brand-fg));
+.btn-primary { 
+  background: hsl(var(--pb-accent));
+  color: hsl(var(--pb-ink));
 }
 
 .btn-primary:hover {
-  filter: brightness(0.95);
+  opacity: 0.9;
 }
 
-.btn-primary:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px hsl(var(--ring));
+.btn-primary:active {
+  opacity: 0.85;
 }
 
-.btn-ghost {
-  background: hsl(var(--surface));
-  border: 1px solid hsl(var(--border));
+.btn-ghost { 
+  border: 1px solid hsl(var(--pb-line));
+  color: hsl(var(--pb-ink));
 }
 
 .btn-ghost:hover {
-  background: hsl(var(--surface) / 0.8);
+  background: hsl(var(--pb-line));
 }
 
-.badge {
+.badge { 
   display: inline-flex;
   align-items: center;
   border-radius: 9999px;
-  border: 1px solid hsl(var(--border));
-  padding: 0.25rem 0.625rem;
+  padding: 0.25rem 0.75rem;
   font-size: 0.75rem;
-  color: hsl(var(--muted));
+  border: 1px solid hsl(var(--pb-line));
+  background: white;
 }
 
-.link {
-  color: hsl(var(--brand));
+.card { 
+  background: white;
+  border: 1px solid hsl(var(--pb-line));
+  border-radius: 1rem;
+  box-shadow: 0 10px 40px rgba(0,0,0,.06);
 }
 
-.link:hover {
-  text-decoration: underline;
+.divider { 
+  height: 1px;
+  background: hsl(var(--pb-line));
 }
 
-.text-muted {
-  color: hsl(var(--muted));
+/* Typographic helpers */
+.h1 { 
+  font-size: clamp(48px, 9vw, 160px);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  font-weight: 900;
+  font-family: var(--font-display), ui-sans-serif, system-ui;
+}
+
+.h2 { 
+  font-size: 1.875rem;
+  font-weight: 600;
+}
+
+@media (min-width: 768px) {
+  .h2 {
+    font-size: 2.25rem;
+  }
+}
+
+.lead { 
+  font-size: clamp(22px, 2.2vw, 28px);
+  line-height: 1.3;
+  color: hsl(var(--pb-muted));
 }

@@ -1,192 +1,96 @@
+import SiteHeader from "@/components/layout/SiteHeader";
+import ScrollCue from "@/components/ui/ScrollCue";
 import Link from "next/link";
-import { ArrowRight, FlaskConical, FileText, Sparkles, Target } from "lucide-react";
-import { Card, CardHeader } from "@/components/ui/card";
-import Reveal from "@/components/motion/Reveal";
 
 export const metadata = {
-  title: "Switchback Labs — Product Strategy & Technical PM",
-  description:
-    "Helping teams turn ambiguity into shipped products—strategy, research, design, requirements, and hands-on delivery.",
+  title: "Switchback Labs — Less fluff. More shipped.",
+  description: "Senior PM with principal-level engineering skills. Strategy, research, design, and developer-loved specs.",
 };
-
-const Pill = ({ children }: { children: React.ReactNode }) => (
-  <span className="badge">
-    {children}
-  </span>
-);
 
 export default function Home() {
   return (
-    <div className="space-y-16">
+    <>
+      <SiteHeader />
+
       {/* HERO */}
-      <Reveal>
-        <section className="relative overflow-hidden rounded-2xl border bg-[radial-gradient(1200px_500px_at_20%_-20%,hsl(var(--ring)/0.25),transparent),linear-gradient(180deg,hsl(var(--surface)),hsl(var(--bg)))]">
-          <div className="container-std py-14 md:py-20">
-            <div className="max-w-3xl space-y-6">
-              <div className="flex flex-wrap gap-2">
-                <Pill>Product Strategy</Pill>
-                <Pill>Research</Pill>
-                <Pill>Design</Pill>
-                <Pill>Requirements</Pill>
-                <Pill>Delivery</Pill>
-              </div>
+      <section className="relative overflow-hidden">
+        <div className="container-std">
+          <div className="pt-16 pb-24 md:pb-28">
+            <p className="text-xs tracking-widest uppercase text-muted mb-6">
+              Product Strategy · Research · Design · Requirements · Delivery
+            </p>
 
-              <h1 className="text-4xl font-semibold leading-tight md:text-5xl">
-                Build the <span className="text-[hsl(var(--brand))]">right</span> product—faster and with less thrash.
-              </h1>
+            <h1 className="h1" style={{ fontFamily: "var(--font-display), ui-sans-serif" }}>
+              LESS TALK.<br/> MORE SHIPPED.
+            </h1>
 
-              <p className="max-w-2xl text-lg text-muted">
-                I&apos;m <strong>Colt Jones</strong>, a senior PM helping founders and product teams move from fuzzy ideas to shipped experiences:
-                crisp strategy, evidence-based decisions, and specs developers love.
-              </p>
+            <p className="lead mt-6 max-w-[60ch]">
+              I help founders and teams move from fuzzy ideas to shipped experiences: crisp strategy,
+              evidence-based decisions, and specs developers love.
+            </p>
 
-              <div className="flex flex-wrap gap-3">
-                <a
-                  className="btn btn-primary"
-                  href="mailto:switchbacklabsco@gmail.com?subject=Project%20inquiry%20—%20Switchback%20Labs"
-                >
-                  Start a project
-                </a>
-                <Link href="/projects" className="btn btn-ghost">
-                  See projects <ArrowRight className="ml-1 h-4 w-4" />
-                </Link>
-              </div>
-
-              <p className="text-xs text-muted">
-                Availability: fractional PM or project-based sprints. Response within 1 business day.
-              </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a className="btn btn-primary" href="mailto:switchbacklabsco@gmail.com">Start a project</a>
+              <Link className="btn btn-ghost" href="/projects">See projects →</Link>
             </div>
           </div>
-        </section>
-      </Reveal>
-
-      {/* THREE OUTCOMES */}
-      <Reveal delay={0.2}>
-        <section className="container-std">
-          <div className="mb-6">
-            <h2 className="text-2xl font-semibold">What you get</h2>
-            <p className="text-muted">
-              Clear decisions, fewer cycles, and documentation that accelerates engineering.
-            </p>
-          </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card className="hover:shadow-pop transition hover:-translate-y-0.5">
-              <CardHeader title="Clarity & focus" subtitle="Strategy that ties features to outcomes." />
-              <div className="mt-3 flex items-start gap-3">
-                <Target className="mt-0.5 h-5 w-5 text-[hsl(var(--brand))]" />
-                <p className="text-sm text-muted">
-                  Positioning, goals, and success metrics. A roadmap that explains &quot;why this, why now.&quot;
-                </p>
-              </div>
-            </Card>
-
-            <Card className="hover:shadow-pop transition hover:-translate-y-0.5">
-              <CardHeader title="Evidence over opinion" subtitle="Research that de-risks decisions." />
-              <div className="mt-3 flex items-start gap-3">
-                <FlaskConical className="mt-0.5 h-5 w-5 text-[hsl(var(--brand))]" />
-                <p className="text-sm text-muted">
-                  Discovery interviews, JTBD, rapid validation with prototypes. Insights you can act on.
-                </p>
-              </div>
-            </Card>
-
-            <Card className="hover:shadow-pop transition hover:-translate-y-0.5">
-              <CardHeader title="Specs devs love" subtitle="Crisp requirements, faster delivery." />
-              <div className="mt-3 flex items-start gap-3">
-                <FileText className="mt-0.5 h-5 w-5 text-[hsl(var(--brand))]" />
-                <p className="text-sm text-muted">
-                  PRDs, flows, and acceptance criteria that remove ambiguity and speed up implementation.
-                </p>
-              </div>
-            </Card>
-          </div>
-        </section>
-      </Reveal>
-
-      {/* PROCESS */}
-      <section className="container-std">
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold">How we&apos;ll work</h2>
-          <p className="text-muted">A simple, time-boxed engagement that moves fast.</p>
         </div>
-        <div className="grid gap-4 md:grid-cols-5">
+
+        {/* Neon accent circle (pure shape, no brand copying) */}
+        <div className="pointer-events-none absolute -right-24 top-24 w-[320px] h-[320px] rounded-full bg-accent mix-blend-multiply opacity-90"></div>
+
+        <ScrollCue />
+      </section>
+
+      {/* WHAT YOU GET */}
+      <section className="container-std py-16">
+        <h2 className="h2">What you get</h2>
+        <p className="mt-2 text-muted">Clear decisions, fewer cycles, and documentation that accelerates engineering.</p>
+
+        <div className="mt-8 grid gap-4">
           {[
-            ["Discover", "Context, goals, users, constraints."],
-            ["Decide", "Prioritize opportunities against outcomes."],
-            ["Design", "Flows & prototypes to validate direction."],
-            ["Define", "PRDs, acceptance tests, instrumentation."],
-            ["Deliver", "Handoff, backlog, and launch support."],
-          ].map(([t, d], i) => (
-            <Card key={i} className="p-4">
-              <span className="text-xs text-muted">Step {i + 1}</span>
-              <div className="mt-1 font-medium">{t}</div>
-              <div className="mt-1 text-sm text-muted">{d}</div>
-            </Card>
+            ["Clarity & focus", "Strategy that ties features to outcomes."],
+            ["Evidence over opinion", "Research that de-risks decisions."],
+            ["Specs devs love", "PRDs, flows, and acceptance criteria that remove ambiguity."],
+          ].map(([title, body]) => (
+            <div className="card p-6 md:p-7" key={title}>
+              <div className="text-lg font-semibold">{title}</div>
+              <div className="text-muted mt-2">{body}</div>
+            </div>
           ))}
         </div>
       </section>
 
       {/* FEATURED PROJECT */}
-      <Reveal delay={0.4}>
-        <section className="container-std">
-          <div className="mb-6 flex items-end justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-semibold">Featured project</h2>
-              <p className="text-muted">A small, purposeful build showcasing hands-on execution.</p>
-            </div>
-            <Link href="/projects" className="text-sm underline">
-              All projects
-            </Link>
-          </div>
+      <section className="container-std py-16">
+        <div className="flex items-end justify-between">
+          <h2 className="h2">Featured project</h2>
+          <Link href="/projects" className="underline">All projects</Link>
+        </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card className="p-5 md:col-span-2 hover:shadow-pop transition hover:-translate-y-0.5">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div className="max-w-2xl">
-                  <div className="flex items-center gap-2 text-xs">
-                    <Sparkles className="h-4 w-4 text-[hsl(var(--brand))]" />
-                    <span className="text-muted">Demo / Personal</span>
-                  </div>
-                  <h3 className="mt-1 text-xl font-semibold">Horsetooth Four-Seasons Race Tracker</h3>
-                  <p className="mt-1 text-sm text-muted">
-                    OAuth with Strava, segment parsing, Supabase, Vercel. Mobile-first leaderboard with admin
-                    controls for date windows. A quick example of strategy → schema → API → UI → deployment.
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Link href="/projects/4soh" className="btn btn-ghost">
-                    Project details
-                  </Link>
-                  <Link href="/race-trackingV2" className="btn btn-primary">
-                    Live tracker
-                  </Link>
-                </div>
-              </div>
-            </Card>
-          </div>
-        </section>
-      </Reveal>
-
-      {/* CTA */}
-      <section className="container-std">
-        <Card className="p-6 md:p-8 items-center text-center hover:shadow-pop transition">
-          <h3 className="text-xl font-semibold">Have a product to move forward?</h3>
-          <p className="mt-2 text-sm text-muted">
-            Let&apos;s align on outcomes and carve a path from ambiguity to shipped.
+        <div className="card p-6 md:p-8 mt-6">
+          <div className="text-xs text-muted">Demo / Personal</div>
+          <div className="text-xl font-semibold mt-1">Horsetooth Four-Seasons Race Tracker</div>
+          <p className="text-muted mt-2 max-w-2xl">
+            OAuth with Strava, segment parsing, Supabase, Vercel. Mobile leaderboard with admin windows—
+            strategy → schema → API → UI → launch.
           </p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-            <a
-              className="btn btn-primary"
-              href="mailto:switchbacklabsco@gmail.com?subject=Project%20inquiry%20—%20Switchback%20Labs"
-            >
-              Book a working session
-            </a>
-            <Link href="/services" className="btn btn-ghost">
-              Explore services
-            </Link>
+          <div className="mt-6 flex gap-3">
+            <Link href="/race-trackingV2" className="btn btn-primary">Live tracker</Link>
+            <Link href="/projects/4soh" className="btn btn-ghost">Details</Link>
           </div>
-        </Card>
+        </div>
       </section>
-    </div>
+
+      <footer className="border-t border-line">
+        <div className="container-std py-8 text-sm text-muted flex items-center justify-between">
+          <div>© Switchback Labs — Fort Collins, CO</div>
+          <div className="flex gap-6">
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/terms">Terms</Link>
+          </div>
+        </div>
+      </footer>
+    </>
   );
 }
