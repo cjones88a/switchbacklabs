@@ -65,7 +65,7 @@ export async function GET() {
 
   // 1) Load all windows from DB
   const { data: winRows, error: winErr } = await sb
-    .from<SeasonWindowRow>("season_windows")
+    .from("season_windows")
     .select("*")
     .order("start_at", { ascending: true });
 
@@ -95,7 +95,7 @@ export async function GET() {
 
   // Fetch attempts we may already have (cache)
   const { data: cachedAttempts } = await sb
-    .from<AttemptRow>("attempts")
+    .from("attempts")
     .select("id, rider_id, season_key, activity_id, main_ms")
     .eq("rider_id", rid);
 
