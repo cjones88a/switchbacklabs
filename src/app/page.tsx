@@ -1,7 +1,6 @@
 import SiteHeader from "@/components/layout/SiteHeader";
 import ScrollCue from "@/components/ui/ScrollCue";
 import Link from "next/link";
-import OutlineCard from "@/components/ui/OutlineCard";
 import PillArrow from "@/components/ui/PillArrow";
 
 export const metadata = {

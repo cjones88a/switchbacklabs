@@ -4,7 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import SiteHeader from "@/components/layout/SiteHeader";
 import StravaConnect from "@/components/race/StravaConnect";
-import Alert from "@/components/ui/Alert";
 import Leaderboard from "@/components/race/Leaderboard";
 import TrackerBackground from "@/components/race/TrackerBackground";
 
@@ -57,8 +56,8 @@ export default function RaceTracker() {
         let riderName = "Unknown";
         if (typeof r.rider === 'string') {
           riderName = r.rider;
-        } else if (r.rider && typeof r.rider === 'object' && 'name' in r.rider) {
-          riderName = (r.rider as any).name;
+            } else if (r.rider && typeof r.rider === 'object' && 'name' in r.rider) {
+              riderName = (r.rider as { name: string }).name;
         } else if (r.rider_name) {
           riderName = r.rider_name as string;
         }
@@ -126,7 +125,7 @@ export default function RaceTracker() {
                   />
                 </div>
                 <p className="text-xs text-gray-600">
-                  By clicking "Connect with Strava", I agree to display my name and race times on the public leaderboard. 
+                  By clicking &quot;Connect with Strava&quot;, I agree to display my name and race times on the public leaderboard. 
                   You can withdraw consent anytime by emailing us.
                 </p>
                 {seasonKey && (

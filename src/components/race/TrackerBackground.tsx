@@ -1,4 +1,3 @@
-import Image from "next/image";
 
 /**
  * Decorative background for the Four-Seasons tracker.
