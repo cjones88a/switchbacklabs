@@ -85,7 +85,7 @@ export type TokenRow = {
 
 export async function getFreshAccessToken(riderId: string): Promise<string> {
   const sb = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
-  const { data, error } = await sb.from<TokenRow>("oauth_tokens").select("*").eq("rider_id", riderId).maybeSingle();
+  const { data, error } = await sb.from("oauth_tokens").select("*").eq("rider_id", riderId).maybeSingle();
   if (error || !data) throw new Error("oauth_token_not_found");
 
   const expires = new Date(data.expires_at).getTime();

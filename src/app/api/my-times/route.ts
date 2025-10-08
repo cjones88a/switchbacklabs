@@ -44,7 +44,6 @@ function parseKey(key: string) {
   return { year, season, race_year };
 }
 
-type SeasonWindowRow = { season_key: string; start_at: string; end_at: string };
 type AttemptRow = {
   id: string;
   rider_id: string;
