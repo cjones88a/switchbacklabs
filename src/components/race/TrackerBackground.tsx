@@ -25,10 +25,10 @@ export default function TrackerBackground({
         fill
         sizes="100vw"
         priority={false}
-        className="object-cover opacity-20 mix-blend-luminosity"
+        className="object-cover opacity-30 mix-blend-luminosity"
       />
       {/* Legibility wash — darkens toward the bottom */}
-      <div className="absolute inset-0 bg-gradient-to-b from-bg/0 via-bg/40 to-bg/80" />
+      <div className="absolute inset-0 bg-gradient-to-b from-bg/0 via-bg/30 to-bg/70" />
     </div>
   );
 }

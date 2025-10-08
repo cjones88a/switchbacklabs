@@ -49,7 +49,7 @@ export default function Page() {
   }, [consent, cid, redir, envOk]);
 
   return (
-    <main className="relative min-h-[calc(100svh-56px)]">
+    <div className="relative min-h-[calc(100svh-56px)] -mx-4 -my-8">
       {/* Pencil-drawing background (uses webp if available) */}
       <TrackerBackground
         src={
@@ -126,6 +126,6 @@ export default function Page() {
         
         <LeaderboardTable seasonKey={seasonKey} />
       </div>
-    </main>
+    </div>
   );
 }
