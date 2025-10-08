@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import LeaderboardTable from '@/components/LeaderboardTable';
+import TrackerBackground from '@/components/race/TrackerBackground';
 
 // Make this page dynamic to avoid prerender errors
 export const dynamic = "force-dynamic";
@@ -48,72 +49,83 @@ export default function Page() {
   }, [consent, cid, redir, envOk]);
 
   return (
-    <main className="mx-auto max-w-3xl p-4 space-y-6">
-      <p className="text-xs"><Link href="/" className="underline">← Back to home</Link></p>
-      <h1 className="text-2xl font-semibold">Horsetooth Four-Seasons Challenge</h1>
-      <p className="text-sm">Authenticate with Strava to log your time for the season window.</p>
-
-      <label className="flex items-start gap-2 text-sm">
-        <input type="checkbox" className="mt-1" checked={consent} onChange={(e)=>setConsent(e.target.checked)} />
-        <span>
-          I agree to display my name and race times on the public leaderboard.
-          <br/><span className="text-xs text-gray-500">You can withdraw consent anytime by emailing us.</span>
-        </span>
-      </label>
-
-      {/* Official Strava button, but as a <button> so we can truly disable it */}
-      <button
-        type="button"
-        id="strava-auth-btn"
-        disabled={!consent || !envOk}
-        className={`inline-block ${(!consent || !envOk) ? "opacity-50" : ""}`}
-        aria-disabled={!consent || !envOk}
-        title={
-          !consent ? "Check the consent box to enable" :
-          !envOk ? `Missing config: ${envIssues.join(", ")}` :
-          "Connect with Strava"
+    <main className="relative min-h-[calc(100svh-56px)]">
+      {/* Pencil-drawing background (uses webp if available) */}
+      <TrackerBackground
+        src={
+          process.env.NEXT_PUBLIC_USE_PNG === "1"
+            ? "/race/4soh-background.png"
+            : "/race/4soh-background.webp"
         }
-        onClick={() => {
-          if (!consent || !envOk) return;
-          console.log("[auth] navigating →", authorizeUrl);
-          // Direct navigation to Strava OAuth endpoint (brand-compliant)
-          window.location.assign(authorizeUrl);
-        }}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/strava/buttons/connect-with-strava_orange.svg"
-          alt="Connect with Strava"
-          height={48}
-        />
-      </button>
+      />
 
-      {(!consent || !envOk) && (
-        <div className="text-xs text-red-600 mt-1">
-          {!consent ? "Check the consent box to enable the button." :
-            <>Missing config in env: <code>{envIssues.join(", ")}</code></>}
+      <div className="mx-auto max-w-3xl p-4 space-y-6 relative z-10">
+        <p className="text-xs"><Link href="/" className="underline">← Back to home</Link></p>
+        <h1 className="text-2xl font-semibold">Horsetooth Four-Seasons Challenge</h1>
+        <p className="text-sm">Authenticate with Strava to log your time for the season window.</p>
+
+        <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" className="mt-1" checked={consent} onChange={(e)=>setConsent(e.target.checked)} />
+          <span>
+            I agree to display my name and race times on the public leaderboard.
+            <br/><span className="text-xs text-gray-500">You can withdraw consent anytime by emailing us.</span>
+          </span>
+        </label>
+
+        {/* Official Strava button, but as a <button> so we can truly disable it */}
+        <button
+          type="button"
+          id="strava-auth-btn"
+          disabled={!consent || !envOk}
+          className={`inline-block ${(!consent || !envOk) ? "opacity-50" : ""}`}
+          aria-disabled={!consent || !envOk}
+          title={
+            !consent ? "Check the consent box to enable" :
+            !envOk ? `Missing config: ${envIssues.join(", ")}` :
+            "Connect with Strava"
+          }
+          onClick={() => {
+            if (!consent || !envOk) return;
+            console.log("[auth] navigating →", authorizeUrl);
+            // Direct navigation to Strava OAuth endpoint (brand-compliant)
+            window.location.assign(authorizeUrl);
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/strava/buttons/connect-with-strava_orange.svg"
+            alt="Connect with Strava"
+            height={48}
+          />
+        </button>
+
+        {(!consent || !envOk) && (
+          <div className="text-xs text-red-600 mt-1">
+            {!consent ? "Check the consent box to enable the button." :
+              <>Missing config in env: <code>{envIssues.join(", ")}</code></>}
+          </div>
+        )}
+
+        <div className="pt-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/strava/logos/powered-by-strava_orange.svg" alt="Powered by Strava" height={18} />
         </div>
-      )}
 
-      <div className="pt-2">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/strava/logos/powered-by-strava_orange.svg" alt="Powered by Strava" height={18} />
+        <div className="text-xs opacity-70">Season key: {seasonKey}</div>
+
+        {debug && (
+          <div className="border rounded-xl p-3 text-xs space-y-1">
+            <div><strong>Debug</strong></div>
+            <div>envOk: {String(envOk)}</div>
+            <div>client_id: {cid || "(missing)"}</div>
+            <div>redirect_uri: {redir || "(missing)"} </div>
+            <div className="break-all">authorizeUrl: {authorizeUrl || "(not built)"}</div>
+            <div className="text-[10px] text-gray-500">Tip: add <code>?debug=1</code> to the URL anytime.</div>
+          </div>
+        )}
+        
+        <LeaderboardTable seasonKey={seasonKey} />
       </div>
-
-      <div className="text-xs opacity-70">Season key: {seasonKey}</div>
-
-      {debug && (
-        <div className="border rounded-xl p-3 text-xs space-y-1">
-          <div><strong>Debug</strong></div>
-          <div>envOk: {String(envOk)}</div>
-          <div>client_id: {cid || "(missing)"}</div>
-          <div>redirect_uri: {redir || "(missing)"} </div>
-          <div className="break-all">authorizeUrl: {authorizeUrl || "(not built)"}</div>
-          <div className="text-[10px] text-gray-500">Tip: add <code>?debug=1</code> to the URL anytime.</div>
-        </div>
-      )}
-      
-      <LeaderboardTable seasonKey={seasonKey} />
     </main>
   );
 }
