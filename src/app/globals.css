@@ -1,7 +1,9 @@
-/* Tailwind v4 */
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@reference tailwind;
 
-/* ---- Design tokens (unchanged) ---- */
+/* ---- Design tokens ---- */
 :root {
   --bg: 0 0% 100%;
   --fg: 220 35% 10%;
@@ -10,6 +12,7 @@
   --border: 220 16% 90%;
   --shadow: 220 50% 30%;
   --brand: 158 64% 45%;
+  --brand2: 200 100% 50%;
   --brand-fg: 160 84% 98%;
   --ring: 160 84% 40%;
 }
@@ -21,33 +24,89 @@
   --border: 220 12% 20%;
   --shadow: 220 50% 2%;
   --brand: 158 64% 45%;
+  --brand2: 200 100% 50%;
   --brand-fg: 160 84% 10%;
   --ring: 160 84% 35%;
 }
 
 /* Base */
-html, body { background: hsl(var(--bg)); color: hsl(var(--fg)); }
-* { border-color: hsl(var(--border)); }
+html, body { 
+  background: hsl(var(--bg)); 
+  color: hsl(var(--fg)); 
+}
+* { 
+  border-color: hsl(var(--border)); 
+}
 
-/* ---- Minimal helpers (no @apply) ---- */
-.container-std { margin-left:auto; margin-right:auto; max-width: 64rem; padding-left:1rem; padding-right:1rem; }
+/* ---- Utility classes ---- */
+.container-std {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 64rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
 
 .card {
   background: hsl(var(--surface));
   border: 1px solid hsl(var(--border));
-  border-radius: 1.25rem; /* ≈ rounded-2xl */
+  border-radius: 1.25rem;
   box-shadow: 0 1px 0 0 hsl(var(--border)), 0 8px 24px -12px hsl(var(--shadow));
 }
 
 .btn {
-  display:inline-flex; align-items:center; justify-content:center;
-  border-radius: 0.75rem; /* ≈ rounded-xl */
-  padding: 0.5rem 1rem;   /* ≈ px-4 py-2 */
-  font-size: 0.875rem; line-height: 1.25rem; font-weight: 500;
-  transition: filter .2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
-.btn-primary { background: hsl(var(--brand)); color: hsl(var(--brand-fg)); }
-.btn-primary:hover { filter: brightness(.95); }
-.btn-ghost { background:hsl(var(--surface)); border:1px solid hsl(var(--border)); }
 
-.text-muted { color: hsl(var(--muted)); }
+.btn-primary {
+  background: hsl(var(--brand));
+  color: hsl(var(--brand-fg));
+}
+
+.btn-primary:hover {
+  filter: brightness(0.95);
+}
+
+.btn-primary:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--ring));
+}
+
+.btn-ghost {
+  background: hsl(var(--surface));
+  border: 1px solid hsl(var(--border));
+}
+
+.btn-ghost:hover {
+  background: hsl(var(--surface) / 0.8);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid hsl(var(--border));
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  color: hsl(var(--muted));
+}
+
+.link {
+  color: hsl(var(--brand));
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.text-muted {
+  color: hsl(var(--muted));
+}

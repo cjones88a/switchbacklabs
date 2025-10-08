@@ -3,6 +3,7 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import ThemeProvider from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/ui/toast";
+import StickyCallout from "@/components/layout/StickyCallout";
 
 export const metadata = {
   metadataBase: new URL("https://switchbacklabsco.com"),
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <div className="container-std py-8">{children}</div>
             </main>
             <SiteFooter />
+            <StickyCallout />
           </ToastProvider>
         </ThemeProvider>
       </body>
