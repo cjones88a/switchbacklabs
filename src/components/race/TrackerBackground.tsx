@@ -8,7 +8,7 @@ import Image from "next/image";
  */
 export default function TrackerBackground({
   /** Prefer WEBP if present; otherwise PNG is fine */
-  src = "/race/4soh-background.png",
+  src = "/race/4soh-background.webp",
   className = "",
 }: {
   src?: string;
