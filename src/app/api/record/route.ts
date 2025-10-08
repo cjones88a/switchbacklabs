@@ -46,7 +46,18 @@ export async function POST(req: Request) {
   console.time(`[${t.name}] ${t.id}`);
   
   try {
-    const body = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch (jsonError) {
+      console.error(`[${t.name}] ${t.id} JSON parse error:`, jsonError);
+      return NextResponse.json({ 
+        recorded: false, 
+        reason: 'invalid_json', 
+        detail: 'Request body must be valid JSON' 
+      }, { status: 400 });
+    }
+    
     const seasonKey = body.season_key;
     console.log(`[${t.name}] ${t.id} body`, body);
     const force_activity_id = process.env.NODE_ENV !== "production"

@@ -83,7 +83,15 @@ export default function RaceTracker() {
   const recordNow = async () => {
     setBusy(true);
     try {
-      const res = await fetch("/api/record", { method: "POST" });
+      const res = await fetch("/api/record", { 
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          season_key: seasonKey || "2025"
+        })
+      });
       const json = await res.json();
       setStatus(json as AttemptStatus);
       await refresh();
