@@ -35,7 +35,7 @@ export default function MyTimes() {
         }
         const j = await r.json();
         setRows(j.rows || []);
-      } catch (e: any) {
+      } catch (e: unknown) {
         setErr("network_error");
       } finally {
         setLoading(false);

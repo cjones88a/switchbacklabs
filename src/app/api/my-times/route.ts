@@ -5,14 +5,14 @@ import { traceHeaders } from "@/lib/trace";
 
 export const runtime = 'nodejs';
 
-type Row = {
-  rider_id: string;
-  race_year: number;
-  fall_ms: number | null;
-  winter_ms: number | null;
-  spring_ms: number | null;
-  summer_ms: number | null;
-};
+// type Row = {
+//   rider_id: string;
+//   race_year: number;
+//   fall_ms: number | null;
+//   winter_ms: number | null;
+//   spring_ms: number | null;
+//   summer_ms: number | null;
+// };
 
 export async function GET() {
   const t = traceHeaders("my-times");
