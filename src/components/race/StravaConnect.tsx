@@ -8,7 +8,7 @@ export default function StravaConnect({
   href?: string;
 }) {
   const base =
-    "inline-flex items-center rounded-xl transition focus:outline-none focus-visible:ring-2 ring-offset-2 ring-[hsl(var(--pb-ink))]";
+    "inline-flex items-center rounded-xl transition focus:outline-none focus-visible:ring-2 ring-offset-2 ring-gray-500 shadow-lg";
 
   if (!enabled) {
     return (

@@ -17,65 +17,53 @@ export default function Leaderboard({
 }: {
   rows: RiderRow[];
 }) {
+  // Ensure rows is always an array
+  const safeRows = Array.isArray(rows) ? rows : [];
+  
   return (
-    <>
-      {/* Desktop table */}
-      <div className="hidden md:block card p-0 overflow-x-auto">
-        <table className="min-w-full border-separate [border-spacing:0]">
+    <div className="card-outline overflow-hidden bg-white/95 backdrop-blur-sm">
+      <div className="overflow-x-auto">
+        <table className="min-w-full">
           <thead>
-            <tr className="text-left text-sm text-muted">
+            <tr className="border-b border-gray-300 bg-gray-50">
               {["Rider","Fall","Winter","Spring","Summer","Total","Climb Sum","Descent Sum"].map(h => (
-                <th key={h} className="px-4 py-3 border-b border-[hsl(var(--pb-line))]">{h}</th>
+                <th key={h} className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  {h}
+                </th>
               ))}
             </tr>
           </thead>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={i} className="text-sm">
-                <td className="px-4 py-3 border-b border-[hsl(var(--pb-line))]">
-                  {r.profileUrl ? (
-                    <a href={r.profileUrl} className="underline">{r.rider}</a>
-                  ) : r.rider}
+          <tbody className="divide-y divide-gray-200">
+            {safeRows.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
+                  No entries yet
                 </td>
-                <td className="px-4 py-3 border-b border-[hsl(var(--pb-line))]">{r.fall ?? "—"}</td>
-                <td className="px-4 py-3 border-b border-[hsl(var(--pb-line))]">{r.winter ?? "—"}</td>
-                <td className="px-4 py-3 border-b border-[hsl(var(--pb-line))]">{r.spring ?? "—"}</td>
-                <td className="px-4 py-3 border-b border-[hsl(var(--pb-line))]">{r.summer ?? "—"}</td>
-                <td className="px-4 py-3 border-b border-[hsl(var(--pb-line))]">{r.total ?? "—"}</td>
-                <td className="px-4 py-3 border-b border-[hsl(var(--pb-line))]">{r.climbSum ?? "—"}</td>
-                <td className="px-4 py-3 border-b border-[hsl(var(--pb-line))]">{r.descSum ?? "—"}</td>
               </tr>
-            ))}
+            ) : (
+              safeRows.map((r, i) => (
+                <tr key={i} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                    {r.profileUrl ? (
+                      <a href={r.profileUrl} className="underline hover:opacity-70 text-blue-600">{r.rider}</a>
+                    ) : (
+                      r.rider
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{r.fall ?? "—"}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{r.winter ?? "—"}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{r.spring ?? "—"}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{r.summer ?? "—"}</td>
+                  <td className="px-6 py-4 text-sm font-semibold text-gray-900">{r.total ?? "—"}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{r.climbSum ?? "—"}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{r.descSum ?? "—"}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
-
-      {/* Mobile cards */}
-      <div className="md:hidden space-y-3">
-        {rows.map((r, i) => (
-          <div key={i} className="card p-4">
-            <div className="font-semibold">{r.rider}</div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mt-2">
-              <LabelVal label="Fall"   value={r.fall} />
-              <LabelVal label="Winter" value={r.winter} />
-              <LabelVal label="Spring" value={r.spring} />
-              <LabelVal label="Summer" value={r.summer} />
-              <LabelVal label="Total"  value={r.total} />
-              <LabelVal label="Climb"  value={r.climbSum} />
-              <LabelVal label="Desc"   value={r.descSum} />
-            </div>
-          </div>
-        ))}
-      </div>
-    </>
-  );
-}
-
-function LabelVal({ label, value }: { label: string; value?: string | null }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-muted">{label}</span>
-      <span>{value ?? "—"}</span>
     </div>
   );
 }
+

@@ -1,32 +1,31 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@reference tailwind;
 
-/* Light, punchy palette */
+/* Light palette tuned to the reference */
 :root{
-  --pb-bg:      0 0% 100%;   /* white */
-  --pb-ink:     150 22% 8%;  /* very dark green/black */
-  --pb-muted:   150 9% 40%;  /* muted ink */
-  --pb-line:    150 12% 90%; /* soft gray lines */
-  --pb-accent:  78 100% 60%; /* neon-lime */
+  --pb-bg:      0 0% 100%;   /* white hero */
+  --pb-paper:   45 29% 96%;  /* warm off-white */
+  --pb-ink:     150 22% 8%;  /* deep green/black */
+  --pb-muted:   150 9% 40%;
+  --pb-line:    150 12% 90%;
+  --pb-stroke:  150 9% 18%;  /* dark outline strokes */
+  --pb-accent:  78 100% 60%; /* neon lime */
 }
 
-html, body { 
-  height: 100%; 
-  background: hsl(var(--pb-bg));
+html, body { height: 100%; }
+body { 
+  background-color: hsl(var(--pb-bg));
   color: hsl(var(--pb-ink));
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Links feel bold but simple */
-a { 
-  text-underline-offset: 4px;
-  text-decoration-thickness: 2px;
-}
+/* Prevent purple visited links; inherit ink color */
+a { color: inherit; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
+a:visited { color: inherit; }
 
-/* Shared layout/utilities */
+/* Layout helpers */
 .container-std { 
   max-width: 1140px;
   margin-left: auto;
@@ -34,59 +33,31 @@ a {
   padding-left: 1.5rem;
   padding-right: 1.5rem;
 }
-
-.btn { 
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  font-weight: 600;
-  border-radius: 0.75rem;
-  transition: all 0.2s ease;
+.section { 
+  max-width: 1140px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 4rem;
+  padding-bottom: 4rem;
 }
-
-.btn-primary { 
-  background: hsl(var(--pb-accent));
-  color: hsl(var(--pb-ink));
+@media (min-width: 768px) {
+  .section {
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+  }
 }
-
-.btn-primary:hover {
-  opacity: 0.9;
+.section-paper { 
+  padding-top: 4rem;
+  padding-bottom: 4rem;
+  background-color: hsl(var(--pb-paper));
 }
-
-.btn-primary:active {
-  opacity: 0.85;
-}
-
-.btn-ghost { 
-  border: 1px solid hsl(var(--pb-line));
-  color: hsl(var(--pb-ink));
-}
-
-.btn-ghost:hover {
-  background: hsl(var(--pb-line));
-}
-
-.badge { 
-  display: inline-flex;
-  align-items: center;
-  border-radius: 9999px;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.75rem;
-  border: 1px solid hsl(var(--pb-line));
-  background: white;
-}
-
-.card { 
-  background: white;
-  border: 1px solid hsl(var(--pb-line));
-  border-radius: 1rem;
-  box-shadow: 0 10px 40px rgba(0,0,0,.06);
-}
-
-.divider { 
-  height: 1px;
-  background: hsl(var(--pb-line));
+@media (min-width: 768px) {
+  .section-paper {
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+  }
 }
 
 /* Typographic helpers */
@@ -95,22 +66,71 @@ a {
   line-height: 0.9;
   letter-spacing: -0.04em;
   font-weight: 900;
-  font-family: var(--font-display), ui-sans-serif, system-ui;
+  text-transform: uppercase;
 }
-
 .h2 { 
   font-size: 1.875rem;
   font-weight: 600;
+  letter-spacing: -0.025em;
 }
-
 @media (min-width: 768px) {
   .h2 {
     font-size: 2.25rem;
   }
 }
-
 .lead { 
-  font-size: clamp(22px, 2.2vw, 28px);
-  line-height: 1.3;
+  font-size: clamp(18px, 1.9vw, 22px);
+  line-height: 1.45;
   color: hsl(var(--pb-muted));
+}
+
+/* Buttons */
+.btn { 
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.btn-primary { 
+  background-color: hsl(var(--pb-accent));
+  color: hsl(var(--pb-ink));
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.25rem;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+}
+.btn-primary:active {
+  opacity: 0.85;
+}
+
+/* Pill CTA like the reference's "More projects" */
+.btn-pill { 
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 36px;
+  border: 2px solid hsl(var(--pb-stroke));
+  padding: 0.75rem 1.5rem;
+  background-color: transparent;
+}
+.btn-pill:hover { 
+  background-color: hsl(var(--pb-line));
+}
+
+/* Cards */
+.card-outline { 
+  border-radius: 1rem;
+  background-color: transparent;
+  border: 2px solid hsl(var(--pb-stroke));
+}
+
+/* Legacy alias to not break older pages */
+:root{
+  --bg:        var(--pb-bg);
+  --foreground:var(--pb-ink);
+  --border:    var(--pb-line);
+  --card:      0 0% 100%;
+  --muted-old: var(--pb-muted);
 }
