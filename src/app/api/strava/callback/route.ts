@@ -43,7 +43,7 @@ export async function GET(req: Request) {
     expires_at,
   });
 
-  // set cookie on the response (works in dev/prod)
+  // set cookies on the response (works in dev/prod)
   const res = NextResponse.redirect(new URL('/race-trackingV2?connected=1', req.url));
   res.cookies.set('RID', riderRow.id, {
     httpOnly: true,
@@ -51,6 +51,13 @@ export async function GET(req: Request) {
     secure: process.env.NODE_ENV === 'production',
     path: '/',
     maxAge: 60 * 60 * 24 * 30,
+  });
+  res.cookies.set('rider_id', riderRow.id, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 365, // 1 year
   });
   res.headers.set("x-trace-id", t.id);
   res.headers.set("x-handler", t.name);

@@ -5,7 +5,9 @@ import Link from "next/link";
 import SiteHeader from "@/components/layout/SiteHeader";
 import StravaConnect from "@/components/race/StravaConnect";
 import Leaderboard from "@/components/race/Leaderboard";
+import MyTimes from "@/components/race/MyTimes";
 import TrackerBackground from "@/components/race/TrackerBackground";
+import Tabs from "@/components/ui/Tabs";
 
 type AttemptStatus = {
   recorded: boolean;
@@ -26,6 +28,7 @@ const fmt = (ms?: number | null) => {
 };
 
 export default function RaceTracker() {
+  const [tab, setTab] = React.useState<"leaderboard" | "my-times">("leaderboard");
   const [seasonKey, setSeasonKey] = React.useState<string>(""); // server returns this on page load in your impl
   const [status, setStatus] = React.useState<AttemptStatus | null>(null);
   const [busy, setBusy] = React.useState(false);
@@ -158,21 +161,45 @@ export default function RaceTracker() {
                 </div>
               )}
 
-              {/* Leaderboard */}
-              <div className="space-y-6 bg-white/95 p-8 rounded-xl backdrop-blur-sm">
-                <h2 className="h2">Leaderboard</h2>
-                
-                {/* Actions */}
-                <div className="flex flex-wrap gap-3">
-                  <button onClick={refresh} className="btn btn-pill bg-white border-2 border-gray-300 hover:bg-gray-50 px-4 py-2 text-sm" disabled={busy}>Refresh</button>
-                  <button onClick={recordNow} className="btn btn-primary shadow-lg px-4 py-2 text-sm" disabled={busy}>
-                    {busy ? "Recording…" : "Record now"}
-                  </button>
-                </div>
-                
-                <div className="pt-4">
-                  <Leaderboard rows={rows} />
-                </div>
+              {/* Tabs */}
+              <div className="bg-white/95 p-8 rounded-xl backdrop-blur-sm">
+                <Tabs
+                  tabs={[
+                    { id: "leaderboard", label: "Leaderboard" },
+                    { id: "my-times", label: "My Times" },
+                  ]}
+                  value={tab}
+                  onChange={(id) => setTab(id as typeof tab)}
+                  className="mb-6"
+                />
+
+                {tab === "leaderboard" && (
+                  <div className="space-y-6">
+                    <h2 className="h2">Leaderboard</h2>
+                    
+                    {/* Actions */}
+                    <div className="flex flex-wrap gap-3">
+                      <button onClick={refresh} className="btn btn-pill bg-white border-2 border-gray-300 hover:bg-gray-50 px-4 py-2 text-sm" disabled={busy}>Refresh</button>
+                      <button onClick={recordNow} className="btn btn-primary shadow-lg px-4 py-2 text-sm" disabled={busy}>
+                        {busy ? "Recording…" : "Record now"}
+                      </button>
+                    </div>
+                    
+                    <div className="pt-4">
+                      <Leaderboard rows={rows} />
+                    </div>
+                  </div>
+                )}
+
+                {tab === "my-times" && (
+                  <div className="space-y-4">
+                    <h2 className="h2">My Times</h2>
+                    <p className="text-sm text-muted">
+                      Your best seasonal times per race year (Fall defines the race year).
+                    </p>
+                    <MyTimes />
+                  </div>
+                )}
               </div>
 
               {/* Guidance */}
