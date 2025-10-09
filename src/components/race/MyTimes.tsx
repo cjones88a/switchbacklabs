@@ -19,6 +19,7 @@ const fmt = (ms: number | null | undefined) => {
 };
 
 export default function MyTimes() {
+  console.log('[MyTimes] Component loaded with updated code');
   const [rows, setRows] = React.useState<YearRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [importing, setImporting] = React.useState(false);
