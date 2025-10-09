@@ -196,9 +196,12 @@ export default function RacePage() {
               </div>
               {viewActivityUrl && (
                 <div>
-                  <Button variant="outline" size="sm" asChild>
-                    <a href={viewActivityUrl}>View on Strava</a>
-                  </Button>
+                  <a 
+                    href={viewActivityUrl}
+                    className="inline-flex items-center justify-center rounded-full transition-colors focus-visible:outline-none h-8 px-3 text-sm border border-black/10 text-brand-900 hover:bg-black/5"
+                  >
+                    View on Strava
+                  </a>
                 </div>
               )}
             </div>
