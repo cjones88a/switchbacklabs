@@ -8,7 +8,7 @@ import TrackerBackground from "@/components/race/TrackerBackground";
 import Leaderboard from "@/components/race/Leaderboard";
 import StravaConnect from "@/components/race/StravaConnect";
 import { Button } from '@/components/ui/button'
-import { Tabs } from '@/components/ui/tabs'
+import { Tabs } from '@/components/ui/Tabs'
 import { Notice } from '@/components/ui/notice'
 import { TableWrap, T, TH, TD } from '@/components/ui/table'
 

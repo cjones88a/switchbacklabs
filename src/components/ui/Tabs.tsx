@@ -1,34 +1,28 @@
-"use client";
-import * as React from "react";
+'use client'
+import * as React from 'react'
+import { cn } from '@/lib/cn'
 
-type Tab = { id: string; label: string };
-
-export default function Tabs({
-  tabs,
-  value,
-  onChange,
-  className = "",
-}: {
-  tabs: Tab[];
-  value: string;
-  onChange: (id: string) => void;
-  className?: string;
-}) {
+type Tab = { id: string; label: string }
+export function Tabs({ tabs, value, onChange }: { tabs: Tab[]; value: string; onChange: (id: string)=>void }) {
   return (
-    <div className={`flex gap-2 border-b border-line ${className}`}>
+    <div role="tablist" aria-label="Sections" className="flex gap-2 mt-6">
       {tabs.map(t => {
-        const active = t.id === value;
+        const active = t.id === value
         return (
           <button
             key={t.id}
-            className={`px-4 py-2 text-sm rounded-t-xl border-x border-t border-line -mb-[1px]
-              ${active ? "bg-white" : "bg-[hsl(var(--pb-paper))] hover:bg-white/70"}`}
+            role="tab"
+            aria-selected={active}
+            className={cn(
+              'rounded-full h-9 px-4 text-sm',
+              active ? 'bg-black text-white' : 'bg-white ring-1 ring-[var(--ring)] hover:bg-neutral-50'
+            )}
             onClick={() => onChange(t.id)}
           >
             {t.label}
           </button>
-        );
+        )
       })}
     </div>
-  );
+  )
 }
