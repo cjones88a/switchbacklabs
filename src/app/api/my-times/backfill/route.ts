@@ -64,24 +64,9 @@ export async function POST() {
 
     console.log(`[backfill] Processed ${Object.keys(yearly).length} race years`);
 
-    // Persist the yearly rollups
-    const rows = Object.entries(yearly).map(([yr, v]) => ({
-      rider_id, 
-      race_year: Number(yr),
-      fall_ms:   v.fall_ms   === Infinity ? null : v.fall_ms ?? null,
-      winter_ms: v.winter_ms === Infinity ? null : v.winter_ms ?? null,
-      spring_ms: v.spring_ms === Infinity ? null : v.spring_ms ?? null,
-      summer_ms: v.summer_ms === Infinity ? null : v.summer_ms ?? null,
-    }));
-
-    if (rows.length) {
-      console.log(`[backfill] Upserting ${rows.length} yearly time rows`);
-      const { error } = await sb.from('rider_yearly_times').upsert(rows, { onConflict: 'rider_id,race_year' });
-      if (error) {
-        console.error('[backfill] Error upserting yearly times:', error);
-        return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-      }
-    }
+    // Note: rider_yearly_times is a VIEW that automatically aggregates from attempts table
+    // We don't need to insert into it directly - the view will show the data
+    // after we've inserted the attempts above
 
     console.log(`[backfill] Backfill completed successfully`);
     return NextResponse.json({ 
