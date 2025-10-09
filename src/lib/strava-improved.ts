@@ -64,7 +64,7 @@ async function refreshIfNeeded(tokens: Tokens): Promise<Tokens> {
   const j = await r.json();
 
   const sb = adminSb();
-  const { data, error } = await sb.from('oauth_tokens')
+  const { error } = await sb.from('oauth_tokens')
     .update({
       access_token: j.access_token,
       refresh_token: j.refresh_token,
@@ -112,7 +112,7 @@ export async function stravaFetch(path: string, search: Record<string,string|num
 export async function fetchAllSegmentEffortsSince2014() {
   console.log(`[strava] Starting to fetch all segment efforts for segment ${MAIN_SEGMENT_ID}`);
   
-  const efforts: any[] = [];
+  const efforts: unknown[] = [];
   let page = 1;
   
   while (true) {

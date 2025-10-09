@@ -91,7 +91,7 @@ export default function MyTimes() {
       {loading ? (
         <p className="text-sm text-muted">Loading your times…</p>
       ) : !rows.length ? (
-        <div className="text-sm text-muted">No historical times found yet. Click "Backfill my history" to import your data.</div>
+        <div className="text-sm text-muted">No historical times found yet. Click &quot;Backfill my history&quot; to import your data.</div>
       ) : (
         <div className="overflow-x-auto">
           {/* Desktop table */}

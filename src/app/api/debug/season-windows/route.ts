@@ -22,7 +22,7 @@ export async function GET() {
     console.log("[debug] Testing database connection...");
     
     // Test basic connection first
-    const { data: testData, error: testError } = await sb
+    const { error: testError } = await sb
       .from("riders")
       .select("id")
       .limit(1);
