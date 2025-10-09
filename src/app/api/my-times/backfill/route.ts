@@ -28,23 +28,33 @@ export async function POST() {
     const yearly: Record<number, {fall_ms?:number; winter_ms?:number; spring_ms?:number; summer_ms?:number;}> = {};
 
     for (const e of efforts) {
+      // Type assertion for Strava effort object
+      const effort = e as {
+        id: number;
+        start_date_local?: string;
+        start_date?: string;
+        elapsed_time: number;
+        activity?: { id: number };
+        activity_id?: number;
+      };
+
       // e.start_date_local or e.start_date? prefer local to match windows
-      const when = e.start_date_local ?? e.start_date;
+      const when = effort.start_date_local ?? effort.start_date;
       if (!when) {
-        console.log(`[backfill] Skipping effort ${e.id} - no start date`);
+        console.log(`[backfill] Skipping effort ${effort.id} - no start date`);
         continue;
       }
 
       const season_key = await seasonKeyFor(when);
       if (!season_key) {
-        console.log(`[backfill] Skipping effort ${e.id} - no season window for ${when}`);
+        console.log(`[backfill] Skipping effort ${effort.id} - no season window for ${when}`);
         continue;
       }
       
       const race_year = raceYearFromSeasonKey(season_key);
-      const ms = e.elapsed_time * 1000; // Strava seconds → ms
+      const ms = effort.elapsed_time * 1000; // Strava seconds → ms
 
-      console.log(`[backfill] Effort ${e.id}: ${when} -> ${season_key} (race year ${race_year}) = ${ms}ms`);
+      console.log(`[backfill] Effort ${effort.id}: ${when} -> ${season_key} (race year ${race_year}) = ${ms}ms`);
 
       yearly[race_year] ??= {};
       if (season_key.endsWith('_FALL'))   yearly[race_year].fall_ms   = Math.min(yearly[race_year].fall_ms   ?? Infinity, ms);
@@ -56,7 +66,7 @@ export async function POST() {
       await sb.from('attempts').upsert({
         rider_id,
         season_key,
-        activity_id: e.activity?.id ?? e.activity_id, // Strava may embed activity or give id
+        activity_id: effort.activity?.id ?? effort.activity_id, // Strava may embed activity or give id
         main_ms: ms,
         created_at: new Date().toISOString(),
       }, { onConflict: 'rider_id,season_key,activity_id' });
