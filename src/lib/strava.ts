@@ -145,6 +145,9 @@ export async function listAllSegmentEffortsUTC(
   const results: SegmentEffort[] = [];
   let page = 1;
   const per_page = 200;
+  
+  console.log(`[strava] Fetching segment efforts for segment ${segmentId} from ${startISO} to ${endISO}`);
+  
   while (true) {
     const url = new URL(`${STRAVA_API}/segment_efforts`);
     url.searchParams.set("segment_id", String(segmentId));
@@ -153,18 +156,28 @@ export async function listAllSegmentEffortsUTC(
     url.searchParams.set("per_page", String(per_page));
     url.searchParams.set("page", String(page));
 
+    console.log(`[strava] Fetching page ${page}: ${url.toString()}`);
+
     const r = await fetch(url.toString(), {
       headers: { Authorization: `Bearer ${accessToken}` },
       cache: "no-store",
     });
-    if (!r.ok) throw new Error(`strava_list_efforts_failed: ${await r.text().catch(() => r.statusText)}`);
+    
+    if (!r.ok) {
+      const errorText = await r.text().catch(() => r.statusText);
+      console.error(`[strava] API error: ${r.status} ${errorText}`);
+      throw new Error(`strava_list_efforts_failed: ${errorText}`);
+    }
 
     const chunk = (await r.json()) as SegmentEffort[];
+    console.log(`[strava] Page ${page}: received ${chunk.length} efforts`);
     results.push(...chunk);
     if (chunk.length < per_page) break;
     page++;
     if (page > 50) break; // hard stop safety
   }
+  
+  console.log(`[strava] Total efforts fetched: ${results.length}`);
   return results;
 }
 
