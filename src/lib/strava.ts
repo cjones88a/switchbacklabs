@@ -7,7 +7,7 @@ const STRAVA_API = "https://www.strava.com/api/v3";
 const STRAVA_CLIENT_ID = process.env.STRAVA_CLIENT_ID!;
 const STRAVA_CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET!;
 const SUPABASE_URL = process.env.SUPABASE_URL!;
-const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE!;
 const MAIN_SEGMENT_ID = Number(process.env.MAIN_SEGMENT_ID || process.env.NEXT_PUBLIC_MAIN_SEGMENT_ID || process.env.SEGMENT_ID || 7977451);
 
 // Legacy functions for backward compatibility

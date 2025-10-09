@@ -2,57 +2,98 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
-const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE!;
 
 export async function GET() {
+  console.log("[debug] Starting season-windows debug check");
+  
+  if (!SUPABASE_URL || !SERVICE_KEY) {
+    console.log("[debug] Missing environment variables");
+    return NextResponse.json({ 
+      error: "Missing environment variables",
+      SUPABASE_URL: !!SUPABASE_URL,
+      SERVICE_KEY: !!SERVICE_KEY
+    }, { status: 500 });
+  }
+
   const sb = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
   try {
-    // Get all season windows
-    const { data: windows, error: winErr } = await sb
-      .from("season_windows")
-      .select("*")
-      .order("start_at", { ascending: true });
+    console.log("[debug] Testing database connection...");
+    
+    // Test basic connection first
+    const { data: testData, error: testError } = await sb
+      .from("riders")
+      .select("id")
+      .limit(1);
 
-    if (winErr) {
-      return NextResponse.json({ error: winErr.message }, { status: 500 });
+    if (testError) {
+      console.log("[debug] Database connection failed:", testError);
+      return NextResponse.json({ 
+        error: "Database connection failed", 
+        detail: testError.message 
+      }, { status: 500 });
     }
 
-    // Get count of attempts
-    const { count: attemptCount, error: attemptErr } = await sb
-      .from("attempts")
-      .select("*", { count: "exact", head: true });
+    console.log("[debug] Database connection successful");
 
-    if (attemptErr) {
-      return NextResponse.json({ error: attemptErr.message }, { status: 500 });
+    // Check if season_windows table exists
+    let windowsResult = { data: [], error: null };
+    try {
+      const result = await sb
+        .from("season_windows")
+        .select("*")
+        .order("start_at", { ascending: true });
+      windowsResult = result;
+    } catch (err) {
+      windowsResult.error = err instanceof Error ? err.message : "Unknown error";
     }
 
-    // Get count of oauth tokens
-    const { count: tokenCount, error: tokenErr } = await sb
-      .from("oauth_tokens")
-      .select("*", { count: "exact", head: true });
+    // Check attempts table
+    let attemptsResult = { count: 0, error: null };
+    try {
+      const result = await sb
+        .from("attempts")
+        .select("*", { count: "exact", head: true });
+      attemptsResult = result;
+    } catch (err) {
+      attemptsResult.error = err instanceof Error ? err.message : "Unknown error";
+    }
 
-    if (tokenErr) {
-      return NextResponse.json({ error: tokenErr.message }, { status: 500 });
+    // Check oauth_tokens table
+    let tokensResult = { count: 0, error: null };
+    try {
+      const result = await sb
+        .from("oauth_tokens")
+        .select("*", { count: "exact", head: true });
+      tokensResult = result;
+    } catch (err) {
+      tokensResult.error = err instanceof Error ? err.message : "Unknown error";
     }
 
     return NextResponse.json({
+      status: "success",
       season_windows: {
-        count: windows?.length || 0,
-        data: windows || []
+        count: windowsResult.data?.length || 0,
+        data: windowsResult.data || [],
+        error: windowsResult.error
       },
       attempts: {
-        count: attemptCount || 0
+        count: attemptsResult.count || 0,
+        error: attemptsResult.error
       },
       oauth_tokens: {
-        count: tokenCount || 0
+        count: tokensResult.count || 0,
+        error: tokensResult.error
       }
     });
 
   } catch (error) {
+    console.log("[debug] Unexpected error:", error);
     return NextResponse.json({ 
-      error: "Database error", 
-      detail: error instanceof Error ? error.message : "Unknown error" 
+      error: "Unexpected error", 
+      detail: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined
     }, { status: 500 });
   }
 }

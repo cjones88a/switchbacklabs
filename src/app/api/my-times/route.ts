@@ -7,7 +7,7 @@ import { traceHeaders } from "@/lib/trace";
 export const runtime = 'nodejs';
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
-const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE!;
 
 type SeasonWindowRow = { season_key: string; start_at: string; end_at: string };
 type AttemptRow = {
