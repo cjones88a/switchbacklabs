@@ -181,4 +181,17 @@ export async function listAllSegmentEffortsUTC(
   return results;
 }
 
+/** helper in UI to produce upgrade link (force new scopes) */
+export function buildForceConsentUrl() {
+  const params = new URLSearchParams({
+    client_id: process.env.NEXT_PUBLIC_STRAVA_CLIENT_ID!,
+    response_type: 'code',
+    approval_prompt: 'force',
+    scope: 'read,activity:read_all',
+    redirect_uri: process.env.NEXT_PUBLIC_STRAVA_REDIRECT_URI!,
+    state: 'upgrade-scopes',
+  });
+  return `https://www.strava.com/oauth/authorize?${params.toString()}`;
+}
+
 export { MAIN_SEGMENT_ID };

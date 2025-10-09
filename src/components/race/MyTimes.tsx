@@ -1,5 +1,6 @@
 "use client";
 import * as React from "react";
+import { buildForceConsentUrl } from "@/lib/strava";
 
 type YearRow = {
   race_year: number;
@@ -19,7 +20,6 @@ const fmt = (ms: number | null | undefined) => {
 };
 
 export default function MyTimes() {
-  console.log('[MyTimes] Component loaded with updated code');
   const [rows, setRows] = React.useState<YearRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [importing, setImporting] = React.useState(false);
@@ -86,7 +86,20 @@ export default function MyTimes() {
         >
           {importing ? "Importing…" : "Backfill my history"}
         </button>
-        {err && <p className="text-red-600 text-sm">{err}</p>}
+        {err && (
+          <div className="text-sm">
+            <p className="text-red-600">{err}</p>
+            {(err.includes('404') || err.includes('Record Not Found') || err.includes('permissions')) && (
+              <p className="mt-1 text-muted">
+                If this mentions permissions or "Record Not Found", re-connect with full scope:{' '}
+                <a className="underline text-blue-600 hover:text-blue-800" href={buildForceConsentUrl()}>
+                  upgrade Strava permissions
+                </a>
+                , then run Backfill again.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {loading ? (
