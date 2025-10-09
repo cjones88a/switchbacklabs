@@ -11,23 +11,83 @@
   --accent: #D9FF43;
 }
 
-html, body { height: 100%; }
+html, body { 
+  height: 100%; 
+}
+
 body {
-  @apply bg-white text-brand-900 antialiased;
+  background-color: white;
+  color: #0E1A13;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Links & focus outline */
-a { @apply underline decoration-1 underline-offset-2 hover:opacity-90; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+a { 
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  opacity: 0.9;
+}
+
+:focus-visible { 
+  outline: 2px solid var(--accent); 
+  outline-offset: 2px; 
+}
 
 /* "container" helper */
-.container-page { @apply container max-w-5xl; }
+.container-page { 
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
 
 /* Table primitives (no boxy borders) */
-.table-wrap { @apply overflow-x-auto mt-4; }
-.table-surface { @apply min-w-[640px] bg-white rounded-2xl ring-1 ring-[var(--ring)] overflow-hidden; }
-.table { @apply w-full border-collapse; }
-.table thead { @apply bg-neutral-50; }
-.table th { @apply text-left text-xs font-semibold uppercase tracking-wide text-neutral-600 px-4 py-3; }
-.table td { @apply px-4 py-3; }
-.table tbody { @apply divide-y divide-neutral-200; }
+.table-wrap { 
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.table-surface { 
+  min-width: 640px;
+  background-color: white;
+  border-radius: 1rem;
+  border: 1px solid var(--ring);
+  overflow: hidden;
+}
+
+.table { 
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table thead { 
+  background-color: #f9fafb;
+}
+
+.table th { 
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  padding: 0.75rem 1rem;
+}
+
+.table td { 
+  padding: 0.75rem 1rem;
+}
+
+.table tbody { 
+  border-top: 1px solid #e5e7eb;
+}
+
+.table tbody tr:not(:last-child) {
+  border-bottom: 1px solid #e5e7eb;
+}
