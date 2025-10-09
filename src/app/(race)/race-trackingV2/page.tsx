@@ -141,8 +141,8 @@ export default function RacePage() {
       const jj = await rr.json()
       if (!rr.ok) throw new Error(jj?.error || 'reload failed')
       setMine(jj.items || [])
-    } catch (e:any) {
-      setErr(e?.message ?? String(e))
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : String(e))
     } finally {
       setImporting(false)
     }
@@ -210,7 +210,7 @@ export default function RacePage() {
               { id: 'mine', label: 'My Times' },
             ]}
             value={tab}
-            onChange={id => setTab(id as any)}
+            onChange={id => setTab(id as 'leaderboard' | 'mine')}
           />
 
           {tab === 'leaderboard' && (
