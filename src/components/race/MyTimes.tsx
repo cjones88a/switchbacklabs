@@ -94,30 +94,24 @@ export default function MyTimes() {
         <div className="text-sm text-muted">No historical times found yet. Click &quot;Backfill my history&quot; to import your data.</div>
       ) : (
         <div className="overflow-x-auto">
-          {/* Debug: Show raw data */}
-          <div className="mb-4 p-3 bg-gray-100 rounded text-xs">
-            <div>Rows: {rows.length}</div>
-            <pre>{JSON.stringify(rows, null, 2)}</pre>
-          </div>
-          
           {/* Desktop table */}
           <div className="hidden md:block card-outline bg-white p-0 overflow-x-auto">
             <table className="min-w-full border-separate [border-spacing:0]">
               <thead>
-                <tr className="text-left text-sm text-muted">
+                <tr className="text-left text-sm text-muted bg-gray-50">
                   {["Race Year","Fall","Winter","Spring","Summer"].map(h => (
-                    <th key={h} className="px-4 py-3 border-b border-[hsl(var(--pb-line))]">{h}</th>
+                    <th key={h} className="px-6 py-4 border-b border-[hsl(var(--pb-line))] font-semibold uppercase tracking-wide">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.race_year} className="text-sm">
-                    <td className="px-4 py-3 border-b border-[hsl(var(--pb-line))]">{r.race_year}</td>
-                    <td className="px-4 py-3 border-b border-[hsl(var(--pb-line))]">{fmt(r.fall_ms)}</td>
-                    <td className="px-4 py-3 border-b border-[hsl(var(--pb-line))]">{fmt(r.winter_ms)}</td>
-                    <td className="px-4 py-3 border-b border-[hsl(var(--pb-line))]">{fmt(r.spring_ms)}</td>
-                    <td className="px-4 py-3 border-b border-[hsl(var(--pb-line))]">{fmt(r.summer_ms)}</td>
+                  <tr key={r.race_year} className="text-sm hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 border-b border-[hsl(var(--pb-line))] font-semibold">{r.race_year}</td>
+                    <td className="px-6 py-4 border-b border-[hsl(var(--pb-line))] font-mono">{fmt(r.fall_ms)}</td>
+                    <td className="px-6 py-4 border-b border-[hsl(var(--pb-line))] font-mono">{fmt(r.winter_ms)}</td>
+                    <td className="px-6 py-4 border-b border-[hsl(var(--pb-line))] font-mono">{fmt(r.spring_ms)}</td>
+                    <td className="px-6 py-4 border-b border-[hsl(var(--pb-line))] font-mono">{fmt(r.summer_ms)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -128,8 +122,8 @@ export default function MyTimes() {
           <div className="md:hidden space-y-3">
             {rows.map(r => (
               <div key={r.race_year} className="card-outline bg-white p-4">
-                <div className="font-semibold">Race Year {r.race_year}</div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mt-2">
+                <div className="font-semibold text-lg mb-3">Race Year {r.race_year}</div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                   <Label label="Fall"   v={fmt(r.fall_ms)} />
                   <Label label="Winter" v={fmt(r.winter_ms)} />
                   <Label label="Spring" v={fmt(r.spring_ms)} />
@@ -146,9 +140,9 @@ export default function MyTimes() {
 
 function Label({ label, v }: { label: string; v: string }) {
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-muted">{label}</span>
-      <span>{v}</span>
+    <div className="flex items-center justify-between py-1">
+      <span className="text-muted font-medium">{label}</span>
+      <span className="font-mono font-semibold">{v}</span>
     </div>
   );
 }
