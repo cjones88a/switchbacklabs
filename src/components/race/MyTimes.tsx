@@ -94,6 +94,12 @@ export default function MyTimes() {
         <div className="text-sm text-muted">No historical times found yet. Click &quot;Backfill my history&quot; to import your data.</div>
       ) : (
         <div className="overflow-x-auto">
+          {/* Debug: Show raw data */}
+          <div className="mb-4 p-3 bg-gray-100 rounded text-xs">
+            <div>Rows: {rows.length}</div>
+            <pre>{JSON.stringify(rows, null, 2)}</pre>
+          </div>
+          
           {/* Desktop table */}
           <div className="hidden md:block card-outline bg-white p-0 overflow-x-auto">
             <table className="min-w-full border-separate [border-spacing:0]">
