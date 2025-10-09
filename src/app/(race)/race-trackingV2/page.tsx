@@ -245,6 +245,23 @@ export default function RacePage() {
                 <Button onClick={backfill} disabled={importing}>
                   {importing ? 'Importing…' : 'Backfill my history'}
                 </Button>
+                <Button 
+                  onClick={() => fetch('/api/my-times/backfill?purge=1', { method: 'POST' })
+                    .then(async (r) => {
+                      const j = await r.json()
+                      if (!r.ok) throw new Error(j?.error || 'purge failed')
+                      // Reload the data
+                      const rr = await fetch('/api/my-times', { cache: 'no-store' })
+                      const jj = await rr.json()
+                      if (jj.ok) setMine(jj.items || [])
+                    })
+                    .catch(e => setErr(e instanceof Error ? e.message : String(e)))
+                  } 
+                  disabled={importing}
+                  variant="outline"
+                >
+                  {importing ? 'Rebuilding…' : 'Rebuild from Strava (purge)'}
+                </Button>
                 {err && <Notice>{err}</Notice>}
               </div>
 

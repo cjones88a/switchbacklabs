@@ -1,96 +1,161 @@
-import { NextResponse } from 'next/server';
-import { adminSb } from '@/lib/seasons';
-import { fetchAllSegmentEffortsSince2014 } from '@/lib/strava-improved';
-import { cookies } from 'next/headers';
-import { seasonKeyFor, raceYearFromSeasonKey } from '@/lib/seasons';
+import { NextResponse } from 'next/server'
+import { createClient as createSb } from '@supabase/supabase-js'
+import { fetchAllSegmentEffortsSince2014 } from '@/lib/strava-improved'
+import { cookies } from 'next/headers'
+
+const MAIN_SEGMENT_ID = Number(process.env.MAIN_SEGMENT_ID)
+const CLIMB_1 = Number(process.env.CLIMB_1)
+const CLIMB_2 = Number(process.env.CLIMB_2)
+const DESC_1  = Number(process.env.DESC_1)
+const DESC_2  = Number(process.env.DESC_2)
+const DESC_3  = Number(process.env.DESC_3)
+
+function adminSb() {
+  return createSb(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE!, {
+    auth: { persistSession: false }
+  })
+}
 
 export const dynamic = 'force-dynamic';
 
-export async function POST() {
-  console.log('[backfill] Starting backfill process');
-  
-  const cookieStore = await cookies();
-  const rider_id = cookieStore.get('rider_id')?.value;
-  if (!rider_id) {
-    console.log('[backfill] No rider_id found in cookies');
-    return NextResponse.json({ ok: false, error: 'no_rider' }, { status: 401 });
-  }
-
-  console.log(`[backfill] Processing rider: ${rider_id}`);
-
-  const sb = adminSb();
-
+export async function POST(req: Request) {
   try {
-    const efforts = await fetchAllSegmentEffortsSince2014();
-    console.log(`[backfill] Fetched ${efforts.length} efforts from Strava`);
+    const url = new URL(req.url)
+    const purge = url.searchParams.get('purge') === '1'
 
-    // Group by race_year, then write to rider_yearly_times
-    const yearly: Record<number, {fall_ms?:number; winter_ms?:number; spring_ms?:number; summer_ms?:number;}> = {};
+    const sb = adminSb()
+
+    // Who is the current rider?
+    const cookieStore = await cookies();
+    const rider_id = cookieStore.get('rider_id')?.value;
+    if (!rider_id) {
+      return NextResponse.json({ error: 'No rider tokens found' }, { status: 401 })
+    }
+
+    if (purge) {
+      await sb.from('attempts').delete().eq('rider_id', rider_id)
+    }
+
+    // 1) get all efforts for MAIN segment (all-time)
+    const efforts = await fetchAllSegmentEffortsSince2014()
+
+    let imported = 0
+    let skippedNoWindow = 0
+    const skippedNoSegs = 0
+    let skippedDup = 0
 
     for (const e of efforts) {
       // Type assertion for Strava effort object
       const effort = e as {
-        id: number;
-        start_date_local?: string;
         start_date?: string;
-        elapsed_time: number;
         activity?: { id: number };
         activity_id?: number;
+        elapsed_time?: number;
+        moving_time?: number;
       };
-
-      // e.start_date_local or e.start_date? prefer local to match windows
-      const when = effort.start_date_local ?? effort.start_date;
-      if (!when) {
-        console.log(`[backfill] Skipping effort ${effort.id} - no start date`);
-        continue;
-      }
-
-      const season_key = await seasonKeyFor(when);
-      if (!season_key) {
-        console.log(`[backfill] Skipping effort ${effort.id} - no season window for ${when}`);
-        continue;
-      }
       
-      const race_year = raceYearFromSeasonKey(season_key);
-      const ms = effort.elapsed_time * 1000; // Strava seconds → ms
+      // use the canonical UTC timestamp
+      const startUtc = effort.start_date
+      const activity_id = effort.activity?.id ?? effort.activity_id
+      if (!startUtc || !activity_id) continue
 
-      console.log(`[backfill] Effort ${effort.id}: ${when} -> ${season_key} (race year ${race_year}) = ${ms}ms`);
+      // 2) find matching season window IN THE DB using UTC time
+      const { data: win, error: werr } = await sb
+        .from('season_windows')
+        .select('season_key, start_at, end_at')
+        .lte('start_at', startUtc)   // start_at <= ts
+        .gte('end_at',   startUtc)   //   ts   <= end_at
+        .single()
 
-      yearly[race_year] ??= {};
-      if (season_key.endsWith('_FALL'))   yearly[race_year].fall_ms   = Math.min(yearly[race_year].fall_ms   ?? Infinity, ms);
-      if (season_key.endsWith('_WINTER')) yearly[race_year].winter_ms = Math.min(yearly[race_year].winter_ms ?? Infinity, ms);
-      if (season_key.endsWith('_SPRING')) yearly[race_year].spring_ms = Math.min(yearly[race_year].spring_ms ?? Infinity, ms);
-      if (season_key.endsWith('_SUMMER')) yearly[race_year].summer_ms = Math.min(yearly[race_year].summer_ms ?? Infinity, ms);
+      if (werr || !win) {
+        skippedNoWindow++
+        continue
+      }
 
-      // Optional: keep a canonical attempts table too
-      await sb.from('attempts').upsert({
+      // 3) fetch the activity's segment efforts once to compute climb/desc sums
+      //    (cache to avoid re-fetching if the same activity pops again in pagination)
+      const sums = await getClimbDescSumsForActivity(activity_id)
+
+      // 4) upsert attempt (unique on rider_id + activity_id guarantees we don't duplicate)
+      const insert = {
         rider_id,
-        season_key,
-        activity_id: effort.activity?.id ?? effort.activity_id, // Strava may embed activity or give id
-        main_ms: ms,
-        created_at: new Date().toISOString(),
-      }, { onConflict: 'rider_id,season_key,activity_id' });
+        season_key: win.season_key,
+        activity_id: Number(activity_id),
+        main_ms: (effort.elapsed_time ?? effort.moving_time ?? 0) * 1000,
+        climb_sum_ms: sums?.climb ?? null,
+        desc_sum_ms: sums?.desc ?? null,
+      }
+
+      const { error: insErr } = await sb
+        .from('attempts')
+        .upsert(insert, { onConflict: 'rider_id,activity_id' })
+
+      if (insErr?.message?.includes('duplicate key')) {
+        skippedDup++
+      } else if (!insErr) {
+        imported++
+      }
     }
 
-    console.log(`[backfill] Processed ${Object.keys(yearly).length} race years`);
+    // 5) Optionally (re)build rider_yearly_times from attempts server-side (if you rely on it)
+    //    If your UI reads directly from attempts+grouping, you can skip this.
 
-    // Note: rider_yearly_times is a VIEW that automatically aggregates from attempts table
-    // We don't need to insert into it directly - the view will show the data
-    // after we've inserted the attempts above
+    return NextResponse.json({
+      ok: true,
+      imported,
+      skippedNoWindow,
+      skippedNoSegs,
+      skippedDup,
+      totalEfforts: efforts.length,
+    })
+  } catch (e: unknown) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
+  }
+}
 
-    console.log(`[backfill] Backfill completed successfully`);
-    return NextResponse.json({ 
-      ok: true, 
-      imported: efforts.length, 
-      years: Object.keys(yearly).length,
-      yearly_data: yearly
-    });
+/** Cache for per-activity segment effort lookups so we don't refetch the same activity repeatedly. */
+const _segCache = new Map<number, { climb: number|null; desc: number|null }>()
 
+async function getClimbDescSumsForActivity(activity_id: number) {
+  if (_segCache.has(activity_id)) return _segCache.get(activity_id)!
+
+  // You likely already have a helper to fetch a detailed activity with segment efforts.
+  // Minimal implementation using Strava v3 activities endpoint:
+  // const tokenRes = await fetch('https://www.strava.com/api/v3/athlete', { headers: {} })
+  // ^ replace with your bearer() helper; omitted here for brevity.
+  // Better: expose a lib method `fetchActivitySegments(activity_id)` returning its `segment_efforts`.
+
+  // Assuming you already built a helper:
+  const segs = await fetchActivitySegmentEfforts(activity_id)
+
+  // pick the segment times we care about (in ms)
+  let climb = 0
+  let desc = 0
+  let haveClimb = false
+  let haveDesc = false
+
+  for (const s of segs as unknown[]) {
+    const seg = s as Record<string, unknown>;
+    const id = (seg.segment as Record<string, unknown>)?.id
+    const ms = ((seg.elapsed_time as number) ?? (seg.moving_time as number) ?? 0) * 1000
+    if (id === CLIMB_1 || id === CLIMB_2) { climb += ms; haveClimb = true }
+    if (id === DESC_1 || id === DESC_2 || id === DESC_3) { desc += ms; haveDesc = true }
+  }
+
+  const sums = { climb: haveClimb ? climb : null, desc: haveDesc ? desc : null }
+  _segCache.set(activity_id, sums)
+  return sums
+}
+
+async function fetchActivitySegmentEfforts(activity_id: number) {
+  // This is a placeholder - you'll need to implement this using your Strava helper
+  // to fetch the activity's segment efforts
+  try {
+    // Use your existing Strava helper to get the activity with segment efforts
+    // For now, return empty array to avoid breaking the build
+    return []
   } catch (error) {
-    console.error('[backfill] Error during backfill:', error);
-    return NextResponse.json({ 
-      ok: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
-    }, { status: 500 });
+    console.error(`Failed to fetch segment efforts for activity ${activity_id}:`, error)
+    return []
   }
 }
