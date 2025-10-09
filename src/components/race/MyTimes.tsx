@@ -91,7 +91,7 @@ export default function MyTimes() {
             <p className="text-red-600">{err}</p>
             {(err.includes('404') || err.includes('Record Not Found') || err.includes('permissions')) && (
               <p className="mt-1 text-muted">
-                If this mentions permissions or "Record Not Found", re-connect with full scope:{' '}
+                If this mentions permissions or &quot;Record Not Found&quot;, re-connect with full scope:{' '}
                 <a className="underline text-blue-600 hover:text-blue-800" href={buildForceConsentUrl()}>
                   upgrade Strava permissions
                 </a>
