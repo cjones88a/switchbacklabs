@@ -1,0 +1,192 @@
+{
+  "info": {
+    "name": "Strava API Test Collection",
+    "description": "Test collection to debug Strava API calls for historical data",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://www.strava.com/api/v3",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "YOUR_ACCESS_TOKEN_HERE",
+      "type": "string",
+      "description": "Get this from your browser's network tab when logged into the race tracker"
+    },
+    {
+      "key": "segment_id",
+      "value": "7977451",
+      "type": "string",
+      "description": "Main segment ID for Horsetooth"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Test Token Validity",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/athlete",
+          "host": ["{{base_url}}"],
+          "path": ["athlete"]
+        },
+        "description": "Test if the access token is valid"
+      }
+    },
+    {
+      "name": "2. Get Segment Details",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/segments/{{segment_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["segments", "{{segment_id}}"]
+        },
+        "description": "Get details about the main segment"
+      }
+    },
+    {
+      "name": "3. Get Recent Segment Efforts (Last 30 Days)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/segment_efforts?segment_id={{segment_id}}&start_date={{$timestamp}}&per_page=200",
+          "host": ["{{base_url}}"],
+          "path": ["segment_efforts"],
+          "query": [
+            {
+              "key": "segment_id",
+              "value": "{{segment_id}}"
+            },
+            {
+              "key": "start_date",
+              "value": "{{$timestamp}}",
+              "description": "Current timestamp - 30 days"
+            },
+            {
+              "key": "per_page",
+              "value": "200"
+            }
+          ]
+        },
+        "description": "Get recent segment efforts to test basic API access"
+      }
+    },
+    {
+      "name": "4. Get Historical Segment Efforts (2014-2025)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/segment_efforts?segment_id={{segment_id}}&start_date=2014-01-01T00:00:00Z&end_date=2025-12-31T23:59:59Z&per_page=200&page=1",
+          "host": ["{{base_url}}"],
+          "path": ["segment_efforts"],
+          "query": [
+            {
+              "key": "segment_id",
+              "value": "{{segment_id}}"
+            },
+            {
+              "key": "start_date",
+              "value": "2014-01-01T00:00:00Z",
+              "description": "Start of 2014"
+            },
+            {
+              "key": "end_date",
+              "value": "2025-12-31T23:59:59Z",
+              "description": "End of 2025"
+            },
+            {
+              "key": "per_page",
+              "value": "200"
+            },
+            {
+              "key": "page",
+              "value": "1"
+            }
+          ]
+        },
+        "description": "Get all historical segment efforts from 2014-2025 (this is what our API should be calling)"
+      }
+    },
+    {
+      "name": "5. Get My Times API (Our Endpoint)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "rider_id=YOUR_RIDER_ID_HERE",
+            "type": "text",
+            "description": "Get this from browser dev tools when logged in"
+          }
+        ],
+        "url": {
+          "raw": "https://your-domain.vercel.app/api/my-times",
+          "host": ["https://your-domain.vercel.app"],
+          "path": ["api", "my-times"]
+        },
+        "description": "Test our my-times API endpoint directly"
+      }
+    },
+    {
+      "name": "6. Test Token Refresh",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"client_id\": \"YOUR_STRAVA_CLIENT_ID\",\n  \"client_secret\": \"YOUR_STRAVA_CLIENT_SECRET\",\n  \"grant_type\": \"refresh_token\",\n  \"refresh_token\": \"YOUR_REFRESH_TOKEN\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://www.strava.com/oauth/token",
+          "protocol": "https",
+          "host": ["www", "strava", "com"],
+          "path": ["oauth", "token"]
+        },
+        "description": "Test token refresh if needed"
+      }
+    }
+  ]
+}
