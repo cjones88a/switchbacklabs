@@ -1,12 +1,14 @@
-export function Table({ children }: { children: React.ReactNode }) {
-  return <div className="overflow-x-auto border rounded-2xl">{children}</div>;
+import * as React from 'react'
+
+export function TableWrap({ children }: { children: React.ReactNode }) {
+  return <div className="table-wrap"><div className="table-surface">{children}</div></div>
 }
 export function T({ children }: { children: React.ReactNode }) {
-  return <table className="min-w-full text-sm">{children}</table>;
+  return <table className="table">{children}</table>
 }
-export function Th({ children, right }: { children: React.ReactNode; right?: boolean }) {
-  return <th className={`p-2 ${right ? "text-right" : "text-left"} bg-[hsl(var(--surface))]`}>{children}</th>;
+export function TH({ children }: { children: React.ReactNode }) {
+  return <th>{children}</th>
 }
-export function Td({ children, right }: { children: React.ReactNode; right?: boolean }) {
-  return <td className={`p-2 ${right ? "text-right" : "text-left"} border-t`}>{children}</td>;
+export function TD({ children, mono=false }: { children: React.ReactNode; mono?: boolean }) {
+  return <td className={mono ? 'font-mono' : undefined}>{children}</td>
 }

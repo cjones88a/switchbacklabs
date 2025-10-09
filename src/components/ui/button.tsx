@@ -1,23 +1,22 @@
-"use client";
-import { forwardRef, ButtonHTMLAttributes } from "react";
-import clsx from "clsx";
+'use client'
+import { cn } from '@/lib/cn'
+import * as React from 'react'
 
-type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "ghost";
-  size?: "sm" | "md" | "lg";
-};
+type Props = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: 'solid' | 'outline' | 'ghost'
+  size?: 'sm' | 'md'
+}
 
-const sizeCls = { sm: "h-8 px-3 text-sm", md: "h-10 px-4 text-sm", lg: "h-12 px-5" };
-
-export const Button = forwardRef<HTMLButtonElement, Props>(
-  ({ className, variant="primary", size="md", ...props }, ref) => {
-    const base = "btn";
-    const v = {
-      primary: "btn-primary shadow-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]",
-      secondary: "btn-ghost hover:bg-[hsl(var(--surface))/0.9]",
-      ghost: "btn-ghost hover:bg-[hsl(var(--surface))/0.6]",
-    }[variant];
-    return <button ref={ref} className={clsx(base, v, sizeCls[size], className)} {...props} />;
-  }
-);
-Button.displayName = "Button";
+export function Button({ variant='solid', size='md', className, ...props }: Props) {
+  const base = 'inline-flex items-center justify-center rounded-full transition-colors focus-visible:outline-none'
+  const sizes = {
+    sm: 'h-8 px-3 text-sm',
+    md: 'h-10 px-4 text-sm',
+  }[size]
+  const variants = {
+    solid: 'bg-black text-white hover:opacity-90 disabled:opacity-50',
+    outline: 'border border-black/10 text-brand-900 hover:bg-black/5 disabled:opacity-50',
+    ghost: 'text-brand-900 hover:bg-black/5 disabled:opacity-50',
+  }[variant]
+  return <button className={cn(base, sizes, variants, className)} {...props} />
+}

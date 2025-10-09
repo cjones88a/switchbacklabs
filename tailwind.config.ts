@@ -1,27 +1,43 @@
-import type { Config } from "tailwindcss";
+/* eslint-disable @typescript-eslint/no-var-requires */
+import type { Config } from 'tailwindcss'
 
 const config: Config = {
-  darkMode: "class",
-  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
+  darkMode: 'class',
+  content: [
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
   theme: {
+    container: { center: true, padding: '1rem' },
     extend: {
+      fontFamily: {
+        display: ['ui-sans-serif', 'system-ui', 'Inter', 'Arial', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+      },
       colors: {
-        bg:     "hsl(var(--pb-bg))",     // pure white hero
-        ink:    "hsl(var(--pb-ink))",    // deep green/black text
-        muted:  "hsl(var(--pb-muted))",
-        line:   "hsl(var(--pb-line))",
-        accent: "hsl(var(--pb-accent))", // neon lime
-        paper:  "hsl(var(--pb-paper))",  // off-white content sections
-        stroke: "hsl(var(--pb-stroke))", // outline color for cards/CTAs
+        brand: {
+          // deep green like plug&bet
+          900: '#0E1A13',
+          700: '#12261A',
+          600: '#173322',
+          500: '#1F4630',
+        },
+        accent: {
+          // neon-lime accent
+          400: '#D9FF43',
+          500: '#CCFF00',
+        },
       },
-      fontSize: {
-        display: ["clamp(48px, 9vw, 160px)", { lineHeight: ".9", letterSpacing: "-0.04em" }],
-        hero:    ["clamp(18px, 1.9vw, 22px)", { lineHeight: "1.45" }],
+      boxShadow: {
+        card: '0 8px 22px rgba(0,0,0,.06)',
+        subtle: '0 1px 0 rgba(0,0,0,.06)',
       },
-      borderRadius: { xl: "18px", "2xl": "28px", huge: "36px" },
-      boxShadow: { soft: "0 10px 40px rgba(0,0,0,.06)" },
+      borderRadius: {
+        xl: '1rem',
+        '2xl': '1.25rem',
+      },
     },
   },
   plugins: [],
-};
-export default config;
+}
+export default config

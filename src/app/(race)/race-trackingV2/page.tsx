@@ -1,13 +1,19 @@
-"use client";
+'use client'
 
-import * as React from "react";
+import * as React from 'react'
+import { useState, useEffect } from 'react'
 import Link from "next/link";
 import SiteHeader from "@/components/layout/SiteHeader";
-import StravaConnect from "@/components/race/StravaConnect";
-import Leaderboard from "@/components/race/Leaderboard";
-import MyTimes from "@/components/race/MyTimes";
 import TrackerBackground from "@/components/race/TrackerBackground";
-import Tabs from "@/components/ui/Tabs";
+import Leaderboard from "@/components/race/Leaderboard";
+import StravaConnect from "@/components/race/StravaConnect";
+import { Button } from '@/components/ui/button'
+import { Tabs } from '@/components/ui/tabs'
+import { Notice } from '@/components/ui/notice'
+import { TableWrap, T, TH, TD } from '@/components/ui/table'
+
+// types you already have:
+type YearRow = { race_year: number; fall_ms: number|null; winter_ms: number|null; spring_ms: number|null; summer_ms: number|null }
 
 type AttemptStatus = {
   recorded: boolean;
@@ -18,26 +24,30 @@ type AttemptStatus = {
   desc_sum_ms?: number;
 };
 
-const fmt = (ms?: number | null) => {
-  if (!ms && ms !== 0) return null;
-  const total = Math.floor(ms / 1000);
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-  return [h, m, s].map((v, i) => (i === 0 ? String(v) : String(v).padStart(2, "0"))).join(":").replace(/^0:/, "");
-};
+function fmt(ms?: number|null) {
+  if (!ms) return '—'
+  const totalSec = Math.round(ms / 1000)
+  const h = Math.floor(totalSec / 3600)
+  const m = Math.floor((totalSec % 3600) / 60)
+  const s = totalSec % 60
+  return (h ? `${h}:` : '') + `${m}`.padStart(2,'0') + ':' + `${s}`.padStart(2,'0')
+}
 
-export default function RaceTracker() {
-  const [tab, setTab] = React.useState<"leaderboard" | "my-times">("leaderboard");
-  const [seasonKey, setSeasonKey] = React.useState<string>(""); // server returns this on page load in your impl
-  const [status, setStatus] = React.useState<AttemptStatus | null>(null);
-  const [busy, setBusy] = React.useState(false);
-  const [rows, setRows] = React.useState<
+export default function RacePage() {
+  const [tab, setTab] = useState<'leaderboard'|'mine'>('leaderboard')
+  const [mine, setMine] = useState<YearRow[]>([])
+  const [loading, setLoading] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const [importing, setImporting] = useState(false)
+  const [seasonKey, setSeasonKey] = useState<string>("")
+  const [status, setStatus] = useState<AttemptStatus | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [rows, setRows] = useState<
     { rider: string; fall?: string | null; winter?: string | null; spring?: string | null; summer?: string | null; total?: string | null; climbSum?: string | null; descSum?: string | null; profileUrl?: string | null; }[]
-  >([]);
+  >([])
 
   // initial fetches (season + leaderboard)
-  React.useEffect(() => {
+  useEffect(() => {
     (async () => {
       try {
         const s = await fetch("/api/season-key").then(r => r.ok ? r.text() : "");
@@ -45,7 +55,21 @@ export default function RaceTracker() {
       } catch {}
       await refresh();
     })();
-  }, []);
+  }, [])
+
+  // load my-times when tab opens
+  useEffect(() => {
+    if (tab !== 'mine') return
+    setLoading(true); setErr(null)
+    fetch('/api/my-times', { cache: 'no-store' })
+      .then(async r => {
+        const j = await r.json()
+        if (!r.ok) throw new Error(j?.error || 'failed')
+        setMine(j.items || [])
+      })
+      .catch(e => setErr(String(e.message ?? e)))
+      .finally(() => setLoading(false))
+  }, [tab])
 
   const refresh = async () => {
     try {
@@ -59,8 +83,8 @@ export default function RaceTracker() {
         let riderName = "Unknown";
         if (typeof r.rider === 'string') {
           riderName = r.rider;
-            } else if (r.rider && typeof r.rider === 'object' && 'name' in r.rider) {
-              riderName = (r.rider as { name: string }).name;
+        } else if (r.rider && typeof r.rider === 'object' && 'name' in r.rider) {
+          riderName = (r.rider as { name: string }).name;
         } else if (r.rider_name) {
           riderName = r.rider_name as string;
         }
@@ -106,6 +130,24 @@ export default function RaceTracker() {
     }
   };
 
+  async function backfill() {
+    setImporting(true); setErr(null)
+    try {
+      const r = await fetch('/api/my-times/backfill', { method: 'POST' })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j?.error || 'import failed')
+      // reload
+      const rr = await fetch('/api/my-times', { cache: 'no-store' })
+      const jj = await rr.json()
+      if (!rr.ok) throw new Error(jj?.error || 'reload failed')
+      setMine(jj.items || [])
+    } catch (e:any) {
+      setErr(e?.message ?? String(e))
+    } finally {
+      setImporting(false)
+    }
+  }
+
   const viewActivityUrl = status?.activity_id
     ? `https://www.strava.com/activities/${status.activity_id}`
     : null;
@@ -114,127 +156,169 @@ export default function RaceTracker() {
     <>
       <SiteHeader />
       <TrackerBackground />
-          <main className="relative">
-            <section className="section space-y-12">
-              <Link href="/" className="text-sm text-muted hover:opacity-70 bg-white/90 px-3 py-1 rounded-md backdrop-blur-sm">← Back to home</Link>
+      <main className="relative">
+        <div className="container-page py-8">
+          <Link href="/" className="text-sm text-neutral-500 hover:opacity-70 bg-white/90 px-3 py-1 rounded-md backdrop-blur-sm">← Back to home</Link>
 
-              <header className="space-y-4 bg-white/95 p-8 rounded-xl backdrop-blur-sm">
-                <h1 className="h2">Horsetooth Four-Seasons Challenge</h1>
-                <p className="text-muted">Authenticate with Strava to log your time for the season window.</p>
-              </header>
+          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.05] mt-6">
+            Horsetooth Four-Seasons Challenge
+          </h1>
 
-              {/* Connect */}
-              <div className="space-y-6 bg-white/95 p-8 rounded-xl backdrop-blur-sm">
-                <div className="flex flex-wrap items-center gap-6">
-                  <StravaConnect enabled={true} />
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/strava/powered-by-strava-black.svg"
-                    alt="Powered by Strava"
-                    className="h-8 w-auto opacity-90"
-                    height={32}
-                  />
-                </div>
-                <p className="text-xs text-gray-600">
-                  By clicking &quot;Connect with Strava&quot;, I agree to display my name and race times on the public leaderboard. 
-                  You can withdraw consent anytime by emailing us.
-                </p>
-                {seasonKey && (
-                  <div className="text-xs text-muted bg-gray-100 px-3 py-2 rounded">Season key: <span className="font-mono">{seasonKey}</span></div>
-                )}
+          {/* Consent + Strava connect block */}
+          <div className="mt-8 space-y-6 bg-white/95 p-8 rounded-xl backdrop-blur-sm">
+            <div className="flex flex-wrap items-center gap-6">
+              <StravaConnect enabled={true} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/strava/powered-by-strava-black.svg"
+                alt="Powered by Strava"
+                className="h-8 w-auto opacity-90"
+                height={32}
+              />
+            </div>
+            <p className="text-xs text-gray-600">
+              By clicking &quot;Connect with Strava&quot;, I agree to display my name and race times on the public leaderboard. 
+              You can withdraw consent anytime by emailing us.
+            </p>
+            {seasonKey && (
+              <div className="text-xs text-neutral-500 bg-gray-100 px-3 py-2 rounded">Season key: <span className="font-mono">{seasonKey}</span></div>
+            )}
+          </div>
+
+          {/* Status / JSON */}
+          {status && (
+            <div className="mt-6 rounded-xl p-8 bg-white/95 backdrop-blur-sm ring-1 ring-neutral-200">
+              <div className="text-[11px] tracking-widest uppercase text-neutral-500 mb-3">
+                {status.recorded ? "Success" : "Error"}
               </div>
-
-              {/* Status / JSON */}
-              {status && (
-                <div className="card-outline p-8 bg-white/95 backdrop-blur-sm">
-                  <div className="text-[11px] tracking-widest uppercase text-muted mb-3">
-                    {status.recorded ? "Success" : "Error"}
-                  </div>
-                  <div className="text-sm mb-4">
-                    {status.recorded ? "Time recorded successfully!" : `Failed to record: ${status.reason}`}
-                  </div>
-                  {viewActivityUrl && (
-                    <div>
-                      <a href={viewActivityUrl} className="btn btn-pill text-sm bg-white border-2 border-gray-300 hover:bg-gray-50 px-4 py-2">View on Strava</a>
-                    </div>
-                  )}
+              <div className="text-sm mb-4">
+                {status.recorded ? "Time recorded successfully!" : `Failed to record: ${status.reason}`}
+              </div>
+              {viewActivityUrl && (
+                <div>
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={viewActivityUrl}>View on Strava</a>
+                  </Button>
                 </div>
               )}
+            </div>
+          )}
 
-              {/* Tabs */}
-              <div className="bg-white/95 p-8 rounded-xl backdrop-blur-sm">
-                <Tabs
-                  tabs={[
-                    { id: "leaderboard", label: "Leaderboard" },
-                    { id: "my-times", label: "My Times" },
-                  ]}
-                  value={tab}
-                  onChange={(id) => setTab(id as typeof tab)}
-                  className="mb-6"
-                />
+          <Tabs
+            tabs={[
+              { id: 'leaderboard', label: 'Leaderboard' },
+              { id: 'mine', label: 'My Times' },
+            ]}
+            value={tab}
+            onChange={id => setTab(id as any)}
+          />
 
-                {tab === "leaderboard" && (
-                  <div className="space-y-6">
-                    <h2 className="h2">Leaderboard</h2>
-                    
-                    {/* Actions */}
-                    <div className="flex flex-wrap gap-3">
-                      <button onClick={refresh} className="btn btn-pill bg-white border-2 border-gray-300 hover:bg-gray-50 px-4 py-2 text-sm" disabled={busy}>Refresh</button>
-                      <button onClick={recordNow} className="btn btn-primary shadow-lg px-4 py-2 text-sm" disabled={busy}>
-                        {busy ? "Recording…" : "Record now"}
-                      </button>
-                    </div>
-                    
-                    <div className="pt-4">
-                      <Leaderboard rows={rows} />
-                    </div>
-                  </div>
-                )}
+          {tab === 'leaderboard' && (
+            <section className="mt-6">
+              <div className="flex flex-wrap items-center gap-3">
+                <Button variant="outline" onClick={refresh} disabled={busy}>Refresh</Button>
+                <Button onClick={recordNow} disabled={busy}>
+                  {busy ? 'Recording…' : 'Record now'}
+                </Button>
+              </div>
+              
+              <div className="pt-4">
+                <Leaderboard rows={rows} />
+              </div>
+            </section>
+          )}
 
-                {tab === "my-times" && (
-                  <div className="space-y-4">
-                    <h2 className="h2">My Times</h2>
-                    <p className="text-sm text-muted">
-                      Your best seasonal times per race year (Fall defines the race year).
-                    </p>
-                    <MyTimes />
-                  </div>
-                )}
+          {tab === 'mine' && (
+            <section className="mt-6">
+              <div className="flex flex-wrap items-center gap-3">
+                <Button onClick={backfill} disabled={importing}>
+                  {importing ? 'Importing…' : 'Backfill my history'}
+                </Button>
+                {err && <Notice>{err}</Notice>}
               </div>
 
-              {/* Guidance */}
-              <div className="bg-white/95 p-6 rounded-xl backdrop-blur-sm">
-                <p className="text-xs text-muted mb-4">
-                  Descent Sum = 3 descents from the same activity as your overall time.
-                </p>
+              {loading ? (
+                <p className="mt-6 text-sm text-neutral-500">Loading your times…</p>
+              ) : (
+                <MyTimesTable rows={mine} />
+              )}
 
-                {/* Segment links */}
-                <div className="text-xs text-muted">
-                  <span className="font-semibold">Segments:</span>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {[
-                      { id: "7977451", name: "Main" },
-                      { id: "9589287", name: "Climb 1" },
-                      { id: "18229887", name: "Climb 2" },
-                      { id: "21056071", name: "Descent 1" },
-                      { id: "19057702", name: "Descent 2" },
-                      { id: "13590275", name: "Descent 3" }
-                    ].map((segment) => (
-                      <a
-                        key={segment.id}
-                        className="underline hover:opacity-70 bg-gray-100 px-3 py-2 rounded"
-                        href={`https://www.strava.com/segments/${segment.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {segment.name}
-                      </a>
-                    ))}
-                  </div>
-                </div>
+              <p className="mt-2 text-xs text-neutral-500">
+                Best seasonal time per race year (Fall defines the race year).
+              </p>
+            </section>
+          )}
+
+          {/* Guidance */}
+          <div className="mt-8 bg-white/95 p-6 rounded-xl backdrop-blur-sm">
+            <p className="text-xs text-neutral-500 mb-4">
+              Descent Sum = 3 descents from the same activity as your overall time.
+            </p>
+
+            {/* Segment links */}
+            <div className="text-xs text-neutral-500">
+              <span className="font-semibold">Segments:</span>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {[
+                  { id: "7977451", name: "Main" },
+                  { id: "9589287", name: "Climb 1" },
+                  { id: "18229887", name: "Climb 2" },
+                  { id: "21056071", name: "Descent 1" },
+                  { id: "19057702", name: "Descent 2" },
+                  { id: "13590275", name: "Descent 3" }
+                ].map((segment) => (
+                  <a
+                    key={segment.id}
+                    className="underline hover:opacity-70 bg-gray-100 px-3 py-2 rounded"
+                    href={`https://www.strava.com/segments/${segment.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {segment.name}
+                  </a>
+                ))}
               </div>
-        </section>
+            </div>
+          </div>
+        </div>
       </main>
     </>
-  );
+  )
+}
+
+function MyTimesTable({ rows }: { rows: YearRow[] }) {
+  return (
+    <TableWrap>
+      <T>
+        <thead>
+          <tr>
+            <TH>Race year</TH>
+            <TH>Fall</TH>
+            <TH>Winter</TH>
+            <TH>Spring</TH>
+            <TH>Summer</TH>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-neutral-200">
+          {rows.length === 0 ? (
+            <tr>
+              <td colSpan={5} className="px-4 py-8 text-sm text-neutral-500">
+                No historical times yet. Click <em>Backfill my history</em>.
+              </td>
+            </tr>
+          ) : (
+            rows.map(r => (
+              <tr key={r.race_year} className="hover:bg-neutral-50">
+                <TD>{r.race_year}</TD>
+                <TD mono>{fmt(r.fall_ms)}</TD>
+                <TD mono>{fmt(r.winter_ms)}</TD>
+                <TD mono>{fmt(r.spring_ms)}</TD>
+                <TD mono>{fmt(r.summer_ms)}</TD>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </T>
+    </TableWrap>
+  )
 }
