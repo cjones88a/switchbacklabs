@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient as createSb } from '@supabase/supabase-js'
-import { fetchAllSegmentEffortsSince2014 } from '@/lib/strava-improved'
+import { fetchAllSegmentEffortsSince2014, fetchActivitySegmentEfforts } from '@/lib/strava-improved'
 import { cookies } from 'next/headers'
 
-const MAIN_SEGMENT_ID = Number(process.env.MAIN_SEGMENT_ID)
+// const MAIN_SEGMENT_ID = Number(process.env.MAIN_SEGMENT_ID) // Not used in this file
 const CLIMB_1 = Number(process.env.CLIMB_1)
 const CLIMB_2 = Number(process.env.CLIMB_2)
 const DESC_1  = Number(process.env.DESC_1)
@@ -119,43 +119,37 @@ const _segCache = new Map<number, { climb: number|null; desc: number|null }>()
 async function getClimbDescSumsForActivity(activity_id: number) {
   if (_segCache.has(activity_id)) return _segCache.get(activity_id)!
 
-  // You likely already have a helper to fetch a detailed activity with segment efforts.
-  // Minimal implementation using Strava v3 activities endpoint:
-  // const tokenRes = await fetch('https://www.strava.com/api/v3/athlete', { headers: {} })
-  // ^ replace with your bearer() helper; omitted here for brevity.
-  // Better: expose a lib method `fetchActivitySegments(activity_id)` returning its `segment_efforts`.
-
-  // Assuming you already built a helper:
-  const segs = await fetchActivitySegmentEfforts(activity_id)
-
-  // pick the segment times we care about (in ms)
-  let climb = 0
-  let desc = 0
-  let haveClimb = false
-  let haveDesc = false
-
-  for (const s of segs as unknown[]) {
-    const seg = s as Record<string, unknown>;
-    const id = (seg.segment as Record<string, unknown>)?.id
-    const ms = ((seg.elapsed_time as number) ?? (seg.moving_time as number) ?? 0) * 1000
-    if (id === CLIMB_1 || id === CLIMB_2) { climb += ms; haveClimb = true }
-    if (id === DESC_1 || id === DESC_2 || id === DESC_3) { desc += ms; haveDesc = true }
-  }
-
-  const sums = { climb: haveClimb ? climb : null, desc: haveDesc ? desc : null }
-  _segCache.set(activity_id, sums)
-  return sums
-}
-
-async function fetchActivitySegmentEfforts(activity_id: number) {
-  // This is a placeholder - you'll need to implement this using your Strava helper
-  // to fetch the activity's segment efforts
   try {
-    // Use your existing Strava helper to get the activity with segment efforts
-    // For now, return empty array to avoid breaking the build
-    return []
+    // Fetch segment efforts for this activity from Strava
+    const segs = await fetchActivitySegmentEfforts(activity_id)
+
+    // pick the segment times we care about (in ms)
+    let climb = 0
+    let desc = 0
+    let haveClimb = false
+    let haveDesc = false
+
+    for (const s of segs) {
+      const seg = s as Record<string, unknown>;
+      const segment = seg.segment as Record<string, unknown> | undefined;
+      const id = segment?.id as number | undefined;
+      const ms = ((seg.elapsed_time as number) ?? (seg.moving_time as number) ?? 0) * 1000;
+      
+      if (id === CLIMB_1 || id === CLIMB_2) { 
+        climb += ms; 
+        haveClimb = true 
+      }
+      if (id === DESC_1 || id === DESC_2 || id === DESC_3) { 
+        desc += ms; 
+        haveDesc = true 
+      }
+    }
+
+    const sums = { climb: haveClimb ? climb : null, desc: haveDesc ? desc : null }
+    _segCache.set(activity_id, sums)
+    return sums
   } catch (error) {
-    console.error(`Failed to fetch segment efforts for activity ${activity_id}:`, error)
-    return []
+    console.error(`Failed to get climb/desc sums for activity ${activity_id}:`, error)
+    return { climb: null, desc: null }
   }
 }

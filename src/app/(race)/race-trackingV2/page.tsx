@@ -13,7 +13,24 @@ import { TableWrap, T, TH, TD } from '@/components/ui/table'
 import { LeaderboardTable, LeaderboardRow } from '@/components/leaderboard/LeaderboardTable'
 
 // types you already have:
-type YearRow = { race_year: number; fall_ms: number|null; winter_ms: number|null; spring_ms: number|null; summer_ms: number|null }
+type YearRow = { 
+  race_year: number; 
+  fall_ms: number|null; 
+  winter_ms: number|null; 
+  spring_ms: number|null; 
+  summer_ms: number|null;
+  total_ms: number|null;
+  fall_climb_ms: number|null;
+  winter_climb_ms: number|null;
+  spring_climb_ms: number|null;
+  summer_climb_ms: number|null;
+  total_climb_ms: number|null;
+  fall_desc_ms: number|null;
+  winter_desc_ms: number|null;
+  spring_desc_ms: number|null;
+  summer_desc_ms: number|null;
+  total_desc_ms: number|null;
+}
 
 type AttemptStatus = {
   recorded: boolean;
@@ -317,36 +334,44 @@ export default function RacePage() {
 function MyTimesTable({ rows }: { rows: YearRow[] }) {
   return (
     <TableWrap>
-      <T>
-        <thead>
-          <tr>
-            <TH>Race year</TH>
-            <TH>Fall</TH>
-            <TH>Winter</TH>
-            <TH>Spring</TH>
-            <TH>Summer</TH>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-neutral-200">
-          {rows.length === 0 ? (
+      <div className="min-w-[1200px]">
+        <T>
+          <thead>
             <tr>
-              <td colSpan={5} className="px-4 py-8 text-sm text-neutral-500">
-                No historical times yet. Click <em>Backfill my history</em>.
-              </td>
+              <TH>Race year</TH>
+              <TH>Fall</TH>
+              <TH>Winter</TH>
+              <TH>Spring</TH>
+              <TH>Summer</TH>
+              <TH>Total</TH>
+              <TH>Climb Sum</TH>
+              <TH>Descent Sum</TH>
             </tr>
-          ) : (
-            rows.map(r => (
-              <tr key={r.race_year} className="hover:bg-neutral-50">
-                <TD>{r.race_year}</TD>
-                <TD mono>{fmt(r.fall_ms)}</TD>
-                <TD mono>{fmt(r.winter_ms)}</TD>
-                <TD mono>{fmt(r.spring_ms)}</TD>
-                <TD mono>{fmt(r.summer_ms)}</TD>
+          </thead>
+          <tbody className="divide-y divide-neutral-200">
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="px-4 py-8 text-sm text-neutral-500">
+                  No historical times yet. Click <em>Backfill my history</em>.
+                </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </T>
+            ) : (
+              rows.map(r => (
+                <tr key={r.race_year} className="hover:bg-neutral-50">
+                  <TD>{r.race_year}</TD>
+                  <TD mono>{fmt(r.fall_ms)}</TD>
+                  <TD mono>{fmt(r.winter_ms)}</TD>
+                  <TD mono>{fmt(r.spring_ms)}</TD>
+                  <TD mono>{fmt(r.summer_ms)}</TD>
+                  <TD mono>{fmt(r.total_ms)}</TD>
+                  <TD mono>{fmt(r.total_climb_ms)}</TD>
+                  <TD mono>{fmt(r.total_desc_ms)}</TD>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </T>
+      </div>
     </TableWrap>
   )
 }

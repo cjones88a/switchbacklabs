@@ -147,6 +147,20 @@ export async function fetchAllSegmentEffortsSince2014() {
   return collected;
 }
 
+/** Fetch segment efforts for a specific activity */
+export async function fetchActivitySegmentEfforts(activityId: number) {
+  const accessToken = await bearer();
+  const url = `${STRAVA_BASE}/activities/${activityId}/segment_efforts`;
+  
+  try {
+    const efforts = await stravaJson(url, accessToken);
+    return Array.isArray(efforts) ? efforts : [];
+  } catch (error) {
+    console.error(`Failed to fetch segment efforts for activity ${activityId}:`, error);
+    return [];
+  }
+}
+
 /** helper in UI to produce upgrade link (force new scopes) */
 export function buildForceConsentUrl() {
   const params = new URLSearchParams({

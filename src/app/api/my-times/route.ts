@@ -21,7 +21,15 @@ export async function GET() {
   try {
     const { data, error } = await sb
       .from('rider_yearly_times')
-      .select('race_year, fall_ms, winter_ms, spring_ms, summer_ms')
+      .select(`
+        race_year, 
+        fall_ms, winter_ms, spring_ms, summer_ms,
+        total_ms,
+        fall_climb_ms, winter_climb_ms, spring_climb_ms, summer_climb_ms,
+        total_climb_ms,
+        fall_desc_ms, winter_desc_ms, spring_desc_ms, summer_desc_ms,
+        total_desc_ms
+      `)
       .eq('rider_id', rider_id)
       .order('race_year', { ascending: false });
 
