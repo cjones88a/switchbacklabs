@@ -5,12 +5,12 @@ import { useState, useEffect } from 'react'
 import Link from "next/link";
 import SiteHeader from "@/components/layout/SiteHeader";
 import TrackerBackground from "@/components/race/TrackerBackground";
-import Leaderboard from "@/components/race/Leaderboard";
 import StravaConnect from "@/components/race/StravaConnect";
 import { Button } from '@/components/ui/button'
 import { Tabs } from '@/components/ui/Tabs'
 import { Notice } from '@/components/ui/notice'
 import { TableWrap, T, TH, TD } from '@/components/ui/table'
+import { LeaderboardTable, LeaderboardRow } from '@/components/leaderboard/LeaderboardTable'
 
 // types you already have:
 type YearRow = { race_year: number; fall_ms: number|null; winter_ms: number|null; spring_ms: number|null; summer_ms: number|null }
@@ -39,12 +39,12 @@ export default function RacePage() {
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [importing, setImporting] = useState(false)
+  const [lb, setLb] = useState<LeaderboardRow[]>([])
+  const [lbLoading, setLbLoading] = useState(false)
+  const [lbErr, setLbErr] = useState<string | null>(null)
   const [seasonKey, setSeasonKey] = useState<string>("")
   const [status, setStatus] = useState<AttemptStatus | null>(null)
   const [busy, setBusy] = useState(false)
-  const [rows, setRows] = useState<
-    { rider: string; fall?: string | null; winter?: string | null; spring?: string | null; summer?: string | null; total?: string | null; climbSum?: string | null; descSum?: string | null; profileUrl?: string | null; }[]
-  >([])
 
   // initial fetches (season + leaderboard)
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function RacePage() {
         const s = await fetch("/api/season-key").then(r => r.ok ? r.text() : "");
         if (s) setSeasonKey(s);
       } catch {}
-      await refresh();
+      await refreshLeaderboard();
     })();
   }, [])
 
@@ -71,41 +71,46 @@ export default function RacePage() {
       .finally(() => setLoading(false))
   }, [tab])
 
-  const refresh = async () => {
-    try {
-      const res = await fetch("/api/leaderboard", { cache: "no-store" });
-      if (!res.ok) return;
+  // load leaderboard when that tab opens
+  useEffect(() => {
+    if (tab !== 'leaderboard') return
+    refreshLeaderboard()
+  }, [tab])
 
-      const data = await res.json();
-      // adapt to your API shape
-      const mapped = (data?.rows || data || []).map((r: Record<string, unknown>) => {
-        // Handle case where rider might be an object with name/avatar
-        let riderName = "Unknown";
-        if (typeof r.rider === 'string') {
-          riderName = r.rider;
-        } else if (r.rider && typeof r.rider === 'object' && 'name' in r.rider) {
-          riderName = (r.rider as { name: string }).name;
-        } else if (r.rider_name) {
-          riderName = r.rider_name as string;
-        }
-        
+  async function refreshLeaderboard() {
+    try {
+      setLbLoading(true); setLbErr(null)
+      const r = await fetch('/api/leaderboard', { cache: 'no-store' })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j?.error || 'failed')
+      
+      // Normalize the API response to match LeaderboardRow type
+      const normalized: LeaderboardRow[] = (j.rows ?? j ?? []).map((r: unknown) => {
+        const row = r as Record<string, unknown>;
+        const rider = row.rider as Record<string, unknown> | undefined;
         return {
-          rider: riderName,
-          fall: r.fall ?? r["2025_FALL"] ?? null,
-          winter: r.winter ?? null,
-          spring: r.spring ?? null,
-          summer: r.summer ?? null,
-          total: r.total ?? (r.total_ms ? fmt(r.total_ms as number) : null),
-          climbSum: r.climb_sum ?? (r.climb_sum_ms ? fmt(r.climb_sum_ms as number) : null),
-          descSum: r.desc_sum ?? (r.desc_sum_ms ? fmt(r.desc_sum_ms as number) : null),
-          profileUrl: r.profile ?? r.profile_url ?? null,
+          rider: {
+            firstname: (rider?.firstname as string) ?? (rider?.name as string)?.split(' ')[0] ?? '',
+            lastname: (rider?.lastname as string) ?? (rider?.name as string)?.split(' ').slice(1).join(' ') ?? '',
+            profile: (rider?.profile as string) ?? (row.profileUrl as string) ?? null,
+          },
+          fall_ms: row.fall_ms as number ?? null,
+          winter_ms: row.winter_ms as number ?? null,
+          spring_ms: row.spring_ms as number ?? null,
+          summer_ms: row.summer_ms as number ?? null,
+          total_ms: (row.total_ms as number) ?? (row.main_ms as number) ?? null,
+          climb_sum_ms: row.climb_sum_ms as number ?? null,
+          desc_sum_ms: row.desc_sum_ms as number ?? null,
         };
-      });
-      setRows(mapped);
-    } catch (e) {
-      console.error(e);
+      })
+      setLb(normalized)
+    } catch (e: unknown) {
+      setLbErr(e instanceof Error ? e.message : String(e))
+    } finally {
+      setLbLoading(false)
     }
-  };
+  }
+
 
   const recordNow = async () => {
     setBusy(true);
@@ -121,7 +126,7 @@ export default function RacePage() {
       });
       const json = await res.json();
       setStatus(json as AttemptStatus);
-      await refresh();
+      await refreshLeaderboard();
     } catch (e) {
       console.error(e);
       setStatus({ recorded: false, reason: "client_error" });
@@ -219,15 +224,18 @@ export default function RacePage() {
           {tab === 'leaderboard' && (
             <section className="mt-6">
               <div className="flex flex-wrap items-center gap-3">
-                <Button variant="outline" onClick={refresh} disabled={busy}>Refresh</Button>
+                <Button variant="outline" onClick={refreshLeaderboard} disabled={lbLoading}>Refresh</Button>
                 <Button onClick={recordNow} disabled={busy}>
                   {busy ? 'Recording…' : 'Record now'}
                 </Button>
+                {lbErr && <Notice>{lbErr}</Notice>}
               </div>
-              
-              <div className="pt-4">
-                <Leaderboard rows={rows} />
-              </div>
+
+              {lbLoading ? (
+                <p className="mt-6 text-sm text-neutral-500">Loading leaderboard…</p>
+              ) : (
+                <LeaderboardTable rows={lb} />
+              )}
             </section>
           )}
 
