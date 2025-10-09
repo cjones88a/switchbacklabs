@@ -38,35 +38,35 @@ export async function GET() {
     console.log("[debug] Database connection successful");
 
     // Check if season_windows table exists
-    let windowsResult = { data: [], error: null };
+    let windowsResult: { data: any[] | null; error: string | null } = { data: [], error: null };
     try {
       const result = await sb
         .from("season_windows")
         .select("*")
         .order("start_at", { ascending: true });
-      windowsResult = result;
+      windowsResult = { data: result.data, error: result.error?.message || null };
     } catch (err) {
       windowsResult.error = err instanceof Error ? err.message : "Unknown error";
     }
 
     // Check attempts table
-    let attemptsResult = { count: 0, error: null };
+    let attemptsResult: { count: number | null; error: string | null } = { count: 0, error: null };
     try {
       const result = await sb
         .from("attempts")
         .select("*", { count: "exact", head: true });
-      attemptsResult = result;
+      attemptsResult = { count: result.count, error: result.error?.message || null };
     } catch (err) {
       attemptsResult.error = err instanceof Error ? err.message : "Unknown error";
     }
 
     // Check oauth_tokens table
-    let tokensResult = { count: 0, error: null };
+    let tokensResult: { count: number | null; error: string | null } = { count: 0, error: null };
     try {
       const result = await sb
         .from("oauth_tokens")
         .select("*", { count: "exact", head: true });
-      tokensResult = result;
+      tokensResult = { count: result.count, error: result.error?.message || null };
     } catch (err) {
       tokensResult.error = err instanceof Error ? err.message : "Unknown error";
     }
