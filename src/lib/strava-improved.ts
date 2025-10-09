@@ -19,7 +19,8 @@ function adminSb() {
 }
 
 async function getTokensForCurrentRider(): Promise<Tokens | null> {
-  const riderId = cookies().get('rider_id')?.value;
+  const cookieStore = await cookies();
+  const riderId = cookieStore.get('rider_id')?.value;
   if (!riderId) return null;
   const sb = adminSb();
   const { data } = await sb
