@@ -89,8 +89,7 @@ export async function getFreshAccessToken(riderId: string): Promise<string> {
   if (error || !data) throw new Error("oauth_token_not_found");
 
   const expires = new Date(data.expires_at).getTime();
-  const now = Date.now();
-  if (expires - now > 60_000) {
+  if (expires - Date.now() > 60_000) {
     return data.access_token;
   }
 

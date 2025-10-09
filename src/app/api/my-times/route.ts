@@ -94,12 +94,21 @@ export async function GET() {
 
   // 2) Fetch ALL efforts in one go (2014 → now), UTC
   const access = await getFreshAccessToken(rid);
-  const allEfforts = await listAllSegmentEffortsUTC(
-    access,
-    MAIN_SEGMENT_ID,
-    new Date(Date.UTC(FIRST_RACE_YEAR, 0, 1)).toISOString(),
-    new Date().toISOString()
-  );
+  console.log(`[${t.name}] ${t.id} Fetching efforts for segment ${MAIN_SEGMENT_ID} from ${FIRST_RACE_YEAR} to now`);
+  
+  let allEfforts;
+  try {
+    allEfforts = await listAllSegmentEffortsUTC(
+      access,
+      MAIN_SEGMENT_ID,
+      new Date(Date.UTC(FIRST_RACE_YEAR, 0, 1)).toISOString(),
+      new Date().toISOString()
+    );
+    console.log(`[${t.name}] ${t.id} Found ${allEfforts.length} total efforts`);
+  } catch (error) {
+    console.error(`[${t.name}] ${t.id} Strava API error:`, error);
+    return NextResponse.json({ error: "strava_api_failed", detail: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
+  }
 
   // 3) For each season window, pick the fastest effort that falls inside
   type SeasonBest = { season_key: string; race_year: number; season: string; ms: number; activity_id: number };
@@ -127,6 +136,7 @@ export async function GET() {
   }
 
   // 4) Upsert best-of-season into attempts using (rider_id, season_key)
+  console.log(`[${t.name}] ${t.id} Found best efforts for ${bestBySeason.size} seasons`);
   if (bestBySeason.size) {
     const payload = Array.from(bestBySeason.values()).map(b => ({
       rider_id: rid,
@@ -134,6 +144,7 @@ export async function GET() {
       activity_id: b.activity_id,
       main_ms: b.ms,
     }));
+    console.log(`[${t.name}] ${t.id} Upserting ${payload.length} attempts`);
     const { error: upErr } = await sb.from("attempts").upsert(payload, { onConflict: "rider_id,season_key" });
     if (upErr) {
       console.error("attempts upsert failed", upErr);
