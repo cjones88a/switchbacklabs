@@ -38,7 +38,7 @@ export async function GET() {
     console.log("[debug] Database connection successful");
 
     // Check if season_windows table exists
-    let windowsResult: { data: any[] | null; error: string | null } = { data: [], error: null };
+    let windowsResult: { data: unknown[] | null; error: string | null } = { data: [], error: null };
     try {
       const result = await sb
         .from("season_windows")
