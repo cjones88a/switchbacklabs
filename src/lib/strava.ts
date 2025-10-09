@@ -126,27 +126,31 @@ export async function getFreshAccessToken(riderId: string): Promise<string> {
 
 export type SegmentEffort = {
   id: number;
-  elapsed_time: number; // seconds
-  moving_time: number;
+  elapsed_time: number;    // seconds
+  moving_time: number;     // seconds
+  start_date: string;      // ISO 8601 UTC, e.g. "2024-09-21T15:02:11Z"
   start_date_local: string;
   activity: { id: number };
 };
 
-export async function listSegmentEffortsForWindow(
+/**
+ * Fetch ALL efforts for a segment within a UTC range.
+ * Uses start_date/end_date (UTC) to avoid local-time ambiguity.
+ */
+export async function listAllSegmentEffortsUTC(
   accessToken: string,
   segmentId: number,
-  startLocal: string, // YYYY-MM-DDTHH:mm:ss (no Z)
-  endLocal: string
+  startISO: string, // "2014-01-01T00:00:00Z"
+  endISO: string    // now.toISOString()
 ): Promise<SegmentEffort[]> {
   const results: SegmentEffort[] = [];
   let page = 1;
   const per_page = 200;
-
   while (true) {
     const url = new URL(`${STRAVA_API}/segment_efforts`);
     url.searchParams.set("segment_id", String(segmentId));
-    url.searchParams.set("start_date_local", startLocal);
-    url.searchParams.set("end_date_local", endLocal);
+    url.searchParams.set("start_date", startISO);
+    url.searchParams.set("end_date", endISO);
     url.searchParams.set("per_page", String(per_page));
     url.searchParams.set("page", String(page));
 
@@ -154,19 +158,14 @@ export async function listSegmentEffortsForWindow(
       headers: { Authorization: `Bearer ${accessToken}` },
       cache: "no-store",
     });
-
-    if (!r.ok) {
-      const t = await r.text().catch(() => "");
-      throw new Error(`strava_list_efforts_failed: ${t || r.statusText}`);
-    }
+    if (!r.ok) throw new Error(`strava_list_efforts_failed: ${await r.text().catch(() => r.statusText)}`);
 
     const chunk = (await r.json()) as SegmentEffort[];
     results.push(...chunk);
     if (chunk.length < per_page) break;
     page++;
-    if (page > 20) break; // sanity
+    if (page > 50) break; // hard stop safety
   }
-
   return results;
 }
 
