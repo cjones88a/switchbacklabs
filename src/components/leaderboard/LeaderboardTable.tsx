@@ -5,11 +5,19 @@ import { TableWrap, T, TH, TD } from '@/components/ui/table';
 import { cn } from '@/lib/cn';
 
 export type LeaderboardRow = {
-  rider: { firstname: string; lastname: string; profile?: string | null };
+  rider: { name: string; avatar?: string | null };
   fall_ms: number | null;
   winter_ms: number | null;
   spring_ms: number | null;
   summer_ms: number | null;
+  fall_climb_ms: number | null;
+  winter_climb_ms: number | null;
+  spring_climb_ms: number | null;
+  summer_climb_ms: number | null;
+  fall_desc_ms: number | null;
+  winter_desc_ms: number | null;
+  spring_desc_ms: number | null;
+  summer_desc_ms: number | null;
   total_ms: number | null;
   climb_sum_ms: number | null;
   desc_sum_ms: number | null;
@@ -48,8 +56,8 @@ export function LeaderboardTable({
     const list = [...rows];
     list.sort((a, b) => {
       if (sortKey === 'name') {
-        const an = `${a.rider?.lastname ?? ''} ${a.rider?.firstname ?? ''}`.trim().toLowerCase();
-        const bn = `${b.rider?.lastname ?? ''} ${b.rider?.firstname ?? ''}`.trim().toLowerCase();
+        const an = (a.rider?.name ?? '').toLowerCase();
+        const bn = (b.rider?.name ?? '').toLowerCase();
         return an.localeCompare(bn);
       }
       const av = (a as Record<string, unknown>)[sortKey] as number ?? Infinity;
@@ -128,15 +136,15 @@ export function LeaderboardTable({
               </tr>
             ) : (
               sorted.map((r, i) => {
-                const name = `${r.rider?.firstname ?? ''} ${r.rider?.lastname ?? ''}`.trim();
+                const name = r.rider?.name ?? '—';
                 return (
                   <tr key={`${name}-${i}`} className="hover:bg-neutral-50">
                     <TD>
                       <div className="flex items-center gap-3">
-                        {r.rider?.profile ? (
+                        {r.rider?.avatar ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
-                            src={r.rider.profile}
+                            src={r.rider.avatar}
                             alt=""
                             className="h-8 w-8 rounded-full object-cover ring-1 ring-black/10"
                             loading="lazy"
@@ -144,13 +152,61 @@ export function LeaderboardTable({
                         ) : (
                           <div className="h-8 w-8 rounded-full bg-neutral-200 ring-1 ring-black/10" />
                         )}
-                        <span className="font-medium text-neutral-900">{name || '—'}</span>
+                        <span className="font-medium text-neutral-900">{name}</span>
                       </div>
                     </TD>
-                    <TD mono>{fmt(r.fall_ms)}</TD>
-                    <TD mono>{fmt(r.winter_ms)}</TD>
-                    <TD mono>{fmt(r.spring_ms)}</TD>
-                    <TD mono>{fmt(r.summer_ms)}</TD>
+                    <TD>
+                      <div className="text-center">
+                        <div className="font-mono font-medium text-sm">
+                          {fmt(r.fall_ms)}
+                        </div>
+                        <div className="font-mono text-xs text-neutral-600">
+                          {fmt(r.fall_climb_ms)}
+                        </div>
+                        <div className="font-mono text-xs text-neutral-500">
+                          {fmt(r.fall_desc_ms)}
+                        </div>
+                      </div>
+                    </TD>
+                    <TD>
+                      <div className="text-center">
+                        <div className="font-mono font-medium text-sm">
+                          {fmt(r.winter_ms)}
+                        </div>
+                        <div className="font-mono text-xs text-neutral-600">
+                          {fmt(r.winter_climb_ms)}
+                        </div>
+                        <div className="font-mono text-xs text-neutral-500">
+                          {fmt(r.winter_desc_ms)}
+                        </div>
+                      </div>
+                    </TD>
+                    <TD>
+                      <div className="text-center">
+                        <div className="font-mono font-medium text-sm">
+                          {fmt(r.spring_ms)}
+                        </div>
+                        <div className="font-mono text-xs text-neutral-600">
+                          {fmt(r.spring_climb_ms)}
+                        </div>
+                        <div className="font-mono text-xs text-neutral-500">
+                          {fmt(r.spring_desc_ms)}
+                        </div>
+                      </div>
+                    </TD>
+                    <TD>
+                      <div className="text-center">
+                        <div className="font-mono font-medium text-sm">
+                          {fmt(r.summer_ms)}
+                        </div>
+                        <div className="font-mono text-xs text-neutral-600">
+                          {fmt(r.summer_climb_ms)}
+                        </div>
+                        <div className="font-mono text-xs text-neutral-500">
+                          {fmt(r.summer_desc_ms)}
+                        </div>
+                      </div>
+                    </TD>
                     <TD mono>{fmt(r.total_ms)}</TD>
                     <TD mono>{fmt(r.climb_sum_ms)}</TD>
                     <TD mono>{fmt(r.desc_sum_ms)}</TD>

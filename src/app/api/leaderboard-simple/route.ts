@@ -40,10 +40,23 @@ export async function GET(req: Request) {
   const seasonKeys = [`${year}_FALL`, `${year}_WINTER`, `${year + 1}_SPRING`, `${year + 1}_SUMMER`];
   console.log(`[${t.name}] ${t.id} using race year`, year, 'seasonKeys', seasonKeys);
 
-  // Get all attempts data without joining riders table
+  // Get all attempts data with rider information
   const { data, error } = await supabase
     .from("attempts")
-    .select("rider_id, season_key, main_ms, climb_sum_ms, desc_sum_ms")
+    .select(`
+      rider_id, 
+      season_key, 
+      main_ms, 
+      climb_sum_ms, 
+      desc_sum_ms,
+      riders!inner (
+        id,
+        firstname,
+        lastname,
+        profile,
+        consent_public
+      )
+    `)
     .in("season_key", seasonKeys);
 
   if (error) {
@@ -57,6 +70,8 @@ export async function GET(req: Request) {
   const byRider = new Map<string, {
     rider: { name: string; avatar: string | null };
     by_season: Record<string, number | null>;
+    by_season_climb: Record<string, number | null>;
+    by_season_desc: Record<string, number | null>;
     climb_sum_ms: number | null;
     desc_sum_ms: number | null;
     total_ms: number;
@@ -69,10 +84,21 @@ export async function GET(req: Request) {
     const season = attempt.season_key.split("_")[1] as typeof SEASONS[number];
     if (!SEASONS.includes(season)) continue;
 
+    // Skip riders who haven't consented to public display
+    if (!attempt.riders?.consent_public) {
+      console.log(`[${t.name}] ${t.id} skipping rider ${attempt.rider_id} - no consent`);
+      continue;
+    }
+
     if (!byRider.has(attempt.rider_id)) {
       byRider.set(attempt.rider_id, {
-        rider: { name: `Rider ${attempt.rider_id.slice(0, 8)}`, avatar: null },
+        rider: { 
+          name: `${attempt.riders?.firstname ?? ''} ${attempt.riders?.lastname ?? ''}`.trim() || 'Unknown Rider', 
+          avatar: attempt.riders?.profile ?? null 
+        },
         by_season: { FALL: null, WINTER: null, SPRING: null, SUMMER: null },
+        by_season_climb: { FALL: null, WINTER: null, SPRING: null, SUMMER: null },
+        by_season_desc: { FALL: null, WINTER: null, SPRING: null, SUMMER: null },
         climb_sum_ms: null,
         desc_sum_ms: null,
         total_ms: 0,
@@ -82,6 +108,8 @@ export async function GET(req: Request) {
     
     const rider = byRider.get(attempt.rider_id)!;
     rider.by_season[season] = attempt.main_ms;
+    rider.by_season_climb[season] = attempt.climb_sum_ms;
+    rider.by_season_desc[season] = attempt.desc_sum_ms;
     
     // Use climb/desc from any season (prefer FALL if available)
     if (attempt.climb_sum_ms != null) rider.climb_sum_ms = attempt.climb_sum_ms;
@@ -101,6 +129,15 @@ export async function GET(req: Request) {
       winter_ms: rider.by_season.WINTER,
       spring_ms: rider.by_season.SPRING,
       summer_ms: rider.by_season.SUMMER,
+      // Map individual season climb/descent times
+      fall_climb_ms: rider.by_season_climb.FALL,
+      winter_climb_ms: rider.by_season_climb.WINTER,
+      spring_climb_ms: rider.by_season_climb.SPRING,
+      summer_climb_ms: rider.by_season_climb.SUMMER,
+      fall_desc_ms: rider.by_season_desc.FALL,
+      winter_desc_ms: rider.by_season_desc.WINTER,
+      spring_desc_ms: rider.by_season_desc.SPRING,
+      summer_desc_ms: rider.by_season_desc.SUMMER,
     };
   });
 
