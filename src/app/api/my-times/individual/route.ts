@@ -16,6 +16,7 @@ export async function GET() {
     const sb = supabaseAdmin()
 
     // Get individual attempts with climb/descent details
+    console.log(`[individual] Fetching attempts for rider: ${rider_id}`)
     const { data, error } = await sb
       .from('individual_attempts')
       .select(`
@@ -32,6 +33,8 @@ export async function GET() {
       .order('race_year', { ascending: false })
       .order('season_name', { ascending: true })
       .order('main_ms', { ascending: true })
+    
+    console.log(`[individual] Query result:`, { data: data?.length || 0, error })
 
     if (error) {
       console.error('Error fetching individual attempts:', error)
