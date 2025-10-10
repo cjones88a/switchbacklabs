@@ -82,7 +82,7 @@ export async function POST(req: Request) {
 
       // 3) fetch the activity's segment efforts once to compute climb/desc sums
       //    (cache to avoid re-fetching if the same activity pops again in pagination)
-      const sums = await getClimbDescSumsForActivity(activity_id, allEfforts)
+      const sums = await getClimbDescSumsForActivity(activity_id, efforts)
       console.log(`[backfill] Activity ${activity_id} sums: climb=${sums?.climb}ms, desc=${sums?.desc}ms`)
 
       // 4) upsert attempt (unique on rider_id + activity_id guarantees we don't duplicate)
