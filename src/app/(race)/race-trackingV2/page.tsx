@@ -62,7 +62,7 @@ export default function RacePage() {
   async function refreshLeaderboard() {
     try {
       setLbLoading(true); setLbErr(null)
-      const r = await fetch('/api/leaderboard', { cache: 'no-store' })
+      const r = await fetch('/api/leaderboard-simple', { cache: 'no-store' })
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || 'failed')
       

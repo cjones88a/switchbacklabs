@@ -8,7 +8,7 @@ GROUP BY season_key
 ORDER BY season_key;
 
 -- Check what riders have consent_public = true
-SELECT rider_id, firstname, lastname, consent_public
+SELECT id, firstname, lastname, consent_public
 FROM public.riders 
 WHERE consent_public = true;
 
