@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient as createSb } from '@supabase/supabase-js'
-import { fetchAllSegmentEffortsSince2014, fetchActivitySegmentEfforts } from '@/lib/strava-improved'
+import { fetchAllSegmentEffortsSince2014 } from '@/lib/strava-improved'
 import { cookies } from 'next/headers'
 import { env } from '@/lib/env'
 
@@ -126,15 +126,16 @@ export async function POST(req: Request) {
 /** Cache for per-activity segment effort lookups so we don't refetch the same activity repeatedly. */
 const _segCache = new Map<number, { climb: number|null; desc: number|null }>()
 
-async function getClimbDescSumsForActivity(activity_id: number, allSegmentEfforts: any[]) {
+async function getClimbDescSumsForActivity(activity_id: number, allSegmentEfforts: unknown[]) {
   if (_segCache.has(activity_id)) return _segCache.get(activity_id)!
 
   try {
     console.log(`[backfill] Looking for climb/descent segments for activity ${activity_id}`)
     
     // Find all segment efforts for this specific activity from our already-fetched data
-    const activitySegs = allSegmentEfforts.filter((effort: any) => {
-      const activity = effort.activity as Record<string, unknown> | undefined;
+    const activitySegs = allSegmentEfforts.filter((effort: unknown) => {
+      const effortObj = effort as Record<string, unknown>;
+      const activity = effortObj.activity as Record<string, unknown> | undefined;
       return activity?.id === activity_id;
     });
     
