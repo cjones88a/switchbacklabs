@@ -85,5 +85,5 @@ export async function stravaJson<T>(token: string, path: string) {
 /** Fetch an activity including all segment efforts (owner only). */
 export async function fetchActivityWithEfforts(token: string, activity_id: number) {
   // include_all_efforts=true is critical to get per-activity segment efforts
-  return stravaJson<any>(token, `/activities/${activity_id}?include_all_efforts=true`)
+  return stravaJson<unknown>(token, `/activities/${activity_id}?include_all_efforts=true`)
 }
