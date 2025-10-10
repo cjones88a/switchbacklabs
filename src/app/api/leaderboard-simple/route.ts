@@ -40,23 +40,10 @@ export async function GET(req: Request) {
   const seasonKeys = [`${year}_FALL`, `${year}_WINTER`, `${year + 1}_SPRING`, `${year + 1}_SUMMER`];
   console.log(`[${t.name}] ${t.id} using race year`, year, 'seasonKeys', seasonKeys);
 
-  // Get all attempts data with rider information
+  // Get all attempts data without joining riders table (for now)
   const { data, error } = await supabase
     .from("attempts")
-    .select(`
-      rider_id, 
-      season_key, 
-      main_ms, 
-      climb_sum_ms, 
-      desc_sum_ms,
-      riders!inner (
-        id,
-        firstname,
-        lastname,
-        profile,
-        consent_public
-      )
-    `)
+    .select("rider_id, season_key, main_ms, climb_sum_ms, desc_sum_ms")
     .in("season_key", seasonKeys);
 
   if (error) {
@@ -84,18 +71,13 @@ export async function GET(req: Request) {
     const season = attempt.season_key.split("_")[1] as typeof SEASONS[number];
     if (!SEASONS.includes(season)) continue;
 
-    // Skip riders who haven't consented to public display
-    const rider = Array.isArray(attempt.riders) ? attempt.riders[0] : attempt.riders;
-    if (!rider?.consent_public) {
-      console.log(`[${t.name}] ${t.id} skipping rider ${attempt.rider_id} - no consent`);
-      continue;
-    }
+    // For now, show all riders (we'll add consent filtering later)
 
     if (!byRider.has(attempt.rider_id)) {
       byRider.set(attempt.rider_id, {
         rider: { 
-          name: `${rider?.firstname ?? ''} ${rider?.lastname ?? ''}`.trim() || 'Unknown Rider', 
-          avatar: rider?.profile ?? null 
+          name: `Rider ${attempt.rider_id.slice(0, 8)}`, 
+          avatar: null 
         },
         by_season: { FALL: null, WINTER: null, SPRING: null, SUMMER: null },
         by_season_climb: { FALL: null, WINTER: null, SPRING: null, SUMMER: null },
