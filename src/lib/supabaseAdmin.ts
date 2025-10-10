@@ -7,12 +7,6 @@ const SUPABASE_SERVICE_ROLE_KEY =
   process.env.SUPABASE_SERVICE_ROLE
 
 export function supabaseAdmin() {
-  console.log('[supabaseAdmin] Environment check:', {
-    SUPABASE_URL: SUPABASE_URL ? 'SET' : 'MISSING',
-    SUPABASE_SERVICE_ROLE_KEY: SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING',
-    SUPABASE_SERVICE_ROLE: process.env.SUPABASE_SERVICE_ROLE ? 'SET' : 'MISSING',
-  })
-  
   if (!SUPABASE_URL) throw new Error('SUPABASE_URL is required.')
   if (!SUPABASE_SERVICE_ROLE_KEY) {
     // give a very explicit error for logs
