@@ -99,42 +99,42 @@ export default function IndividualAttemptsTable({ attempts }: { attempts: Attemp
                       className="hover:bg-neutral-50 cursor-pointer"
                       onClick={() => toggleYear(year)}
                     >
-                      <TD className="font-medium">
+                      <td className="font-medium">
                         <div className="flex items-center gap-2">
                           <span className={isExpanded ? 'rotate-90' : ''}>▶</span>
                           {year}
                         </div>
-                      </TD>
-                      <TD>Best Overall</TD>
-                      <TD mono className="font-medium">
+                      </td>
+                      <td>Best Overall</td>
+                      <td className="font-mono font-medium">
                         {formatTime(bestAttempt.main_ms)}
-                      </TD>
-                      <TD mono>{formatTime(bestAttempt.climb_sum_ms)}</TD>
-                      <TD mono>{formatTime(bestAttempt.desc_sum_ms)}</TD>
-                      <TD className="text-sm text-neutral-500">
+                      </td>
+                      <td className="font-mono">{formatTime(bestAttempt.climb_sum_ms)}</td>
+                      <td className="font-mono">{formatTime(bestAttempt.desc_sum_ms)}</td>
+                      <td className="text-sm text-neutral-500">
                         {formatDate(bestAttempt.created_at)}
-                      </TD>
+                      </td>
                     </tr>
                     
                     {/* Expanded sub-rows for all attempts in this year */}
                     {isExpanded && yearAttempts.map((attempt) => (
                       <tr key={`${year}-${attempt.activity_id}`} className="bg-neutral-25">
-                        <TD></TD>
-                        <TD className="text-sm text-neutral-600">
+                        <td></td>
+                        <td className="text-sm text-neutral-600">
                           {attempt.season_name} {attempt.season_year}
-                        </TD>
-                        <TD mono className="text-sm">
+                        </td>
+                        <td className="font-mono text-sm">
                           {formatTime(attempt.main_ms)}
-                        </TD>
-                        <TD mono className="text-sm">
+                        </td>
+                        <td className="font-mono text-sm">
                           {formatTime(attempt.climb_sum_ms)}
-                        </TD>
-                        <TD mono className="text-sm">
+                        </td>
+                        <td className="font-mono text-sm">
                           {formatTime(attempt.desc_sum_ms)}
-                        </TD>
-                        <TD className="text-xs text-neutral-400">
+                        </td>
+                        <td className="text-xs text-neutral-400">
                           {formatDate(attempt.created_at)}
-                        </TD>
+                        </td>
                       </tr>
                     ))}
                   </>
