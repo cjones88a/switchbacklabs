@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from "next/link";
 import SiteHeader from "@/components/layout/SiteHeader";
 import TrackerBackground from "@/components/race/TrackerBackground";
@@ -9,7 +9,6 @@ import StravaConnect from "@/components/race/StravaConnect";
 import { Button } from '@/components/ui/button'
 import { Tabs } from '@/components/ui/Tabs'
 import { Notice } from '@/components/ui/notice'
-import { TableWrap, T, TH, TD } from '@/components/ui/table'
 import { LeaderboardTable, LeaderboardRow } from '@/components/leaderboard/LeaderboardTable'
 import MyTimes from '@/components/race/MyTimes'
 
@@ -23,14 +22,6 @@ type AttemptStatus = {
   desc_sum_ms?: number;
 };
 
-function fmt(ms?: number|null) {
-  if (!ms) return '—'
-  const totalSec = Math.round(ms / 1000)
-  const h = Math.floor(totalSec / 3600)
-  const m = Math.floor((totalSec % 3600) / 60)
-  const s = totalSec % 60
-  return (h ? `${h}:` : '') + `${m}`.padStart(2,'0') + ':' + `${s}`.padStart(2,'0')
-}
 
 export default function RacePage() {
   const [tab, setTab] = useState<'leaderboard'|'mine'>('leaderboard')
@@ -58,9 +49,9 @@ export default function RacePage() {
   useEffect(() => {
     if (tab !== 'leaderboard') return
     refreshLeaderboard()
-  }, [tab])
+  }, [tab, refreshLeaderboard])
 
-  async function refreshLeaderboard() {
+  const refreshLeaderboard = useCallback(async () => {
     try {
       setLbLoading(true); setLbErr(null)
       const r = await fetch(`/api/leaderboard-simple?year=${lbYear}`, { cache: 'no-store' })
@@ -99,7 +90,7 @@ export default function RacePage() {
     } finally {
       setLbLoading(false)
     }
-  }
+  }, [lbYear])
 
 
   const recordNow = async () => {

@@ -85,7 +85,8 @@ export async function GET(req: Request) {
     if (!SEASONS.includes(season)) continue;
 
     // Skip riders who haven't consented to public display
-    if (!attempt.riders?.consent_public) {
+    const rider = Array.isArray(attempt.riders) ? attempt.riders[0] : attempt.riders;
+    if (!rider?.consent_public) {
       console.log(`[${t.name}] ${t.id} skipping rider ${attempt.rider_id} - no consent`);
       continue;
     }
@@ -93,8 +94,8 @@ export async function GET(req: Request) {
     if (!byRider.has(attempt.rider_id)) {
       byRider.set(attempt.rider_id, {
         rider: { 
-          name: `${attempt.riders?.firstname ?? ''} ${attempt.riders?.lastname ?? ''}`.trim() || 'Unknown Rider', 
-          avatar: attempt.riders?.profile ?? null 
+          name: `${rider?.firstname ?? ''} ${rider?.lastname ?? ''}`.trim() || 'Unknown Rider', 
+          avatar: rider?.profile ?? null 
         },
         by_season: { FALL: null, WINTER: null, SPRING: null, SUMMER: null },
         by_season_climb: { FALL: null, WINTER: null, SPRING: null, SUMMER: null },
