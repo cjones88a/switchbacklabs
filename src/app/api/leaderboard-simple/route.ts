@@ -107,14 +107,14 @@ export async function GET(req: Request) {
       });
     }
     
-    const rider = byRider.get(attempt.rider_id)!;
-    rider.by_season[season] = attempt.main_ms;
-    rider.by_season_climb[season] = attempt.climb_sum_ms;
-    rider.by_season_desc[season] = attempt.desc_sum_ms;
+    const riderData = byRider.get(attempt.rider_id)!;
+    riderData.by_season[season] = attempt.main_ms;
+    riderData.by_season_climb[season] = attempt.climb_sum_ms;
+    riderData.by_season_desc[season] = attempt.desc_sum_ms;
     
     // Use climb/desc from any season (prefer FALL if available)
-    if (attempt.climb_sum_ms != null) rider.climb_sum_ms = attempt.climb_sum_ms;
-    if (attempt.desc_sum_ms != null) rider.desc_sum_ms = attempt.desc_sum_ms;
+    if (attempt.climb_sum_ms != null) riderData.climb_sum_ms = attempt.climb_sum_ms;
+    if (attempt.desc_sum_ms != null) riderData.desc_sum_ms = attempt.desc_sum_ms;
   }
 
   const out = Array.from(byRider.values()).map((rider) => {
