@@ -135,25 +135,33 @@ async function getClimbDescSumsForActivity(activity_id: number) {
     // Fetch segment efforts for this activity from Strava
     const segs = await fetchActivitySegmentEfforts(activity_id)
     console.log(`[backfill] Found ${segs.length} segment efforts for activity ${activity_id}`)
+    
+    if (segs.length === 0) {
+      console.log(`[backfill] WARNING: No segment efforts found for activity ${activity_id}`)
+      return { climb: null, desc: null }
+    }
 
     // Log the segment IDs we're looking for
     console.log(`[backfill] Looking for climb segments: ${CLIMB_1}, ${CLIMB_2}`)
     console.log(`[backfill] Looking for descent segments: ${DESC_1}, ${DESC_2}, ${DESC_3}`)
     
-    // If environment variables are not set, log all segments found
+    // Always log all segments found for debugging
+    console.log(`[backfill] All segments found in activity ${activity_id}:`)
+    for (const s of segs) {
+      const seg = s as Record<string, unknown>;
+      const segment = seg.segment as Record<string, unknown> | undefined;
+      const id = segment?.id as number | undefined;
+      const name = segment?.name as string | undefined;
+      const ms = ((seg.elapsed_time as number) ?? (seg.moving_time as number) ?? 0) * 1000;
+      if (id) {
+        console.log(`[backfill]   Segment ${id}: "${name}" (${ms}ms)`)
+      }
+    }
+    
+    // If environment variables are not set, log warning
     if (isNaN(CLIMB_1) || isNaN(CLIMB_2) || isNaN(DESC_1) || isNaN(DESC_2) || isNaN(DESC_3)) {
       console.log(`[backfill] WARNING: Environment variables not set properly!`)
       console.log(`[backfill] CLIMB_1=${CLIMB_1}, CLIMB_2=${CLIMB_2}, DESC_1=${DESC_1}, DESC_2=${DESC_2}, DESC_3=${DESC_3}`)
-      console.log(`[backfill] All segments found in this activity:`)
-      for (const s of segs) {
-        const seg = s as Record<string, unknown>;
-        const segment = seg.segment as Record<string, unknown> | undefined;
-        const id = segment?.id as number | undefined;
-        const name = segment?.name as string | undefined;
-        if (id) {
-          console.log(`[backfill]   Segment ${id}: "${name}"`)
-        }
-      }
     }
 
     // pick the segment times we care about (in ms)

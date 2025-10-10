@@ -152,11 +152,14 @@ export async function fetchActivitySegmentEfforts(activityId: number) {
   const accessToken = await bearer();
   const url = `${STRAVA_BASE}/activities/${activityId}/segment_efforts`;
   
+  console.log(`[strava] Fetching segment efforts for activity ${activityId}: ${url}`);
+  
   try {
     const efforts = await stravaJson(url, accessToken);
+    console.log(`[strava] Received ${Array.isArray(efforts) ? efforts.length : 'non-array'} segment efforts for activity ${activityId}`);
     return Array.isArray(efforts) ? efforts : [];
   } catch (error) {
-    console.error(`Failed to fetch segment efforts for activity ${activityId}:`, error);
+    console.error(`[strava] Failed to fetch segment efforts for activity ${activityId}:`, error);
     return [];
   }
 }
