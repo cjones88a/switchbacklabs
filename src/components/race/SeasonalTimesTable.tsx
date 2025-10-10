@@ -1,6 +1,6 @@
 "use client"
 import * as React from 'react'
-import { TableWrap, T, TH } from '@/components/ui/Table'
+import { TableWrap, T, TH } from '@/components/ui/table'
 
 type Attempt = {
   race_year: number
