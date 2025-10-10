@@ -1,15 +1,11 @@
+export const runtime = 'nodejs'; // ensure process.env is available
+
 import { NextResponse } from 'next/server'
-import { createClient as createSb } from '@supabase/supabase-js'
+import { cookies } from 'next/headers'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { fetchAllSegmentEffortsSince2014 } from '@/lib/strava-improved'
 import { ensureFreshToken, fetchActivityWithEfforts } from '@/lib/strava-activity'
 import { sumsFromActivity } from '@/lib/computeSums'
-import { cookies } from 'next/headers'
-
-function adminSb() {
-  return createSb(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE!, {
-    auth: { persistSession: false }
-  })
-}
 
 export async function POST(req: Request) {
   try {
@@ -24,7 +20,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Not authenticated (no rider_id cookie)' }, { status: 401 })
     }
 
-    const sb = adminSb()
+    const sb = supabaseAdmin()
     if (purge) {
       console.log('[backfill] Purging existing attempts')
       await sb.from('attempts').delete().eq('rider_id', rider_id)
@@ -91,10 +87,10 @@ export async function POST(req: Request) {
           desc_sum_ms = sums.desc
         }
       } catch (err: unknown) {
-        const msg = String(err instanceof Error ? err.message : err)
-        if (msg.includes(' 401 ')) denied401++
-        else if (msg.includes(' 403 ')) denied403++
-        else if (msg.includes(' 404 ')) notFound404++
+        const m = String(err instanceof Error ? err.message : err)
+        if (m.includes(' 401 ')) denied401++
+        else if (m.includes(' 403 ')) denied403++
+        else if (m.includes(' 404 ')) notFound404++
         else otherFetchErr++
         console.warn(`[backfill] Failed to get sums for activity ${activity_id}:`, err)
       }
@@ -117,7 +113,7 @@ export async function POST(req: Request) {
       skipped_no_window: noWindow,
       diag: { denied401, denied403, notFound404, otherFetchErr, noSegEfforts, totalEfforts: efforts.length },
     })
-  } catch (e: unknown) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 })
   }
 }
