@@ -11,26 +11,8 @@ import { Tabs } from '@/components/ui/Tabs'
 import { Notice } from '@/components/ui/notice'
 import { TableWrap, T, TH, TD } from '@/components/ui/table'
 import { LeaderboardTable, LeaderboardRow } from '@/components/leaderboard/LeaderboardTable'
+import MyTimes from '@/components/race/MyTimes'
 
-// types you already have:
-type YearRow = { 
-  race_year: number; 
-  fall_ms: number|null; 
-  winter_ms: number|null; 
-  spring_ms: number|null; 
-  summer_ms: number|null;
-  total_ms: number|null;
-  fall_climb_ms: number|null;
-  winter_climb_ms: number|null;
-  spring_climb_ms: number|null;
-  summer_climb_ms: number|null;
-  total_climb_ms: number|null;
-  fall_desc_ms: number|null;
-  winter_desc_ms: number|null;
-  spring_desc_ms: number|null;
-  summer_desc_ms: number|null;
-  total_desc_ms: number|null;
-}
 
 type AttemptStatus = {
   recorded: boolean;
@@ -52,10 +34,6 @@ function fmt(ms?: number|null) {
 
 export default function RacePage() {
   const [tab, setTab] = useState<'leaderboard'|'mine'>('leaderboard')
-  const [mine, setMine] = useState<YearRow[]>([])
-  const [loading, setLoading] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
-  const [importing, setImporting] = useState(false)
   const [lb, setLb] = useState<LeaderboardRow[]>([])
   const [lbLoading, setLbLoading] = useState(false)
   const [lbErr, setLbErr] = useState<string | null>(null)
@@ -74,19 +52,6 @@ export default function RacePage() {
     })();
   }, [])
 
-  // load my-times when tab opens
-  useEffect(() => {
-    if (tab !== 'mine') return
-    setLoading(true); setErr(null)
-    fetch('/api/my-times', { cache: 'no-store' })
-      .then(async r => {
-        const j = await r.json()
-        if (!r.ok) throw new Error(j?.error || 'failed')
-        setMine(j.items || [])
-      })
-      .catch(e => setErr(String(e.message ?? e)))
-      .finally(() => setLoading(false))
-  }, [tab])
 
   // load leaderboard when that tab opens
   useEffect(() => {
@@ -152,23 +117,6 @@ export default function RacePage() {
     }
   };
 
-  async function backfill() {
-    setImporting(true); setErr(null)
-    try {
-      const r = await fetch('/api/my-times/backfill', { method: 'POST' })
-      const j = await r.json()
-      if (!r.ok) throw new Error(j?.error || 'import failed')
-      // reload
-      const rr = await fetch('/api/my-times', { cache: 'no-store' })
-      const jj = await rr.json()
-      if (!rr.ok) throw new Error(jj?.error || 'reload failed')
-      setMine(jj.items || [])
-    } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : String(e))
-    } finally {
-      setImporting(false)
-    }
-  }
 
   const viewActivityUrl = status?.activity_id
     ? `https://www.strava.com/activities/${status.activity_id}`
@@ -258,39 +206,7 @@ export default function RacePage() {
 
           {tab === 'mine' && (
             <section className="mt-6">
-              <div className="flex flex-wrap items-center gap-3">
-                <Button onClick={backfill} disabled={importing}>
-                  {importing ? 'Importing…' : 'Backfill my history'}
-                </Button>
-                <Button 
-                  onClick={() => fetch('/api/my-times/backfill?purge=1', { method: 'POST' })
-                    .then(async (r) => {
-                      const j = await r.json()
-                      if (!r.ok) throw new Error(j?.error || 'purge failed')
-                      // Reload the data
-                      const rr = await fetch('/api/my-times', { cache: 'no-store' })
-                      const jj = await rr.json()
-                      if (jj.ok) setMine(jj.items || [])
-                    })
-                    .catch(e => setErr(e instanceof Error ? e.message : String(e)))
-                  } 
-                  disabled={importing}
-                  variant="outline"
-                >
-                  {importing ? 'Rebuilding…' : 'Rebuild from Strava (purge)'}
-                </Button>
-                {err && <Notice>{err}</Notice>}
-              </div>
-
-              {loading ? (
-                <p className="mt-6 text-sm text-neutral-500">Loading your times…</p>
-              ) : (
-                <MyTimesTable rows={mine} />
-              )}
-
-              <p className="mt-2 text-xs text-neutral-500">
-                Best seasonal time per race year (Fall defines the race year).
-              </p>
+              <MyTimes />
             </section>
           )}
 
@@ -328,50 +244,5 @@ export default function RacePage() {
         </div>
       </main>
     </>
-  )
-}
-
-function MyTimesTable({ rows }: { rows: YearRow[] }) {
-  return (
-    <TableWrap>
-      <div className="min-w-[1200px]">
-        <T>
-          <thead>
-            <tr>
-              <TH>Race year</TH>
-              <TH>Fall</TH>
-              <TH>Winter</TH>
-              <TH>Spring</TH>
-              <TH>Summer</TH>
-              <TH>Total</TH>
-              <TH>Climb Sum</TH>
-              <TH>Descent Sum</TH>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-neutral-200">
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="px-4 py-8 text-sm text-neutral-500">
-                  No historical times yet. Click <em>Backfill my history</em>.
-                </td>
-              </tr>
-            ) : (
-              rows.map(r => (
-                <tr key={r.race_year} className="hover:bg-neutral-50">
-                  <TD>{r.race_year}</TD>
-                  <TD mono>{fmt(r.fall_ms)}</TD>
-                  <TD mono>{fmt(r.winter_ms)}</TD>
-                  <TD mono>{fmt(r.spring_ms)}</TD>
-                  <TD mono>{fmt(r.summer_ms)}</TD>
-                  <TD mono>{fmt(r.total_ms)}</TD>
-                  <TD mono>{fmt(r.total_climb_ms)}</TD>
-                  <TD mono>{fmt(r.total_desc_ms)}</TD>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </T>
-      </div>
-    </TableWrap>
   )
 }
