@@ -92,7 +92,16 @@ export async function GET(req: Request) {
     const times = Object.values(rider.by_season).filter((v): v is number => v != null);
     const total_ms = times.reduce((a, v) => a + v, 0);
     const best_season_ms = times.length ? Math.min(...times) : null;
-    return { ...rider, total_ms, best_season_ms };
+    return { 
+      ...rider, 
+      total_ms, 
+      best_season_ms,
+      // Map by_season to the expected format
+      fall_ms: rider.by_season.FALL,
+      winter_ms: rider.by_season.WINTER,
+      spring_ms: rider.by_season.SPRING,
+      summer_ms: rider.by_season.SUMMER,
+    };
   });
 
   const res = NextResponse.json({ year, rows: out });
