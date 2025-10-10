@@ -18,7 +18,7 @@ export async function GET() {
     // Get individual attempts with climb/descent details
     console.log(`[individual] Fetching attempts for rider: ${rider_id}`)
     const { data, error } = await sb
-      .from('individual_attempts')
+      .from('individual_attempts_simple')
       .select(`
         race_year,
         season_name,
