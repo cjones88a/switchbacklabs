@@ -7,9 +7,9 @@ select
   a.rider_id,
   a.season_key,
   -- Derive race_year from the season key:
-  -- FALL stays same; WINTER/SPRING/SUMMER roll back to the prior Fall year.
+  -- FALL/WINTER use same year; SPRING/SUMMER use prior year
   case
-    when a.season_key like '%WINTER' or a.season_key like '%SPRING' or a.season_key like '%SUMMER'
+    when a.season_key like '%SPRING' or a.season_key like '%SUMMER'
       then (split_part(a.season_key, '_', 1)::int - 1)
     else split_part(a.season_key, '_', 1)::int
   end as race_year,

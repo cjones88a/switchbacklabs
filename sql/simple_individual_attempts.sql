@@ -18,9 +18,9 @@ SELECT
     WHEN a.season_key LIKE '%SUMMER' THEN 'Summer'
     ELSE 'Unknown'
   END as season_name,
-  -- Race year: FALL stays same; WINTER/SPRING/SUMMER roll back to prior Fall year
+  -- Race year: FALL/WINTER use same year; SPRING/SUMMER use prior year
   CASE
-    WHEN a.season_key LIKE '%WINTER' OR a.season_key LIKE '%SPRING' OR a.season_key LIKE '%SUMMER'
+    WHEN a.season_key LIKE '%SPRING' OR a.season_key LIKE '%SUMMER'
       THEN (split_part(a.season_key, '_', 1)::int - 1)
     ELSE split_part(a.season_key, '_', 1)::int
   END as race_year,
