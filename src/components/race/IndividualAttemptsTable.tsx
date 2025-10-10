@@ -64,7 +64,7 @@ export default function IndividualAttemptsTable({ attempts }: { attempts: Attemp
   if (attempts.length === 0) {
     return (
       <div className="text-center py-8 text-neutral-500">
-        No attempts found. Click "Backfill my history" to import your data.
+        No attempts found. Click &quot;Backfill my history&quot; to import your data.
       </div>
     )
   }
@@ -117,7 +117,7 @@ export default function IndividualAttemptsTable({ attempts }: { attempts: Attemp
                     </tr>
                     
                     {/* Expanded sub-rows for all attempts in this year */}
-                    {isExpanded && yearAttempts.map((attempt, index) => (
+                    {isExpanded && yearAttempts.map((attempt) => (
                       <tr key={`${year}-${attempt.activity_id}`} className="bg-neutral-25">
                         <TD></TD>
                         <TD className="text-sm text-neutral-600">
