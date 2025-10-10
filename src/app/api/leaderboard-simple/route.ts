@@ -40,11 +40,24 @@ export async function GET(req: Request) {
   const seasonKeys = [`${year}_FALL`, `${year}_WINTER`, `${year + 1}_SPRING`, `${year + 1}_SUMMER`];
   console.log(`[${t.name}] ${t.id} using race year`, year, 'seasonKeys', seasonKeys);
 
-  // Get all attempts data without joining riders table (for now)
+  // Get all attempts data
   const { data, error } = await supabase
     .from("attempts")
     .select("rider_id, season_key, main_ms, climb_sum_ms, desc_sum_ms")
     .in("season_key", seasonKeys);
+
+  // Get rider information separately to avoid join issues
+  const riderIds = [...new Set((data || []).map(a => a.rider_id))];
+  const { data: ridersData } = await supabase
+    .from("riders")
+    .select("id, firstname, lastname, profile, consent_public")
+    .in("id", riderIds);
+
+  // Create a map for quick rider lookup
+  const ridersMap = new Map();
+  (ridersData || []).forEach(rider => {
+    ridersMap.set(rider.id, rider);
+  });
 
   if (error) {
     console.error(`[${t.name}] ${t.id} error:`, error);
@@ -71,13 +84,22 @@ export async function GET(req: Request) {
     const season = attempt.season_key.split("_")[1] as typeof SEASONS[number];
     if (!SEASONS.includes(season)) continue;
 
-    // For now, show all riders (we'll add consent filtering later)
+    // Get rider info from our map
+    const riderInfo = ridersMap.get(attempt.rider_id);
+    
+    // Skip riders who haven't consented to public display (if we have rider info)
+    if (riderInfo && !riderInfo.consent_public) {
+      console.log(`[${t.name}] ${t.id} skipping rider ${attempt.rider_id} - no consent`);
+      continue;
+    }
 
     if (!byRider.has(attempt.rider_id)) {
       byRider.set(attempt.rider_id, {
         rider: { 
-          name: `Rider ${attempt.rider_id.slice(0, 8)}`, 
-          avatar: null 
+          name: riderInfo 
+            ? `${riderInfo.firstname ?? ''} ${riderInfo.lastname ?? ''}`.trim() || 'Unknown Rider'
+            : `Rider ${attempt.rider_id.slice(0, 8)}`, 
+          avatar: riderInfo?.profile ?? null 
         },
         by_season: { FALL: null, WINTER: null, SPRING: null, SUMMER: null },
         by_season_climb: { FALL: null, WINTER: null, SPRING: null, SUMMER: null },
