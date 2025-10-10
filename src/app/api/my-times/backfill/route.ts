@@ -19,7 +19,6 @@ export async function POST(req: Request) {
     const purge = url.searchParams.get('purge') === '1'
 
     console.log('[backfill] Starting backfill process')
-    console.log(`[backfill] Environment variables: CLIMB_1=${CLIMB_1}, CLIMB_2=${CLIMB_2}, DESC_1=${DESC_1}, DESC_2=${DESC_2}, DESC_3=${DESC_3}`)
 
     const sb = adminSb()
 
