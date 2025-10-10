@@ -17,6 +17,14 @@ export async function GET() {
 
     // Get individual attempts with climb/descent details
     console.log(`[individual] Fetching attempts for rider: ${rider_id}`)
+    
+    // First, let's check what rider_ids exist
+    const { data: allRiders } = await sb
+      .from('attempts')
+      .select('rider_id')
+      .limit(5)
+    console.log(`[individual] Available rider_ids:`, allRiders)
+    
     const { data, error } = await sb
       .from('individual_attempts_simple')
       .select(`
