@@ -82,7 +82,7 @@ export async function POST(req: Request) {
 
       // 3) fetch the activity's segment efforts once to compute climb/desc sums
       //    (cache to avoid re-fetching if the same activity pops again in pagination)
-      const sums = await getClimbDescSumsForActivity(activity_id)
+      const sums = await getClimbDescSumsForActivity(activity_id, allEfforts)
       console.log(`[backfill] Activity ${activity_id} sums: climb=${sums?.climb}ms, desc=${sums?.desc}ms`)
 
       // 4) upsert attempt (unique on rider_id + activity_id guarantees we don't duplicate)
@@ -126,18 +126,22 @@ export async function POST(req: Request) {
 /** Cache for per-activity segment effort lookups so we don't refetch the same activity repeatedly. */
 const _segCache = new Map<number, { climb: number|null; desc: number|null }>()
 
-async function getClimbDescSumsForActivity(activity_id: number) {
+async function getClimbDescSumsForActivity(activity_id: number, allSegmentEfforts: any[]) {
   if (_segCache.has(activity_id)) return _segCache.get(activity_id)!
 
   try {
-    console.log(`[backfill] Fetching segment efforts for activity ${activity_id}`)
+    console.log(`[backfill] Looking for climb/descent segments for activity ${activity_id}`)
     
-    // Fetch segment efforts for this activity from Strava
-    const segs = await fetchActivitySegmentEfforts(activity_id)
-    console.log(`[backfill] Found ${segs.length} segment efforts for activity ${activity_id}`)
+    // Find all segment efforts for this specific activity from our already-fetched data
+    const activitySegs = allSegmentEfforts.filter((effort: any) => {
+      const activity = effort.activity as Record<string, unknown> | undefined;
+      return activity?.id === activity_id;
+    });
     
-    if (segs.length === 0) {
-      console.log(`[backfill] WARNING: No segment efforts found for activity ${activity_id}`)
+    console.log(`[backfill] Found ${activitySegs.length} segment efforts for activity ${activity_id} from cached data`)
+    
+    if (activitySegs.length === 0) {
+      console.log(`[backfill] WARNING: No segment efforts found for activity ${activity_id} in cached data`)
       return { climb: null, desc: null }
     }
 
@@ -147,7 +151,7 @@ async function getClimbDescSumsForActivity(activity_id: number) {
     
     // Always log all segments found for debugging
     console.log(`[backfill] All segments found in activity ${activity_id}:`)
-    for (const s of segs) {
+    for (const s of activitySegs) {
       const seg = s as Record<string, unknown>;
       const segment = seg.segment as Record<string, unknown> | undefined;
       const id = segment?.id as number | undefined;
@@ -170,7 +174,7 @@ async function getClimbDescSumsForActivity(activity_id: number) {
     let haveClimb = false
     let haveDesc = false
 
-    for (const s of segs) {
+    for (const s of activitySegs) {
       const seg = s as Record<string, unknown>;
       const segment = seg.segment as Record<string, unknown> | undefined;
       const id = segment?.id as number | undefined;
