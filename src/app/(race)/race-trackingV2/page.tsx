@@ -37,6 +37,7 @@ export default function RacePage() {
   const [lb, setLb] = useState<LeaderboardRow[]>([])
   const [lbLoading, setLbLoading] = useState(false)
   const [lbErr, setLbErr] = useState<string | null>(null)
+  const [lbYear, setLbYear] = useState<number>(new Date().getFullYear())
   const [seasonKey, setSeasonKey] = useState<string>("")
   const [status, setStatus] = useState<AttemptStatus | null>(null)
   const [busy, setBusy] = useState(false)
@@ -62,7 +63,7 @@ export default function RacePage() {
   async function refreshLeaderboard() {
     try {
       setLbLoading(true); setLbErr(null)
-      const r = await fetch('/api/leaderboard-simple', { cache: 'no-store' })
+      const r = await fetch(`/api/leaderboard-simple?year=${lbYear}`, { cache: 'no-store' })
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || 'failed')
       
@@ -189,6 +190,21 @@ export default function RacePage() {
           {tab === 'leaderboard' && (
             <section className="mt-6">
               <div className="flex flex-wrap items-center gap-3">
+                <select 
+                  value={lbYear} 
+                  onChange={(e) => setLbYear(Number(e.target.value))}
+                  className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                >
+                  <option value={2025}>2025</option>
+                  <option value={2024}>2024</option>
+                  <option value={2023}>2023</option>
+                  <option value={2022}>2022</option>
+                  <option value={2021}>2021</option>
+                  <option value={2020}>2020</option>
+                  <option value={2019}>2019</option>
+                  <option value={2018}>2018</option>
+                  <option value={2017}>2017</option>
+                </select>
                 <Button variant="outline" onClick={refreshLeaderboard} disabled={lbLoading}>Refresh</Button>
                 <Button onClick={recordNow} disabled={busy}>
                   {busy ? 'Recording…' : 'Record now'}
