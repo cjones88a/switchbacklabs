@@ -13,6 +13,11 @@ export async function POST(req: Request) {
     const purge = url.searchParams.get('purge') === '1'
 
     console.log('[backfill] Starting backfill process')
+    console.log('[backfill] Environment check:', {
+      SUPABASE_URL: process.env.SUPABASE_URL ? 'SET' : 'MISSING',
+      SUPABASE_SERVICE_ROLE: process.env.SUPABASE_SERVICE_ROLE ? 'SET' : 'MISSING',
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING',
+    })
 
     const cookieStore = await cookies()
     const rider_id = cookieStore.get('rider_id')?.value
