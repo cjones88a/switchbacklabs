@@ -25,7 +25,15 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const year = Number(searchParams.get("year") || new Date().getFullYear());
   const seasonKeys = keysForYear(year);
-  console.log(`[${t.name}] ${t.id} year`, year);
+  console.log(`[${t.name}] ${t.id} year`, year, 'seasonKeys', seasonKeys);
+
+  // First, let's see what data we actually have
+  const { data: allData, error: allError } = await supabase
+    .from("attempts")
+    .select("rider_id, season_key, main_ms, climb_sum_ms, desc_sum_ms, riders ( firstname, lastname, profile, consent_public )")
+    .limit(10);
+  
+  console.log(`[${t.name}] ${t.id} allData sample:`, allData?.map(d => ({ season_key: d.season_key, rider_id: d.rider_id })));
 
   const { data, error } = await supabase
     .from("attempts")
@@ -45,11 +53,26 @@ export async function GET(req: Request) {
     best_season_ms: number | null;
   }>();
 
+  console.log(`[${t.name}] ${t.id} found ${rows.length} rows for season keys:`, seasonKeys);
+  
   for (const r of rows) {
+    console.log(`[${t.name}] ${t.id} processing row:`, { 
+      rider_id: r.rider_id, 
+      season_key: r.season_key, 
+      consent_public: r.riders?.consent_public,
+      rider_name: `${r.riders?.firstname} ${r.riders?.lastname}`.trim()
+    });
+    
     // hide riders who have not consented for public display
-    if (!r.riders?.consent_public) continue;
+    if (!r.riders?.consent_public) {
+      console.log(`[${t.name}] ${t.id} skipping rider ${r.rider_id} - no consent`);
+      continue;
+    }
     const season = r.season_key.split("_")[1] as typeof SEASONS[number];
-    if (!SEASONS.includes(season)) continue;
+    if (!SEASONS.includes(season)) {
+      console.log(`[${t.name}] ${t.id} skipping row - invalid season:`, season);
+      continue;
+    }
     if (!byRider.has(r.rider_id)) {
       byRider.set(r.rider_id, {
         rider: { name: `${r.riders?.firstname ?? ""} ${r.riders?.lastname ?? ""}`.trim(), avatar: r.riders?.profile ?? null },
