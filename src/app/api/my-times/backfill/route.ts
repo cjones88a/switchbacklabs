@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server'
 import { createClient as createSb } from '@supabase/supabase-js'
 import { fetchAllSegmentEffortsSince2014, fetchActivitySegmentEfforts } from '@/lib/strava-improved'
 import { cookies } from 'next/headers'
+import { env } from '@/lib/env'
 
-// const MAIN_SEGMENT_ID = Number(process.env.MAIN_SEGMENT_ID) // Not used in this file
-const CLIMB_1 = Number(process.env.CLIMB_1)
-const CLIMB_2 = Number(process.env.CLIMB_2)
-const DESC_1  = Number(process.env.DESC_1)
-const DESC_2  = Number(process.env.DESC_2)
-const DESC_3  = Number(process.env.DESC_3)
+// Use the same segment IDs as the record API
+const CLIMB_1 = env.SEGMENTS.c1
+const CLIMB_2 = env.SEGMENTS.c2
+const DESC_1  = env.SEGMENTS.d1
+const DESC_2  = env.SEGMENTS.d2
+const DESC_3  = env.SEGMENTS.d3
 
 function adminSb() {
   return createSb(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE!, {
@@ -138,6 +139,22 @@ async function getClimbDescSumsForActivity(activity_id: number) {
     // Log the segment IDs we're looking for
     console.log(`[backfill] Looking for climb segments: ${CLIMB_1}, ${CLIMB_2}`)
     console.log(`[backfill] Looking for descent segments: ${DESC_1}, ${DESC_2}, ${DESC_3}`)
+    
+    // If environment variables are not set, log all segments found
+    if (isNaN(CLIMB_1) || isNaN(CLIMB_2) || isNaN(DESC_1) || isNaN(DESC_2) || isNaN(DESC_3)) {
+      console.log(`[backfill] WARNING: Environment variables not set properly!`)
+      console.log(`[backfill] CLIMB_1=${CLIMB_1}, CLIMB_2=${CLIMB_2}, DESC_1=${DESC_1}, DESC_2=${DESC_2}, DESC_3=${DESC_3}`)
+      console.log(`[backfill] All segments found in this activity:`)
+      for (const s of segs) {
+        const seg = s as Record<string, unknown>;
+        const segment = seg.segment as Record<string, unknown> | undefined;
+        const id = segment?.id as number | undefined;
+        const name = segment?.name as string | undefined;
+        if (id) {
+          console.log(`[backfill]   Segment ${id}: "${name}"`)
+        }
+      }
+    }
 
     // pick the segment times we care about (in ms)
     let climb = 0
