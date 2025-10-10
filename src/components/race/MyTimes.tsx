@@ -1,26 +1,22 @@
 "use client";
 import * as React from "react";
 import { buildForceConsentUrl } from "@/lib/strava";
+import IndividualAttemptsTable from "./IndividualAttemptsTable";
 
-type YearRow = {
-  race_year: number;
-  fall_ms: number | null;
-  winter_ms: number | null;
-  spring_ms: number | null;
-  summer_ms: number | null;
-};
+type Attempt = {
+  race_year: number
+  season_name: string
+  season_year: number
+  activity_id: number
+  main_ms: number
+  climb_sum_ms: number | null
+  desc_sum_ms: number | null
+  created_at: string
+}
 
-const fmt = (ms: number | null | undefined) => {
-  if (ms == null) return "—";
-  const s = Math.floor(ms / 1000);
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  return (h ? `${h}:` : "") + `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
-};
 
 export default function MyTimes() {
-  const [rows, setRows] = React.useState<YearRow[]>([]);
+  const [attempts, setAttempts] = React.useState<Attempt[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [importing, setImporting] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
@@ -29,7 +25,7 @@ export default function MyTimes() {
     setLoading(true);
     setErr(null);
     try {
-      const r = await fetch("/api/my-times", { cache: "no-store" });
+      const r = await fetch("/api/my-times/individual", { cache: "no-store" });
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
         setErr(j?.error || r.statusText);
@@ -37,7 +33,7 @@ export default function MyTimes() {
         return;
       }
       const j = await r.json();
-      setRows(j.items || j.rows || []);
+      setAttempts(j.data || []);
     } catch {
       setErr("network_error");
     } finally {
@@ -104,59 +100,10 @@ export default function MyTimes() {
 
       {loading ? (
         <p className="text-sm text-muted">Loading your times…</p>
-      ) : !rows.length ? (
-        <div className="text-sm text-muted">No historical times found yet. Click &quot;Backfill my history&quot; to import your data.</div>
       ) : (
-        <div className="overflow-x-auto">
-          {/* Desktop table */}
-          <div className="hidden md:block card-outline bg-white p-0 overflow-x-auto">
-            <table className="min-w-full border-separate [border-spacing:0]">
-              <thead>
-                <tr className="text-left text-sm text-muted bg-gray-50">
-                  {["Race Year","Fall","Winter","Spring","Summer"].map(h => (
-                    <th key={h} className="px-6 py-4 border-b border-[hsl(var(--pb-line))] font-semibold uppercase tracking-wide">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.race_year} className="text-sm hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 border-b border-[hsl(var(--pb-line))] font-semibold">{r.race_year}</td>
-                    <td className="px-6 py-4 border-b border-[hsl(var(--pb-line))] font-mono">{fmt(r.fall_ms)}</td>
-                    <td className="px-6 py-4 border-b border-[hsl(var(--pb-line))] font-mono">{fmt(r.winter_ms)}</td>
-                    <td className="px-6 py-4 border-b border-[hsl(var(--pb-line))] font-mono">{fmt(r.spring_ms)}</td>
-                    <td className="px-6 py-4 border-b border-[hsl(var(--pb-line))] font-mono">{fmt(r.summer_ms)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile stacked cards */}
-          <div className="md:hidden space-y-3">
-            {rows.map(r => (
-              <div key={r.race_year} className="card-outline bg-white p-4">
-                <div className="font-semibold text-lg mb-3">Race Year {r.race_year}</div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                  <Label label="Fall"   v={fmt(r.fall_ms)} />
-                  <Label label="Winter" v={fmt(r.winter_ms)} />
-                  <Label label="Spring" v={fmt(r.spring_ms)} />
-                  <Label label="Summer" v={fmt(r.summer_ms)} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <IndividualAttemptsTable attempts={attempts} />
       )}
     </div>
   );
 }
 
-function Label({ label, v }: { label: string; v: string }) {
-  return (
-    <div className="flex items-center justify-between py-1">
-      <span className="text-muted font-medium">{label}</span>
-      <span className="font-mono font-semibold">{v}</span>
-    </div>
-  );
-}
