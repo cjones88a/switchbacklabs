@@ -33,24 +33,6 @@ export default function RacePage() {
   const [status, setStatus] = useState<AttemptStatus | null>(null)
   const [busy, setBusy] = useState(false)
 
-  // initial fetches (season + leaderboard)
-  useEffect(() => {
-    (async () => {
-      try {
-        const s = await fetch("/api/season-key").then(r => r.ok ? r.text() : "");
-        if (s) setSeasonKey(s);
-      } catch {}
-      await refreshLeaderboard();
-    })();
-  }, [])
-
-
-  // load leaderboard when that tab opens
-  useEffect(() => {
-    if (tab !== 'leaderboard') return
-    refreshLeaderboard()
-  }, [tab, refreshLeaderboard])
-
   const refreshLeaderboard = useCallback(async () => {
     try {
       setLbLoading(true); setLbErr(null)
@@ -92,6 +74,22 @@ export default function RacePage() {
     }
   }, [lbYear])
 
+  // initial fetches (season + leaderboard)
+  useEffect(() => {
+    (async () => {
+      try {
+        const s = await fetch("/api/season-key").then(r => r.ok ? r.text() : "");
+        if (s) setSeasonKey(s);
+      } catch {}
+      await refreshLeaderboard();
+    })();
+  }, [refreshLeaderboard])
+
+  // load leaderboard when that tab opens
+  useEffect(() => {
+    if (tab !== 'leaderboard') return
+    refreshLeaderboard()
+  }, [tab, refreshLeaderboard])
 
   const recordNow = async () => {
     setBusy(true);
