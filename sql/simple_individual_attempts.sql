@@ -19,6 +19,7 @@ SELECT
     ELSE 'Unknown'
   END as season_name,
   -- Race year: FALL/WINTER use same year; SPRING/SUMMER use prior year
+  -- 2024 Race Season = 2024 Fall + 2024 Winter + 2025 Spring + 2025 Summer
   CASE
     WHEN a.season_key LIKE '%SPRING' OR a.season_key LIKE '%SUMMER'
       THEN (split_part(a.season_key, '_', 1)::int - 1)

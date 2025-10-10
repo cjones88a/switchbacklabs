@@ -24,14 +24,21 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: seasonsError.message }, { status: 500 });
   }
 
-  // Extract unique years from season keys
-  const years = [...new Set((allSeasons || []).map(s => parseInt(s.season_key.split('_')[0])))].sort((a, b) => b - a);
-  console.log(`[${t.name}] ${t.id} available years:`, years);
+  // Calculate race years from season keys (Spring/Summer roll back to prior year)
+  const raceYears = [...new Set((allSeasons || []).map(s => {
+    const seasonKey = s.season_key;
+    const year = parseInt(seasonKey.split('_')[0]);
+    const season = seasonKey.split('_')[1];
+    // Spring/Summer belong to prior race year
+    return (season === 'SPRING' || season === 'SUMMER') ? year - 1 : year;
+  }))].sort((a, b) => b - a);
   
-  // Use the requested year if it has data, otherwise use the most recent year with data
-  const year = years.includes(requestedYear) ? requestedYear : (years[0] || requestedYear);
-  const seasonKeys = [`${year}_FALL`, `${year}_WINTER`, `${year}_SPRING`, `${year}_SUMMER`];
-  console.log(`[${t.name}] ${t.id} using year`, year, 'seasonKeys', seasonKeys);
+  console.log(`[${t.name}] ${t.id} available race years:`, raceYears);
+  
+  // Use the requested year if it has data, otherwise use the most recent race year with data
+  const year = raceYears.includes(requestedYear) ? requestedYear : (raceYears[0] || requestedYear);
+  const seasonKeys = [`${year}_FALL`, `${year}_WINTER`, `${year + 1}_SPRING`, `${year + 1}_SUMMER`];
+  console.log(`[${t.name}] ${t.id} using race year`, year, 'seasonKeys', seasonKeys);
 
   // Get all attempts data without joining riders table
   const { data, error } = await supabase
