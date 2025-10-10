@@ -18,8 +18,12 @@ SELECT
     WHEN a.season_key LIKE '%SUMMER' THEN 'Summer'
     ELSE 'Unknown'
   END as season_name,
-  -- Simple race year (just use the year part)
-  split_part(a.season_key, '_', 1)::int as race_year,
+  -- Race year: FALL stays same; WINTER/SPRING/SUMMER roll back to prior Fall year
+  CASE
+    WHEN a.season_key LIKE '%WINTER' OR a.season_key LIKE '%SPRING' OR a.season_key LIKE '%SUMMER'
+      THEN (split_part(a.season_key, '_', 1)::int - 1)
+    ELSE split_part(a.season_key, '_', 1)::int
+  END as race_year,
   split_part(a.season_key, '_', 1)::int as season_year
 FROM public.attempts a
 ORDER BY a.rider_id, a.created_at DESC;

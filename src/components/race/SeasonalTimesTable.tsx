@@ -92,15 +92,17 @@ export default function SeasonalTimesTable({ attempts }: { attempts: Attempt[] }
     const data: SeasonalData = {}
     
     attempts.forEach(attempt => {
-      const year = attempt.race_year
-      if (!data[year]) {
-        data[year] = {}
+      // Use race_year which should already be calculated correctly
+      // (Fall stays same year, Winter/Spring/Summer roll back to prior Fall year)
+      const raceYear = attempt.race_year
+      if (!data[raceYear]) {
+        data[raceYear] = {}
       }
       
       // Get the best attempt for this season (lowest main_ms)
-      const current = data[year][attempt.season_name.toLowerCase() as keyof typeof data[number]]
+      const current = data[raceYear][attempt.season_name.toLowerCase() as keyof typeof data[number]]
       if (!current || attempt.main_ms < current.main_ms) {
-        data[year][attempt.season_name.toLowerCase() as keyof typeof data[number]] = attempt
+        data[raceYear][attempt.season_name.toLowerCase() as keyof typeof data[number]] = attempt
       }
     })
     
