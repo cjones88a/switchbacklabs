@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import { buildForceConsentUrl } from "@/lib/strava";
-import IndividualAttemptsTable from "./IndividualAttemptsTable";
+import SeasonalTimesTable from "./SeasonalTimesTable";
 
 type Attempt = {
   race_year: number
@@ -101,7 +101,7 @@ export default function MyTimes() {
       {loading ? (
         <p className="text-sm text-muted">Loading your times…</p>
       ) : (
-        <IndividualAttemptsTable attempts={attempts} />
+        <SeasonalTimesTable attempts={attempts} />
       )}
     </div>
   );
