@@ -23,6 +23,9 @@ export async function POST(req: Request) {
     const url = new URL(req.url)
     const purge = url.searchParams.get('purge') === '1'
 
+    console.log('[backfill] Starting backfill process')
+    console.log(`[backfill] Environment variables: CLIMB_1=${CLIMB_1}, CLIMB_2=${CLIMB_2}, DESC_1=${DESC_1}, DESC_2=${DESC_2}, DESC_3=${DESC_3}`)
+
     const sb = adminSb()
 
     // Who is the current rider?
@@ -31,13 +34,17 @@ export async function POST(req: Request) {
     if (!rider_id) {
       return NextResponse.json({ error: 'No rider tokens found' }, { status: 401 })
     }
+    console.log(`[backfill] Processing rider: ${rider_id}`)
 
     if (purge) {
+      console.log('[backfill] Purging existing attempts')
       await sb.from('attempts').delete().eq('rider_id', rider_id)
     }
 
     // 1) get all efforts for MAIN segment (all-time)
+    console.log('[backfill] Fetching all segment efforts from Strava')
     const efforts = await fetchAllSegmentEffortsSince2014()
+    console.log(`[backfill] Found ${efforts.length} total efforts`)
 
     let imported = 0
     let skippedNoWindow = 0
@@ -75,6 +82,7 @@ export async function POST(req: Request) {
       // 3) fetch the activity's segment efforts once to compute climb/desc sums
       //    (cache to avoid re-fetching if the same activity pops again in pagination)
       const sums = await getClimbDescSumsForActivity(activity_id)
+      console.log(`[backfill] Activity ${activity_id} sums: climb=${sums?.climb}ms, desc=${sums?.desc}ms`)
 
       // 4) upsert attempt (unique on rider_id + activity_id guarantees we don't duplicate)
       const insert = {
@@ -85,6 +93,7 @@ export async function POST(req: Request) {
         climb_sum_ms: sums?.climb ?? null,
         desc_sum_ms: sums?.desc ?? null,
       }
+      console.log(`[backfill] Inserting attempt for activity ${activity_id}: main=${insert.main_ms}ms, climb=${insert.climb_sum_ms}ms, desc=${insert.desc_sum_ms}ms`)
 
       const { error: insErr } = await sb
         .from('attempts')
@@ -120,8 +129,15 @@ async function getClimbDescSumsForActivity(activity_id: number) {
   if (_segCache.has(activity_id)) return _segCache.get(activity_id)!
 
   try {
+    console.log(`[backfill] Fetching segment efforts for activity ${activity_id}`)
+    
     // Fetch segment efforts for this activity from Strava
     const segs = await fetchActivitySegmentEfforts(activity_id)
+    console.log(`[backfill] Found ${segs.length} segment efforts for activity ${activity_id}`)
+
+    // Log the segment IDs we're looking for
+    console.log(`[backfill] Looking for climb segments: ${CLIMB_1}, ${CLIMB_2}`)
+    console.log(`[backfill] Looking for descent segments: ${DESC_1}, ${DESC_2}, ${DESC_3}`)
 
     // pick the segment times we care about (in ms)
     let climb = 0
@@ -135,21 +151,30 @@ async function getClimbDescSumsForActivity(activity_id: number) {
       const id = segment?.id as number | undefined;
       const ms = ((seg.elapsed_time as number) ?? (seg.moving_time as number) ?? 0) * 1000;
       
+      // Log each segment we find
+      if (id) {
+        console.log(`[backfill] Found segment ${id} with time ${ms}ms`)
+      }
+      
       if (id === CLIMB_1 || id === CLIMB_2) { 
         climb += ms; 
-        haveClimb = true 
+        haveClimb = true;
+        console.log(`[backfill] Added climb segment ${id}: ${ms}ms (total: ${climb}ms)`)
       }
       if (id === DESC_1 || id === DESC_2 || id === DESC_3) { 
         desc += ms; 
-        haveDesc = true 
+        haveDesc = true;
+        console.log(`[backfill] Added descent segment ${id}: ${ms}ms (total: ${desc}ms)`)
       }
     }
 
     const sums = { climb: haveClimb ? climb : null, desc: haveDesc ? desc : null }
+    console.log(`[backfill] Final sums for activity ${activity_id}: climb=${sums.climb}ms, desc=${sums.desc}ms`)
+    
     _segCache.set(activity_id, sums)
     return sums
   } catch (error) {
-    console.error(`Failed to get climb/desc sums for activity ${activity_id}:`, error)
+    console.error(`[backfill] Failed to get climb/desc sums for activity ${activity_id}:`, error)
     return { climb: null, desc: null }
   }
 }
