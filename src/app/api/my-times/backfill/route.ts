@@ -81,7 +81,8 @@ export async function POST(req: Request) {
 
       try {
         const act = await fetchActivityWithEfforts(token, activity_id)
-        const segEff = Array.isArray(act?.segment_efforts) ? act.segment_efforts : []
+        const actObj = act as Record<string, unknown>
+        const segEff = Array.isArray(actObj?.segment_efforts) ? actObj.segment_efforts : []
         if (segEff.length === 0) {
           noSegEfforts++
         } else {
