@@ -10,7 +10,7 @@ type Row = {
   main_ms: number | null;
   climb_sum_ms: number | null;
   desc_sum_ms: number | null;
-  riders: { firstname: string | null; lastname: string | null; profile: string | null; consent_public?: boolean | null } | null;
+  riders: { firstname: string | null; lastname: string | null; profile: string | null } | null;
 };
 
 const SEASONS = ["FALL", "WINTER", "SPRING", "SUMMER"] as const;
@@ -29,7 +29,7 @@ export async function GET(req: Request) {
 
   const { data, error } = await supabase
     .from("attempts")
-    .select("rider_id, season_key, main_ms, climb_sum_ms, desc_sum_ms, riders ( firstname, lastname, profile, consent_public )")
+    .select("rider_id, season_key, main_ms, climb_sum_ms, desc_sum_ms, riders ( firstname, lastname, profile )")
     .in("season_key", seasonKeys);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -51,15 +51,8 @@ export async function GET(req: Request) {
     console.log(`[${t.name}] ${t.id} processing row:`, { 
       rider_id: r.rider_id, 
       season_key: r.season_key, 
-      consent_public: r.riders?.consent_public,
       rider_name: `${r.riders?.firstname} ${r.riders?.lastname}`.trim()
     });
-    
-    // hide riders who have not consented for public display
-    if (!r.riders?.consent_public) {
-      console.log(`[${t.name}] ${t.id} skipping rider ${r.rider_id} - no consent`);
-      continue;
-    }
     const season = r.season_key.split("_")[1] as typeof SEASONS[number];
     if (!SEASONS.includes(season)) {
       console.log(`[${t.name}] ${t.id} skipping row - invalid season:`, season);

@@ -34,6 +34,7 @@ export async function GET(req: Request) {
   }))].sort((a, b) => b - a);
   
   console.log(`[${t.name}] ${t.id} available race years:`, raceYears);
+  console.log(`[${t.name}] ${t.id} requested year:`, requestedYear);
   
   // Use the requested year if it has data, otherwise use the most recent race year with data
   const year = raceYears.includes(requestedYear) ? requestedYear : (raceYears[0] || requestedYear);
@@ -50,7 +51,7 @@ export async function GET(req: Request) {
   const riderIds = [...new Set((data || []).map(a => a.rider_id))];
   const { data: ridersData } = await supabase
     .from("riders")
-    .select("id, firstname, lastname, profile, consent_public")
+    .select("id, firstname, lastname, profile")
     .in("id", riderIds);
 
   // Create a map for quick rider lookup
@@ -65,6 +66,9 @@ export async function GET(req: Request) {
   }
 
   console.log(`[${t.name}] ${t.id} found ${data?.length || 0} attempts for season keys:`, seasonKeys);
+  console.log(`[${t.name}] ${t.id} sample attempts:`, data?.slice(0, 3));
+  console.log(`[${t.name}] ${t.id} found ${riderIds.length} unique riders:`, riderIds);
+  console.log(`[${t.name}] ${t.id} rider info:`, ridersData?.slice(0, 3));
 
   // Group by rider_id and season
   const byRider = new Map<string, {
@@ -86,12 +90,6 @@ export async function GET(req: Request) {
 
     // Get rider info from our map
     const riderInfo = ridersMap.get(attempt.rider_id);
-    
-    // Skip riders who haven't consented to public display (if we have rider info)
-    if (riderInfo && !riderInfo.consent_public) {
-      console.log(`[${t.name}] ${t.id} skipping rider ${attempt.rider_id} - no consent`);
-      continue;
-    }
 
     if (!byRider.has(attempt.rider_id)) {
       byRider.set(attempt.rider_id, {
@@ -146,6 +144,9 @@ export async function GET(req: Request) {
     };
   });
 
+  console.log(`[${t.name}] ${t.id} final output: ${out.length} riders`);
+  console.log(`[${t.name}] ${t.id} sample output:`, out.slice(0, 2));
+  
   const res = NextResponse.json({ year, rows: out });
   res.headers.set("x-trace-id", t.id);
   res.headers.set("x-handler", t.name);

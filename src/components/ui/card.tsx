@@ -1,13 +1,13 @@
-import clsx from "clsx";
+import { cn } from "@/lib/cn";
 
-export function Card({ className, children }: { className?: string; children: React.ReactNode }) {
-  return <div className={clsx("card p-4", className)}>{children}</div>;
+export function Card(props: React.HTMLAttributes<HTMLDivElement>) {
+  return <div {...props} className={cn("rounded-xl border border-zinc-200 bg-white shadow-card", props.className)} />;
 }
-export function CardHeader({ title, subtitle }: { title: string; subtitle?: string }) {
-  return (
-    <div className="mb-2">
-      <h3 className="font-medium">{title}</h3>
-      {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
-    </div>
-  );
+
+export function CardHeader(props: React.HTMLAttributes<HTMLDivElement>) {
+  return <div {...props} className={cn("p-4 border-b border-zinc-200", props.className)} />;
+}
+
+export function CardBody(props: React.HTMLAttributes<HTMLDivElement>) {
+  return <div {...props} className={cn("p-4", props.className)} />;
 }

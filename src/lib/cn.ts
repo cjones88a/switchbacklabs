@@ -1,3 +1,6 @@
-export function cn(...v: Array<string | false | null | undefined>) {
-  return v.filter(Boolean).join(' ')
+import { clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: any[]) { 
+  return twMerge(clsx(inputs)); 
 }

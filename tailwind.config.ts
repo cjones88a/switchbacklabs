@@ -18,17 +18,10 @@ const config: Config = {
       },
       colors: {
         brand: {
-          // deep green like plug&bet
-          900: '#0E1A13',
-          700: '#12261A',
-          600: '#173322',
-          500: '#1F4630',
-        },
-        accent: {
-          // neon-lime accent
-          400: '#D9FF43',
-          500: '#CCFF00',
-        },
+          DEFAULT: "#132E1E", // deep evergreen
+          fg: "#0B1F14",
+          accent: "#D5FF3F",  // neon-lime accent
+        }
       },
       boxShadow: {
         card: '0 8px 22px rgba(0,0,0,.06)',

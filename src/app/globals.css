@@ -98,3 +98,7 @@ a:hover {
 .table tbody tr:not(:last-child) {
   border-bottom: 1px solid #e5e7eb;
 }
+
+/* Subtle background + base text */
+:root { color-scheme: light; }
+html, body { @apply bg-white text-zinc-900; }
