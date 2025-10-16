@@ -1,13 +1,18 @@
 // Get the actual rider_id from the database
-// Run with: node get-rider-id.js
+// Run with: node get-rider-id.mjs
 
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://gpgeqifprvrsqrlsxsju.supabase.co';
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwZ2VxaWZwcnZyc3FybHN4c2p1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTI1MDAyMCwiZXhwIjoyMDc0ODI2MDIwfQ.UrlDZnEnolqLFZnGJdgnFPkfk6a_cR_i63FiYV5-ylE';
+const SUPABASE_URL =
+  process.env.SUPABASE_URL || "https://gpgeqifprvrsqrlsxsju.supabase.co";
+const SERVICE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwZ2VxaWZwcnZyc3FybHN4c2p1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTI1MDAyMCwiZXhwIjoyMDc0ODI2MDIwfQ.UrlDZnEnolqLFZnGJdgnFPkfk6a_cR_i63FiYV5-ylE";
 
 async function getRiderId() {
-  const sb = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+  const sb = createClient(SUPABASE_URL, SERVICE_KEY, {
+    auth: { persistSession: false },
+  });
 
   try {
     // Get rider_id from oauth_tokens
@@ -18,18 +23,18 @@ async function getRiderId() {
 
     if (error) {
       console.log("❌ Error getting oauth tokens:", error.message);
-      return;
+      return null;
     }
 
-    if (!tokens || tokens.length === 0) {
+    if (!tokens?.length) {
       console.log("❌ No oauth tokens found");
-      return;
+      return null;
     }
 
     const token = tokens[0];
     console.log("✅ Found rider_id:", token.rider_id);
     console.log("Token expires at:", token.expires_at);
-    
+
     // Check if token is still valid
     const expiresAt = new Date(token.expires_at);
     const now = new Date();
@@ -40,10 +45,10 @@ async function getRiderId() {
     }
 
     return token.rider_id;
-
   } catch (error) {
-    console.log("❌ Error:", error.message);
+    console.log("❌ Error:", error instanceof Error ? error.message : error);
+    return null;
   }
 }
 
-getRiderId();
+void getRiderId();

@@ -42,12 +42,12 @@ Choose one of these methods:
 
 ## Method 3: Node.js Script
 
-1. Install node-fetch: `npm install node-fetch`
-2. Update `test-my-times-api.js` with your values:
+1. Use Node.js 18+ so the built-in `fetch` API is available. (The script will fall back to `node-fetch` if needed.)
+2. Update `test-my-times-api.mjs` with your values:
    - `accessToken`: Your token from step 1
    - `riderId`: Your rider ID from step 2
    - `domain`: Your actual Vercel domain
-3. Run: `node test-my-times-api.js`
+3. Run: `node test-my-times-api.mjs`
 
 ## What to Look For
 

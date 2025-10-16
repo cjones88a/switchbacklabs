@@ -27,14 +27,6 @@ export async function GET(req: Request) {
   const seasonKeys = keysForYear(year);
   console.log(`[${t.name}] ${t.id} year`, year, 'seasonKeys', seasonKeys);
 
-  // First, let's see what data we actually have
-  const { data: allData, error: allError } = await supabase
-    .from("attempts")
-    .select("rider_id, season_key, main_ms, climb_sum_ms, desc_sum_ms, riders ( firstname, lastname, profile, consent_public )")
-    .limit(10);
-  
-  console.log(`[${t.name}] ${t.id} allData sample:`, allData?.map(d => ({ season_key: d.season_key, rider_id: d.rider_id })));
-
   const { data, error } = await supabase
     .from("attempts")
     .select("rider_id, season_key, main_ms, climb_sum_ms, desc_sum_ms, riders ( firstname, lastname, profile, consent_public )")

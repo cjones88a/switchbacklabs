@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { TableWrap, T, TH, TD } from '@/components/ui/table'
+import { Fragment, useMemo, useState } from 'react'
+import { TableWrap, T, TH } from '@/components/ui/table'
 
 type Attempt = {
   race_year: number
@@ -19,7 +19,7 @@ type AttemptsByYear = {
 }
 
 function formatTime(ms: number | null): string {
-  if (!ms) return '—'
+  if (ms == null) return '—'
   const totalSeconds = Math.floor(ms / 1000)
   const hours = Math.floor(totalSeconds / 3600)
   const minutes = Math.floor((totalSeconds % 3600) / 60)
@@ -40,25 +40,28 @@ function formatDate(dateString: string): string {
 }
 
 export default function IndividualAttemptsTable({ attempts }: { attempts: Attempt[] }) {
-  const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set())
+  const [expandedYears, setExpandedYears] = useState<Set<number>>(() => new Set())
 
-  // Group attempts by race year
-  const attemptsByYear: AttemptsByYear = attempts.reduce((acc, attempt) => {
-    if (!acc[attempt.race_year]) {
-      acc[attempt.race_year] = []
-    }
-    acc[attempt.race_year].push(attempt)
-    return acc
-  }, {} as AttemptsByYear)
+  const attemptsByYear: AttemptsByYear = useMemo(() => {
+    return attempts.reduce((acc, attempt) => {
+      if (!acc[attempt.race_year]) {
+        acc[attempt.race_year] = []
+      }
+      acc[attempt.race_year].push(attempt)
+      return acc
+    }, {} as AttemptsByYear)
+  }, [attempts])
 
   const toggleYear = (year: number) => {
-    const newExpanded = new Set(expandedYears)
-    if (newExpanded.has(year)) {
-      newExpanded.delete(year)
-    } else {
-      newExpanded.add(year)
-    }
-    setExpandedYears(newExpanded)
+    setExpandedYears(prev => {
+      const next = new Set(prev)
+      if (next.has(year)) {
+        next.delete(year)
+      } else {
+        next.add(year)
+      }
+      return next
+    })
   }
 
   if (attempts.length === 0) {
@@ -89,19 +92,32 @@ export default function IndividualAttemptsTable({ attempts }: { attempts: Attemp
               .map(([raceYear, yearAttempts]) => {
                 const year = parseInt(raceYear)
                 const isExpanded = expandedYears.has(year)
-                const bestAttempt = yearAttempts[0] // Already sorted by main_ms asc
-                
+                const bestAttempt = yearAttempts.reduce<Attempt | null>((best, attempt) => {
+                  if (!best) return attempt
+                  return attempt.main_ms < best.main_ms ? attempt : best
+                }, null)
+
+                if (!bestAttempt) return null
+
+                const sortedAttempts = [...yearAttempts].sort((a, b) =>
+                  new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                )
+
                 return (
-                  <>
+                  <Fragment key={year}>
                     {/* Main row for each race year */}
-                    <tr 
-                      key={year}
+                    <tr
                       className="hover:bg-neutral-50 cursor-pointer"
                       onClick={() => toggleYear(year)}
                     >
                       <td className="font-medium">
                         <div className="flex items-center gap-2">
-                          <span className={isExpanded ? 'rotate-90' : ''}>▶</span>
+                          <span
+                            aria-hidden
+                            className={`transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                          >
+                            ▶
+                          </span>
                           {year}
                         </div>
                       </td>
@@ -115,29 +131,30 @@ export default function IndividualAttemptsTable({ attempts }: { attempts: Attemp
                         {formatDate(bestAttempt.created_at)}
                       </td>
                     </tr>
-                    
+
                     {/* Expanded sub-rows for all attempts in this year */}
-                    {isExpanded && yearAttempts.map((attempt) => (
-                      <tr key={`${year}-${attempt.activity_id}`} className="bg-neutral-25">
-                        <td></td>
-                        <td className="text-sm text-neutral-600">
-                          {attempt.season_name} {attempt.season_year}
-                        </td>
-                        <td className="font-mono text-sm">
-                          {formatTime(attempt.main_ms)}
-                        </td>
-                        <td className="font-mono text-sm">
-                          {formatTime(attempt.climb_sum_ms)}
-                        </td>
-                        <td className="font-mono text-sm">
-                          {formatTime(attempt.desc_sum_ms)}
-                        </td>
-                        <td className="text-xs text-neutral-400">
-                          {formatDate(attempt.created_at)}
-                        </td>
-                      </tr>
-                    ))}
-                  </>
+                    {isExpanded &&
+                      sortedAttempts.map((attempt) => (
+                        <tr key={`${year}-${attempt.activity_id}`} className="bg-neutral-25">
+                          <td></td>
+                          <td className="text-sm text-neutral-600">
+                            {attempt.season_name} {attempt.season_year}
+                          </td>
+                          <td className="font-mono text-sm">
+                            {formatTime(attempt.main_ms)}
+                          </td>
+                          <td className="font-mono text-sm">
+                            {formatTime(attempt.climb_sum_ms)}
+                          </td>
+                          <td className="font-mono text-sm">
+                            {formatTime(attempt.desc_sum_ms)}
+                          </td>
+                          <td className="text-xs text-neutral-400">
+                            {formatDate(attempt.created_at)}
+                          </td>
+                        </tr>
+                      ))}
+                  </Fragment>
                 )
               })}
           </tbody>

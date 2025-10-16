@@ -1,9 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Inter, Archivo_Black } from "next/font/google";
-
-const inter = Inter({ subsets: ["latin"], variable: "--font-body" });
-const archivoBlack = Archivo_Black({ weight: "400", subsets: ["latin"], variable: "--font-display" });
 
 export const metadata: Metadata = {
   title: "Switchback Labs",
@@ -13,7 +9,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${archivoBlack.variable} font-sans`} suppressHydrationWarning={true}>
+      <body className="font-sans" suppressHydrationWarning={true}>
         {children}
       </body>
     </html>
