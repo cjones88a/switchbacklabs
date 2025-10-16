@@ -9,7 +9,7 @@ import StravaConnect from "@/components/race/StravaConnect";
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
 import { Card, CardBody } from '@/components/ui/card'
-import { TableShell, THead, TH, TBody, TR, TD } from '@/components/ui/table'
+// Table components not used in this version - using LeaderboardTable instead
 import { Alert } from '@/components/ui/Alert'
 import { LeaderboardTable, LeaderboardRow } from '@/components/leaderboard/LeaderboardTable'
 import MyTimes from '@/components/race/MyTimes'

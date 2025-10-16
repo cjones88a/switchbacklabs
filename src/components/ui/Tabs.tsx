@@ -26,7 +26,7 @@ export function Tabs({ children, defaultValue, value, onValueChange }: {
           return React.cloneElement(child, { 
             activeValue: currentValue, 
             onValueChange: handleValueChange 
-          } as any);
+          } as React.HTMLAttributes<HTMLElement>);
         }
         return child;
       })}
@@ -49,10 +49,10 @@ export function TabsList({ children, className, activeValue, onValueChange }: {
     >
       {React.Children.map(children, (child) => {
         if (React.isValidElement(child)) {
-          return React.cloneElement(child, { 
-            activeValue, 
-            onValueChange 
-          } as any);
+        return React.cloneElement(child, { 
+          activeValue, 
+          onValueChange 
+        } as React.HTMLAttributes<HTMLElement>);
         }
         return child;
       })}
