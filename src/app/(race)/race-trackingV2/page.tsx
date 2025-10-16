@@ -7,7 +7,7 @@ import SiteHeader from "@/components/layout/SiteHeader";
 import TrackerBackground from "@/components/race/TrackerBackground";
 import StravaConnect from "@/components/race/StravaConnect";
 import { Button } from '@/components/ui/button'
-import { Tabs } from '@/components/ui/Tabs'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
 import { Notice } from '@/components/ui/notice'
 import { LeaderboardTable, LeaderboardRow } from '@/components/leaderboard/LeaderboardTable'
 import MyTimes from '@/components/race/MyTimes'
@@ -174,17 +174,13 @@ export default function RacePage() {
             </div>
           )}
 
-          <Tabs
-            tabs={[
-              { id: 'leaderboard', label: 'Leaderboard' },
-              { id: 'mine', label: 'My Times' },
-            ]}
-            value={tab}
-            onChange={id => setTab(id as 'leaderboard' | 'mine')}
-          />
+          <Tabs value={tab} onValueChange={(value) => setTab(value as 'leaderboard' | 'mine')}>
+            <TabsList>
+              <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
+              <TabsTrigger value="mine">My Times</TabsTrigger>
+            </TabsList>
 
-          {tab === 'leaderboard' && (
-            <section className="mt-6">
+            <TabsContent value="leaderboard">
               <div className="flex flex-wrap items-center gap-3">
                 <select 
                   value={lbYear} 
@@ -213,14 +209,15 @@ export default function RacePage() {
               ) : (
                 <LeaderboardTable rows={lb} />
               )}
-            </section>
-          )}
+            </TabsContent>
 
-          {tab === 'mine' && (
-            <section className="mt-6">
-              <MyTimes />
-            </section>
-          )}
+            <TabsContent value="mine">
+              <div className="mt-4">
+                <MyTimes />
+              </div>
+            </TabsContent>
+          </Tabs>
+
 
           {/* Guidance */}
           <div className="mt-8 bg-white/95 p-6 rounded-xl backdrop-blur-sm">
