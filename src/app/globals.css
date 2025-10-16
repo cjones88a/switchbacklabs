@@ -101,4 +101,3 @@ a:hover {
 
 /* Subtle background + base text */
 :root { color-scheme: light; }
-html, body { @apply bg-white text-zinc-900; }
