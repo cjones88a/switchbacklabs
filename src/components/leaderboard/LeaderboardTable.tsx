@@ -146,11 +146,11 @@ export function LeaderboardTable({
                           <img
                             src={r.rider.avatar}
                             alt=""
-                            className="h-6 w-6 rounded-full object-cover ring-1 ring-black/10"
+                            className="h-4 w-4 rounded-full object-cover ring-1 ring-black/10"
                             loading="lazy"
                           />
                         ) : (
-                          <div className="h-6 w-6 rounded-full bg-neutral-200 ring-1 ring-black/10" />
+                          <div className="h-4 w-4 rounded-full bg-neutral-200 ring-1 ring-black/10" />
                         )}
                         <span className="font-medium text-neutral-900">{name}</span>
                       </div>
@@ -160,10 +160,11 @@ export function LeaderboardTable({
                         <div className="font-mono font-bold text-base mb-1">
                           {fmt(r.fall_ms)}
                         </div>
-                        <div className="flex justify-center gap-2 text-xs">
+                        <div className="flex justify-center gap-1 text-xs">
                           <span className="font-mono font-semibold text-neutral-600">
                             {fmt(r.fall_climb_ms)}
                           </span>
+                          <span className="text-neutral-400">|</span>
                           <span className="font-mono font-semibold text-neutral-500">
                             {fmt(r.fall_desc_ms)}
                           </span>
@@ -175,10 +176,11 @@ export function LeaderboardTable({
                         <div className="font-mono font-bold text-base mb-1">
                           {fmt(r.winter_ms)}
                         </div>
-                        <div className="flex justify-center gap-2 text-xs">
+                        <div className="flex justify-center gap-1 text-xs">
                           <span className="font-mono font-semibold text-neutral-600">
                             {fmt(r.winter_climb_ms)}
                           </span>
+                          <span className="text-neutral-400">|</span>
                           <span className="font-mono font-semibold text-neutral-500">
                             {fmt(r.winter_desc_ms)}
                           </span>
@@ -190,10 +192,11 @@ export function LeaderboardTable({
                         <div className="font-mono font-bold text-base mb-1">
                           {fmt(r.spring_ms)}
                         </div>
-                        <div className="flex justify-center gap-2 text-xs">
+                        <div className="flex justify-center gap-1 text-xs">
                           <span className="font-mono font-semibold text-neutral-600">
                             {fmt(r.spring_climb_ms)}
                           </span>
+                          <span className="text-neutral-400">|</span>
                           <span className="font-mono font-semibold text-neutral-500">
                             {fmt(r.spring_desc_ms)}
                           </span>
@@ -205,10 +208,11 @@ export function LeaderboardTable({
                         <div className="font-mono font-bold text-base mb-1">
                           {fmt(r.summer_ms)}
                         </div>
-                        <div className="flex justify-center gap-2 text-xs">
+                        <div className="flex justify-center gap-1 text-xs">
                           <span className="font-mono font-semibold text-neutral-600">
                             {fmt(r.summer_climb_ms)}
                           </span>
+                          <span className="text-neutral-400">|</span>
                           <span className="font-mono font-semibold text-neutral-500">
                             {fmt(r.summer_desc_ms)}
                           </span>
