@@ -101,3 +101,9 @@ a:hover {
 
 /* Subtle background + base text */
 :root { color-scheme: light; }
+
+/* Selection styling */
+::selection { 
+  background: #D5FF3F; 
+  color: #132E1E; 
+}
