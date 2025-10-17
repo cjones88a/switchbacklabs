@@ -42,7 +42,7 @@ export default function HomePage() {
             <h3 className="mb-1 font-semibold">Clarity &amp; focus</h3>
             <p className="text-sm text-zinc-700">
               Strategy that ties features to outcomes. Positioning, goals, and success metrics. A roadmap that
-              explains "why this, why now."
+              explains &quot;why this, why now.&quot;
             </p>
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
