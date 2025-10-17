@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Inter, Space_Grotesk } from "next/font/google";
 import { motion } from "framer-motion";
 
@@ -30,7 +31,13 @@ function Header() {
     <header className="sticky top-0 z-30 backdrop-blur supports-[backdrop-filter]:bg-white/70 border-b border-slate-200">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 flex items-center justify-between">
         <Link href="/" className="group inline-flex items-center gap-2">
-          <div className="h-6 w-6 rounded-md bg-gradient-to-br from-green-400 to-emerald-500 ring-1 ring-gray-300 shadow-sm" />
+          <Image 
+            src="/switchback-labs-logo.svg" 
+            alt="Switchback Labs" 
+            width={24} 
+            height={24} 
+            className="h-6 w-6"
+          />
           <span className="font-semibold tracking-tight text-gray-900" style={{fontFamily:"var(--font-grotesk)"}}>Switchback Labs</span>
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-sm text-gray-600">
@@ -54,10 +61,25 @@ function Hero() {
       <div className="pointer-events-none absolute inset-0 opacity-[0.06]" style={{backgroundImage:"url('data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'200\\' height=\\'200\\'><filter id=\\'n\\'><feTurbulence type=\\'fractalNoise\\' baseFrequency=\\'.9\\' numOctaves=\\'2\\'/></filter><rect width=\\'100%\\' height=\\'100%\\' filter=\\'url(%23n)\\' opacity=\\'0.4\\'/></svg>')"}} />
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28">
-        <motion.h1
+        <motion.div
           initial={{opacity:0, y:8}}
           animate={{opacity:1, y:0}}
           transition={{duration:0.5}}
+          className="flex items-center gap-3 mb-8">
+          <Image 
+            src="/switchback-labs-logo.svg" 
+            alt="Switchback Labs" 
+            width={40} 
+            height={40} 
+            className="h-10 w-10"
+          />
+          <span className="text-sm font-medium text-gray-500 tracking-wider uppercase">Switchback Labs</span>
+        </motion.div>
+
+        <motion.h1
+          initial={{opacity:0, y:8}}
+          animate={{opacity:1, y:0}}
+          transition={{duration:0.5, delay:0.1}}
           className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.05]">
           <span style={{fontFamily:"var(--font-grotesk)"}}>Less Talk.</span>
           <br/>

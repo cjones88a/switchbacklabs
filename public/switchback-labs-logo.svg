@@ -1,0 +1,21 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rounded square background -->
+  <rect width="32" height="32" rx="6" fill="#374151"/>
+  
+  <!-- Mountain background -->
+  <path d="M8 20 L12 12 L16 16 L20 8 L24 12 L24 20 Z" fill="#ffffff"/>
+  
+  <!-- Mountain shading -->
+  <path d="M8 20 L12 12 L16 16 L20 8 L24 12 L24 20 Z" fill="#e5e7eb" opacity="0.3"/>
+  
+  <!-- Switchback path -->
+  <path d="M16 24 Q12 20 8 16 Q12 12 16 8 Q20 12 24 16 Q20 20 16 24" stroke="#ffffff" stroke-width="1.5" fill="none"/>
+  
+  <!-- Trees left side -->
+  <path d="M6 18 L8 14 L10 18 Z" fill="#1f2937"/>
+  <path d="M4 20 L6 16 L8 20 Z" fill="#1f2937"/>
+  
+  <!-- Trees right side -->
+  <path d="M22 18 L24 14 L26 18 Z" fill="#1f2937"/>
+  <path d="M24 20 L26 16 L28 20 Z" fill="#1f2937"/>
+</svg>
