@@ -79,12 +79,11 @@ export function LeaderboardTable({
   }) {
     const active = sortKey === k;
     return (
-      <TH>
+      <TH className={className}>
         <button
           className={cn(
-            'inline-flex items-center gap-1 text-left',
-            active && 'text-black',
-            className
+            'inline-flex items-center gap-1 text-left w-full',
+            active && 'text-black'
           )}
           onClick={() => {
             if (sortKey === k) setAsc((s) => !s);
@@ -112,19 +111,19 @@ export function LeaderboardTable({
 
   return (
     <TableWrap>
-      {/* a little wider for all columns on mobile */}
-      <div className="min-w-[780px]">
+      {/* standardized column widths to accommodate climb/descent times */}
+      <div className="min-w-[900px]">
         <T>
           <thead>
             <tr>
-              <TH>Rider</TH>
-              <Header k="fall_ms">Fall</Header>
-              <Header k="winter_ms">Winter</Header>
-              <Header k="spring_ms">Spring</Header>
-              <Header k="summer_ms">Summer</Header>
-              <Header k="total_ms">Total</Header>
-              <Header k="climb_sum_ms">Climb Sum</Header>
-              <Header k="desc_sum_ms">Descent Sum</Header>
+              <TH className="w-32">Rider</TH>
+              <Header k="fall_ms" className="w-24">Fall</Header>
+              <Header k="winter_ms" className="w-24">Winter</Header>
+              <Header k="spring_ms" className="w-24">Spring</Header>
+              <Header k="summer_ms" className="w-24">Summer</Header>
+              <Header k="total_ms" className="w-20">Total</Header>
+              <Header k="climb_sum_ms" className="w-20">Climb Sum</Header>
+              <Header k="desc_sum_ms" className="w-20">Descent Sum</Header>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-200">
@@ -146,13 +145,13 @@ export function LeaderboardTable({
                           <img
                             src={r.rider.avatar}
                             alt=""
-                            className="h-4 w-4 rounded-full object-cover ring-1 ring-black/10"
+                            className="h-2 w-2 rounded-full object-cover ring-1 ring-black/10"
                             loading="lazy"
                           />
                         ) : (
-                          <div className="h-4 w-4 rounded-full bg-neutral-200 ring-1 ring-black/10" />
+                          <div className="h-2 w-2 rounded-full bg-neutral-200 ring-1 ring-black/10" />
                         )}
-                        <span className="font-medium text-neutral-900">{name}</span>
+                        <span className="font-bold text-neutral-900">{name}</span>
                       </div>
                     </TD>
                     <TD>
@@ -160,7 +159,7 @@ export function LeaderboardTable({
                         <div className="font-mono font-bold text-base mb-1">
                           {fmt(r.fall_ms)}
                         </div>
-                        <div className="flex justify-center gap-1 text-xs">
+                        <div className="flex justify-center gap-1 text-[10px]">
                           <span className="font-mono font-semibold text-neutral-600">
                             {fmt(r.fall_climb_ms)}
                           </span>
@@ -176,7 +175,7 @@ export function LeaderboardTable({
                         <div className="font-mono font-bold text-base mb-1">
                           {fmt(r.winter_ms)}
                         </div>
-                        <div className="flex justify-center gap-1 text-xs">
+                        <div className="flex justify-center gap-1 text-[10px]">
                           <span className="font-mono font-semibold text-neutral-600">
                             {fmt(r.winter_climb_ms)}
                           </span>
@@ -192,7 +191,7 @@ export function LeaderboardTable({
                         <div className="font-mono font-bold text-base mb-1">
                           {fmt(r.spring_ms)}
                         </div>
-                        <div className="flex justify-center gap-1 text-xs">
+                        <div className="flex justify-center gap-1 text-[10px]">
                           <span className="font-mono font-semibold text-neutral-600">
                             {fmt(r.spring_climb_ms)}
                           </span>
@@ -208,7 +207,7 @@ export function LeaderboardTable({
                         <div className="font-mono font-bold text-base mb-1">
                           {fmt(r.summer_ms)}
                         </div>
-                        <div className="flex justify-center gap-1 text-xs">
+                        <div className="flex justify-center gap-1 text-[10px]">
                           <span className="font-mono font-semibold text-neutral-600">
                             {fmt(r.summer_climb_ms)}
                           </span>
