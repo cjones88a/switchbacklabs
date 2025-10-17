@@ -100,7 +100,9 @@ a:hover {
 }
 
 /* Subtle background + base text */
-:root { color-scheme: light; }
+:root { 
+  color-scheme: light; 
+}
 
 /* Selection styling */
 ::selection { 

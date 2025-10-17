@@ -146,70 +146,78 @@ export function LeaderboardTable({
                           <img
                             src={r.rider.avatar}
                             alt=""
-                            className="h-8 w-8 rounded-full object-cover ring-1 ring-black/10"
+                            className="h-6 w-6 rounded-full object-cover ring-1 ring-black/10"
                             loading="lazy"
                           />
                         ) : (
-                          <div className="h-8 w-8 rounded-full bg-neutral-200 ring-1 ring-black/10" />
+                          <div className="h-6 w-6 rounded-full bg-neutral-200 ring-1 ring-black/10" />
                         )}
                         <span className="font-medium text-neutral-900">{name}</span>
                       </div>
                     </TD>
                     <TD>
                       <div className="text-center">
-                        <div className="font-mono font-medium text-sm">
+                        <div className="font-mono font-bold text-base mb-1">
                           {fmt(r.fall_ms)}
                         </div>
-                        <div className="font-mono text-xs text-neutral-600">
-                          {fmt(r.fall_climb_ms)}
-                        </div>
-                        <div className="font-mono text-xs text-neutral-500">
-                          {fmt(r.fall_desc_ms)}
+                        <div className="flex justify-center gap-2 text-xs">
+                          <span className="font-mono font-semibold text-neutral-600">
+                            {fmt(r.fall_climb_ms)}
+                          </span>
+                          <span className="font-mono font-semibold text-neutral-500">
+                            {fmt(r.fall_desc_ms)}
+                          </span>
                         </div>
                       </div>
                     </TD>
                     <TD>
                       <div className="text-center">
-                        <div className="font-mono font-medium text-sm">
+                        <div className="font-mono font-bold text-base mb-1">
                           {fmt(r.winter_ms)}
                         </div>
-                        <div className="font-mono text-xs text-neutral-600">
-                          {fmt(r.winter_climb_ms)}
-                        </div>
-                        <div className="font-mono text-xs text-neutral-500">
-                          {fmt(r.winter_desc_ms)}
+                        <div className="flex justify-center gap-2 text-xs">
+                          <span className="font-mono font-semibold text-neutral-600">
+                            {fmt(r.winter_climb_ms)}
+                          </span>
+                          <span className="font-mono font-semibold text-neutral-500">
+                            {fmt(r.winter_desc_ms)}
+                          </span>
                         </div>
                       </div>
                     </TD>
                     <TD>
                       <div className="text-center">
-                        <div className="font-mono font-medium text-sm">
+                        <div className="font-mono font-bold text-base mb-1">
                           {fmt(r.spring_ms)}
                         </div>
-                        <div className="font-mono text-xs text-neutral-600">
-                          {fmt(r.spring_climb_ms)}
-                        </div>
-                        <div className="font-mono text-xs text-neutral-500">
-                          {fmt(r.spring_desc_ms)}
+                        <div className="flex justify-center gap-2 text-xs">
+                          <span className="font-mono font-semibold text-neutral-600">
+                            {fmt(r.spring_climb_ms)}
+                          </span>
+                          <span className="font-mono font-semibold text-neutral-500">
+                            {fmt(r.spring_desc_ms)}
+                          </span>
                         </div>
                       </div>
                     </TD>
                     <TD>
                       <div className="text-center">
-                        <div className="font-mono font-medium text-sm">
+                        <div className="font-mono font-bold text-base mb-1">
                           {fmt(r.summer_ms)}
                         </div>
-                        <div className="font-mono text-xs text-neutral-600">
-                          {fmt(r.summer_climb_ms)}
-                        </div>
-                        <div className="font-mono text-xs text-neutral-500">
-                          {fmt(r.summer_desc_ms)}
+                        <div className="flex justify-center gap-2 text-xs">
+                          <span className="font-mono font-semibold text-neutral-600">
+                            {fmt(r.summer_climb_ms)}
+                          </span>
+                          <span className="font-mono font-semibold text-neutral-500">
+                            {fmt(r.summer_desc_ms)}
+                          </span>
                         </div>
                       </div>
                     </TD>
-                    <TD mono>{fmt(r.total_ms)}</TD>
-                    <TD mono>{fmt(r.climb_sum_ms)}</TD>
-                    <TD mono>{fmt(r.desc_sum_ms)}</TD>
+                    <TD mono className="font-bold text-base">{fmt(r.total_ms)}</TD>
+                    <TD mono className="font-semibold text-sm">{fmt(r.climb_sum_ms)}</TD>
+                    <TD mono className="font-semibold text-sm">{fmt(r.desc_sum_ms)}</TD>
                   </tr>
                 );
               })
