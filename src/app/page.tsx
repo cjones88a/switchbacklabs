@@ -126,11 +126,7 @@ function Footer() {
 // Tailwind shortcuts as classNames for buttons, cards, etc.
 // Consider extracting to a CSS module if preferred.
 
-declare module "react" { interface CSSProperties { [key: string]: any } }
-
-const cls = {
-  btn: "inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-2",
-};
+declare module "react" { interface CSSProperties { [key: string]: string | number } }
 
 // Extend Link components with button styling via className props
 // Usage: className="btn btn--primary"
