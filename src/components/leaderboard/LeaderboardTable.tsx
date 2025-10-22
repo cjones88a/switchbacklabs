@@ -141,19 +141,19 @@ export function LeaderboardTable({
                 return (
                   <tr key={`${name}-${i}`} className="hover:bg-neutral-50">
                     <TD>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center">
                         {r.rider?.avatar ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={r.rider.avatar}
                             alt=""
-                            className="h-8 w-8 rounded-full object-cover ring-1 ring-black/10"
+                            className="h-8 w-8 rounded-full object-cover ring-1 ring-black/10 mr-3"
                             loading="lazy"
                           />
                         ) : (
-                          <div className="h-8 w-8 rounded-full bg-neutral-200 ring-1 ring-black/10" />
+                          <div className="h-8 w-8 rounded-full bg-neutral-200 ring-1 ring-black/10 mr-3" />
                         )}
-                        <span className="font-bold text-neutral-900 ml-3" style={{fontWeight: 'bold'}}>{name}</span>
+                        <span className="font-bold text-neutral-900" style={{fontWeight: 'bold'}}>{name}</span>
                       </div>
                     </TD>
                     <TD>
