@@ -49,6 +49,8 @@ export function LeaderboardTable({
   rows: LeaderboardRow[];
   defaultSort?: SortKey;
 }) {
+  // Version check: 2025-01-22-v3
+  console.log('LeaderboardTable v3 loaded - avatar should be h-8 w-8');
   const [sortKey, setSortKey] = React.useState<SortKey>(defaultSort);
   const [asc, setAsc] = React.useState(false);
 
