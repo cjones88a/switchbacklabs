@@ -148,10 +148,11 @@ export function LeaderboardTable({
                             src={r.rider.avatar}
                             alt=""
                             className="h-8 w-8 rounded-full object-cover ring-1 ring-black/10 mr-3"
+                            style={{width: '32px', height: '32px'}}
                             loading="lazy"
                           />
                         ) : (
-                          <div className="h-8 w-8 rounded-full bg-neutral-200 ring-1 ring-black/10 mr-3" />
+                          <div className="h-8 w-8 rounded-full bg-neutral-200 ring-1 ring-black/10 mr-3" style={{width: '32px', height: '32px'}} />
                         )}
                         <span className="font-bold text-neutral-900" style={{fontWeight: 'bold'}}>{name}</span>
                       </div>
