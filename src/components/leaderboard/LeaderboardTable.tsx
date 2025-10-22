@@ -151,7 +151,7 @@ export function LeaderboardTable({
                         ) : (
                           <div className="h-8 w-8 rounded-full bg-neutral-200 ring-1 ring-black/10" />
                         )}
-                        <span className="font-bold text-neutral-900 ml-3">{name}</span>
+                        <span className="font-bold text-neutral-900 ml-3" style={{fontWeight: 'bold'}}>{name}</span>
                       </div>
                     </TD>
                     <TD>
