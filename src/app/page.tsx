@@ -1,165 +1,225 @@
-"use client";
+import Link from 'next/link'
 
-import Link from "next/link";
-import Image from "next/image";
-import { Inter, Space_Grotesk } from "next/font/google";
-import { motion } from "framer-motion";
-
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-grotesk" });
-
-// NOTE: This component is drop-in for app/page.tsx in a Next.js 13+ app.
-// TailwindCSS required. No shadcn dependency to avoid deploy friction.
-// Colors used: slate, off-white, lime accent. Adjust via Tailwind config if desired.
-
-export default function SwitchbackLabsLanding() {
+export default function HomePage() {
   return (
-    <main className={`${inter.variable} ${grotesk.variable} bg-white text-slate-900 antialiased`}> 
-      {/* Site wrapper */}
-      <div className="min-h-screen">
-        <Header />
-        <Hero />
-        <Availability />
-        <Footer />
-      </div>
+    <main className="min-h-screen bg-white">
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <Link href="/" className="flex items-center space-x-2">
+              <span className="text-xl font-semibold tracking-tight">Switchback Labs</span>
+            </Link>
+            
+            <div className="hidden md:flex items-center space-x-8">
+              <Link href="#work" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                Work
+              </Link>
+              <Link href="#services" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                Services
+              </Link>
+              <Link 
+                href="#contact" 
+                className="px-4 py-2 bg-gray-900 text-white text-sm rounded-md hover:bg-gray-800 transition-colors"
+              >
+                Get in touch
+              </Link>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="pt-32 pb-20 px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="max-w-4xl">
+            <p className="text-sm uppercase tracking-wider text-gray-500 mb-6">
+              Product Strategy & Technical PM
+            </p>
+            <h1 className="text-5xl md:text-7xl font-serif font-light leading-tight mb-8">
+              Less Talk.
+              <br />
+              More Shipped.
+            </h1>
+            <p className="text-xl text-gray-600 leading-relaxed mb-12 max-w-2xl">
+              I help founders and teams turn fuzzy ideas into shipped experiences: crisp strategy, 
+              evidence-based decisions, and specs developers love.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link 
+                href="#work"
+                className="inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors"
+              >
+                View my work
+              </Link>
+              <Link 
+                href="#contact"
+                className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-900 rounded-md hover:border-gray-400 transition-colors"
+              >
+                Let's talk
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Project Section */}
+      <section id="work" className="py-20 px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-12">
+            <p className="text-sm uppercase tracking-wider text-gray-500 mb-4">Featured Work</p>
+            <h2 className="text-4xl md:text-5xl font-serif font-light">Recent Projects</h2>
+          </div>
+
+          {/* Project Card */}
+          <Link 
+            href="/race-trackingV2" 
+            className="group block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
+          >
+            <div className="aspect-[16/9] bg-gradient-to-br from-blue-500 to-purple-600 relative overflow-hidden">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-white text-center">
+                  <div className="text-6xl font-bold mb-2">4SOH</div>
+                  <div className="text-xl opacity-90">Race Tracker</div>
+                </div>
+              </div>
+            </div>
+            <div className="p-8">
+              <h3 className="text-2xl font-serif font-light mb-4 group-hover:text-gray-600 transition-colors">
+                Four Seasons One Hour Challenge
+              </h3>
+              <p className="text-gray-600 leading-relaxed mb-6">
+                Real-time race tracking and leaderboard platform connecting athletes through Strava. 
+                Built with Next.js, Supabase, and Strava OAuth for seamless performance tracking 
+                across multiple seasonal challenges.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Next.js</span>
+                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">TypeScript</span>
+                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Supabase</span>
+                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Strava API</span>
+              </div>
+              <div className="mt-6 flex items-center text-gray-900 font-medium group-hover:translate-x-2 transition-transform">
+                View project
+                <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </section>
+
+      {/* Services Section */}
+      <section id="services" className="py-20 px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-16">
+            <p className="text-sm uppercase tracking-wider text-gray-500 mb-4">Services</p>
+            <h2 className="text-4xl md:text-5xl font-serif font-light mb-6">What I Do</h2>
+            <p className="text-xl text-gray-600 max-w-3xl">
+              End-to-end product leadership from strategy and discovery through delivery and launch.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="border-l-2 border-gray-900 pl-6">
+              <div className="text-sm text-gray-500 mb-2">01</div>
+              <h3 className="text-2xl font-serif font-light mb-4">Product Strategy</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Turn ambiguous opportunities into clear roadmaps. I help define what to build, 
+                why it matters, and how to measure success—grounded in user needs and business objectives.
+              </p>
+            </div>
+
+            <div className="border-l-2 border-gray-900 pl-6">
+              <div className="text-sm text-gray-500 mb-2">02</div>
+              <h3 className="text-2xl font-serif font-light mb-4">Technical Product Management</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Bridge the gap between vision and engineering. I write specs developers trust, 
+                make architectural decisions, and ship products that scale.
+              </p>
+            </div>
+
+            <div className="border-l-2 border-gray-900 pl-6">
+              <div className="text-sm text-gray-500 mb-2">03</div>
+              <h3 className="text-2xl font-serif font-light mb-4">Product Discovery</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Validate assumptions before building. Through rapid prototyping and user research, 
+                I help teams learn fast and avoid expensive mistakes.
+              </p>
+            </div>
+
+            <div className="border-l-2 border-gray-900 pl-6">
+              <div className="text-sm text-gray-500 mb-2">04</div>
+              <h3 className="text-2xl font-serif font-light mb-4">Team Leadership</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Build momentum and alignment. I establish product rituals, coach teams on best practices, 
+                and create environments where great work happens.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section id="contact" className="py-20 px-6 lg:px-8 bg-gray-900 text-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl md:text-5xl font-serif font-light mb-6">
+            Ready to ship something great?
+          </h2>
+          <p className="text-xl text-gray-300 mb-10">
+            Let's discuss how I can help you turn your product vision into reality.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a 
+              href="mailto:hello@switchbacklabsco.com"
+              className="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 rounded-md hover:bg-gray-100 transition-colors font-medium"
+            >
+              Get in touch
+            </a>
+            <a 
+              href="https://github.com/cjones88a"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center px-8 py-4 border border-white text-white rounded-md hover:bg-white hover:text-gray-900 transition-colors font-medium"
+            >
+              View GitHub
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-100 py-12 px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center space-x-2">
+              <span className="font-semibold">Switchback Labs</span>
+              <span className="text-gray-400">—</span>
+              <span className="text-gray-500 text-sm">Built in Fort Collins, CO</span>
+            </div>
+            <div className="flex items-center space-x-6 text-sm text-gray-500">
+              <Link href="/privacy" className="hover:text-gray-900 transition-colors">
+                Privacy
+              </Link>
+              <Link href="/terms" className="hover:text-gray-900 transition-colors">
+                Terms
+              </Link>
+              <a 
+                href="https://github.com/cjones88a" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-gray-900 transition-colors"
+              >
+                GitHub
+              </a>
+            </div>
+          </div>
+          <div className="mt-8 text-center text-sm text-gray-400">
+            © 2025 Switchback Labs. All rights reserved.
+          </div>
+        </div>
+      </footer>
     </main>
-  );
+  )
 }
-
-function Header() {
-  return (
-    <header className="sticky top-0 z-30 backdrop-blur supports-[backdrop-filter]:bg-white/70 border-b border-slate-200">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="group inline-flex items-center gap-2">
-          <Image 
-            src="/switchback-labs-logo.svg" 
-            alt="Switchback Labs" 
-            width={24} 
-            height={24} 
-            className="h-6 w-6"
-          />
-          <span className="font-semibold tracking-tight text-gray-900" style={{fontFamily:"var(--font-grotesk)"}}>Switchback Labs</span>
-        </Link>
-        <nav className="hidden md:flex items-center gap-6 text-sm text-gray-600">
-          <Link href="#work" className="nav-link">Work</Link>
-          <Link href="#services" className="nav-link">Services</Link>
-          <Link href="#contact" className="nav-link">Contact</Link>
-          <Link href="/projects" className="btn btn--ghost">See Projects</Link>
-        </nav>
-        <div className="md:hidden">
-          <Link href="/projects" className="btn btn--ghost">Projects</Link>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function Hero() {
-  return (
-    <section className="relative overflow-hidden">
-      {/* subtle grain */}
-      <div className="pointer-events-none absolute inset-0 opacity-[0.06]" style={{backgroundImage:"url('data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'200\\' height=\\'200\\'><filter id=\\'n\\'><feTurbulence type=\\'fractalNoise\\' baseFrequency=\\'.9\\' numOctaves=\\'2\\'/></filter><rect width=\\'100%\\' height=\\'100%\\' filter=\\'url(%23n)\\' opacity=\\'0.4\\'/></svg>')"}} />
-
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28">
-        <motion.div
-          initial={{opacity:0, y:8}}
-          animate={{opacity:1, y:0}}
-          transition={{duration:0.5}}
-          className="flex items-center gap-3 mb-8">
-          <Image 
-            src="/switchback-labs-logo.svg" 
-            alt="Switchback Labs" 
-            width={40} 
-            height={40} 
-            className="h-10 w-10"
-          />
-          <span className="text-sm font-medium text-gray-500 tracking-wider uppercase">Switchback Labs</span>
-        </motion.div>
-
-        <motion.h1
-          initial={{opacity:0, y:8}}
-          animate={{opacity:1, y:0}}
-          transition={{duration:0.5, delay:0.1}}
-          className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.05]">
-          <span style={{fontFamily:"var(--font-grotesk)"}}>Less Talk.</span>
-          <br/>
-          <span className="relative inline-block" style={{fontFamily:"var(--font-grotesk)"}}>
-            <span className="relative z-10">More Shipped.</span>
-            <span className="absolute left-0 bottom-1 h-3 w-full rounded bg-lime-300/70 -z-0" />
-          </span>
-        </motion.h1>
-
-        <motion.p
-          initial={{opacity:0}}
-          animate={{opacity:1}}
-          transition={{delay:0.2}}
-          className="mt-6 max-w-2xl text-lg text-gray-600">
-          I help founders and teams turn fuzzy ideas into shipped experiences: crisp strategy, evidence‑based decisions, and specs developers love.
-        </motion.p>
-
-        <motion.div
-          initial={{opacity:0, y:8}}
-          animate={{opacity:1, y:0}}
-          transition={{delay:0.35}}
-          className="mt-8 flex flex-wrap items-center gap-3">
-          <Link href="/projects" className="btn btn--ghost">See work</Link>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-
-function Availability() {
-  return (
-    <section id="contact" className="py-14 bg-gradient-to-b from-white to-gray-50">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="rounded-2xl ring-1 ring-gray-200 p-8 sm:p-10 bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-          <div>
-            <h3 className="text-xl font-semibold" style={{fontFamily:"var(--font-grotesk)"}}>Availability</h3>
-            <p className="mt-2 text-gray-600 max-w-2xl">Fractional PM or project‑based sprints. Typical response within one business day.</p>
-          </div>
-          <div className="flex gap-3">
-            <Link href="mailto:hello@switchbacklabsco.com" className="btn btn--primary">Email me</Link>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className="bg-gray-950 text-gray-100 py-10">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-        <p className="text-sm opacity-80">© {new Date().getFullYear()} Switchback Labs — Built in Fort Collins, CO</p>
-        <nav className="flex items-center gap-5 text-sm opacity-90">
-          <Link href="/privacy" className="hover:underline">Privacy</Link>
-          <Link href="/terms" className="hover:underline">Terms</Link>
-          <Link href="https://github.com/cjones88a" className="hover:underline" target="_blank">GitHub</Link>
-          <Link href="/projects" className="hover:underline">Projects</Link>
-        </nav>
-      </div>
-    </footer>
-  );
-}
-
-// ------- Utility Styles via Tailwind classes -------
-// Tailwind shortcuts as classNames for buttons, cards, etc.
-// Consider extracting to a CSS module if preferred.
-
-declare module "react" { interface CSSProperties { [key: string]: string | number } }
-
-// Extend Link components with button styling via className props
-// Usage: className="btn btn--primary"
-
-// Add these utilities to globals.css if you prefer, but inline here for portability via @apply-like classes.
-
-// In globals.css, you can add:
-// .btn { @apply inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-2; }
-// .btn--primary { @apply bg-lime-300 text-slate-900 hover:bg-lime-200 focus:ring-lime-400; }
-// .btn--secondary { @apply bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-400; }
-// .btn--ghost { @apply ring-1 ring-slate-300 text-slate-900 hover:bg-slate-100; }
-// .card { @apply rounded-2xl bg-white p-6 ring-1 ring-slate-200 shadow-sm hover:shadow-md transition-shadow; }
-// .icon-wrap { @apply h-10 w-10 flex items-center justify-center rounded-xl bg-slate-100 ring-1 ring-slate-200; }
-// .nav-link { @apply hover:text-slate-900; }
