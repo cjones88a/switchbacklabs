@@ -56,7 +56,7 @@ export default function HomePage() {
                 href="#contact"
                 className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-900 rounded-md hover:border-gray-400 transition-colors"
               >
-                Let's talk
+                Let&apos;s talk
               </Link>
             </div>
           </div>
@@ -168,7 +168,7 @@ export default function HomePage() {
             Ready to ship something great?
           </h2>
           <p className="text-xl text-gray-300 mb-10">
-            Let's discuss how I can help you turn your product vision into reality.
+            Let&apos;s discuss how I can help you turn your product vision into reality.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a 
