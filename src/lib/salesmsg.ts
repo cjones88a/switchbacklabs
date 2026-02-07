@@ -136,15 +136,11 @@ export function filterStopOptOuts(contacts: SalesMsgContact[]): SalesMsgContact[
     const reason = (
       contact.opt_out_reason ||
       contact.unsubscribe_reason ||
-      contact.reason ||
-      contact.status_reason ||
       ''
     ).toLowerCase();
 
     const status = (
       contact.status ||
-      contact.opt_out_status ||
-      contact.unsubscribe_status ||
       ''
     ).toLowerCase();
 
