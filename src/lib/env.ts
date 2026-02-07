@@ -6,8 +6,6 @@ export const env = {
   SUPABASE_SERVICE_ROLE: process.env.SUPABASE_SERVICE_ROLE || '',
   NEXT_PUBLIC_SUPABASE_ANON: process.env.NEXT_PUBLIC_SUPABASE_ANON || '',
   APP_TZ: process.env.APP_TZ || 'America/Denver',
-  SALESMSG_API_KEY: process.env.SALESMSG_API_KEY || '',
-  SALESMSG_API_URL: process.env.SALESMSG_API_URL || 'https://api.salesmsg.com/v1',
   SEGMENTS: {
     main: Number(process.env.MAIN_SEGMENT_ID || '7977451'),
     c1: Number(process.env.CLIMB_1 || '9589287'),
