@@ -12,7 +12,7 @@ export default function HomePage() {
             </Link>
             
             <div className="hidden md:flex items-center space-x-8">
-              <Link href="#work" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+              <Link href="/projects" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
                 Work
               </Link>
               <Link href="#services" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
@@ -47,7 +47,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link 
-                href="#work"
+                href="/projects"
                 className="inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors"
               >
                 View my work

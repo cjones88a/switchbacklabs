@@ -23,6 +23,39 @@
   }
 }
 
+@layer components {
+  .section {
+    @apply max-w-5xl mx-auto px-6 py-16;
+  }
+  .container-std {
+    @apply max-w-5xl mx-auto px-6;
+  }
+  .section-paper {
+    @apply py-16 bg-gray-50/80;
+  }
+  .h2 {
+    @apply text-3xl md:text-4xl font-serif font-light tracking-tight;
+  }
+  .lead {
+    @apply text-lg text-gray-600 leading-relaxed;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-md font-medium transition-colors;
+  }
+  .btn-primary {
+    @apply bg-gray-900 text-white hover:bg-gray-800;
+  }
+  .btn-pill {
+    @apply border border-gray-300 text-gray-900 hover:border-gray-400 hover:bg-gray-50;
+  }
+  .text-muted {
+    @apply text-gray-500;
+  }
+  .border-line {
+    @apply border-gray-200;
+  }
+}
+
 ::-webkit-scrollbar {
   width: 10px;
 }
