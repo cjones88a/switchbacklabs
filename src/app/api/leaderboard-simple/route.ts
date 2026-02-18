@@ -36,8 +36,9 @@ export async function GET(req: Request) {
   console.log(`[${t.name}] ${t.id} available race years:`, raceYears);
   console.log(`[${t.name}] ${t.id} requested year:`, requestedYear);
   
-  // Use the requested year if it has data, otherwise use the most recent race year with data
-  const year = raceYears.includes(requestedYear) ? requestedYear : (raceYears[0] || requestedYear);
+  // Use the requested year exactly — don't silently fall back to a different year
+  // (that causes year 2026 to show year 2025 data when no 2026 data exists yet)
+  const year = requestedYear;
   const seasonKeys = [`${year}_FALL`, `${year}_WINTER`, `${year + 1}_SPRING`, `${year + 1}_SUMMER`];
   console.log(`[${t.name}] ${t.id} using race year`, year, 'seasonKeys', seasonKeys);
 
