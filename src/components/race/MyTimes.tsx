@@ -14,18 +14,20 @@ type Attempt = {
   created_at: string
 }
 
-
-export default function MyTimes() {
+export default function MyTimes({ year }: { year?: number }) {
   const [attempts, setAttempts] = React.useState<Attempt[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [importing, setImporting] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
 
-  const loadData = async () => {
+  const loadData = React.useCallback(async () => {
     setLoading(true);
     setErr(null);
     try {
-      const r = await fetch("/api/my-times/individual", { cache: "no-store" });
+      const url = year
+        ? `/api/my-times/individual?year=${year}`
+        : '/api/my-times/individual';
+      const r = await fetch(url, { cache: "no-store" });
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
         setErr(j?.error || r.statusText);
@@ -39,7 +41,7 @@ export default function MyTimes() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [year]);
 
   const backfill = async () => {
     setImporting(true);
@@ -52,7 +54,6 @@ export default function MyTimes() {
         setImporting(false);
         return;
       }
-      // Re-load data after successful backfill
       await loadData();
     } catch {
       setErr("Backfill failed");
@@ -63,16 +64,15 @@ export default function MyTimes() {
 
   React.useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   if (loading) return <div className="text-sm text-muted">Loading…</div>;
-  if (err === "not_authenticated") {
+  if (err === "not_authenticated" || err === "Not authenticated") {
     return <div className="text-sm">Connect with Strava to view your historical times.</div>;
   }
 
   return (
     <div className="space-y-4">
-      {/* Backfill button and error display */}
       <div className="flex items-center gap-3">
         <button
           onClick={backfill}
@@ -87,7 +87,7 @@ export default function MyTimes() {
             <p className="text-red-600">{err}</p>
             {(err.includes('404') || err.includes('Record Not Found') || err.includes('permissions')) && (
               <p className="mt-1 text-muted">
-                If this mentions permissions or &quot;Record Not Found&quot;, re-connect with full scope:{' '}
+                Re-connect with full scope:{' '}
                 <a className="underline text-blue-600 hover:text-blue-800" href={buildForceConsentUrl()}>
                   upgrade Strava permissions
                 </a>
@@ -106,4 +106,3 @@ export default function MyTimes() {
     </div>
   );
 }
-

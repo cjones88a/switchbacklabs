@@ -141,11 +141,11 @@ function RacePage() {
     runBackfill()
   }, [isAuthenticated, searchParams, router, runBackfill])
 
-  // Reload leaderboard when that tab opens
+  // Re-fetch leaderboard when year changes (lbYear is a dep of refreshLeaderboard,
+  // so this also fires on initial mount via the session effect above)
   useEffect(() => {
-    if (tab !== 'leaderboard') return
-    refreshLeaderboard()
-  }, [tab, refreshLeaderboard])
+    if (tab === 'leaderboard') refreshLeaderboard()
+  }, [lbYear]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const recordNow = async () => {
     setBusy(true);
@@ -238,30 +238,26 @@ function RacePage() {
             </div>
           )}
 
-          <Tabs value={tab} onValueChange={(value) => setTab(value as 'leaderboard' | 'mine')}>
-            <TabsList>
-              <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-              <TabsTrigger value="mine">My Times</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="leaderboard">
-              <div className="flex flex-wrap items-center gap-3">
-                <select
-                  value={lbYear}
-                  onChange={(e) => setLbYear(Number(e.target.value))}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-                >
-                  <option value={2026}>2026</option>
-                  <option value={2025}>2025</option>
-                  <option value={2024}>2024</option>
-                  <option value={2023}>2023</option>
-                  <option value={2022}>2022</option>
-                  <option value={2021}>2021</option>
-                  <option value={2020}>2020</option>
-                  <option value={2019}>2019</option>
-                  <option value={2018}>2018</option>
-                  <option value={2017}>2017</option>
-                </select>
+          {/* Year selector + action buttons — shared across both tabs */}
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <select
+              value={lbYear}
+              onChange={(e) => setLbYear(Number(e.target.value))}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            >
+              <option value={2026}>2026</option>
+              <option value={2025}>2025</option>
+              <option value={2024}>2024</option>
+              <option value={2023}>2023</option>
+              <option value={2022}>2022</option>
+              <option value={2021}>2021</option>
+              <option value={2020}>2020</option>
+              <option value={2019}>2019</option>
+              <option value={2018}>2018</option>
+              <option value={2017}>2017</option>
+            </select>
+            {tab === 'leaderboard' && (
+              <>
                 <Button variant="outline" onClick={refreshLeaderboard} disabled={lbLoading}>Refresh</Button>
                 <Button
                   onClick={recordNow}
@@ -271,8 +267,17 @@ function RacePage() {
                   {busy ? 'Recording…' : 'Record now'}
                 </Button>
                 {lbErr && <Notice>{lbErr}</Notice>}
-              </div>
+              </>
+            )}
+          </div>
 
+          <Tabs value={tab} onValueChange={(value) => setTab(value as 'leaderboard' | 'mine')}>
+            <TabsList>
+              <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
+              <TabsTrigger value="mine">My Times</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="leaderboard">
               {lbLoading ? (
                 <p className="mt-6 text-sm text-neutral-500">Loading leaderboard…</p>
               ) : (
@@ -282,7 +287,7 @@ function RacePage() {
 
             <TabsContent value="mine">
               <div className="mt-4">
-                <MyTimes />
+                <MyTimes year={lbYear} />
               </div>
             </TabsContent>
           </Tabs>
