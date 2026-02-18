@@ -1,4 +1,4 @@
-export const runtime = 'nodejs'; // ensure process.env is available
+export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
@@ -15,9 +15,10 @@ export async function POST(req: Request) {
     console.log('[backfill] Starting backfill process')
 
     const cookieStore = await cookies()
-    const rider_id = cookieStore.get('rider_id')?.value
+    // Accept either cookie name (RID is the primary one set by the OAuth callback)
+    const rider_id = cookieStore.get('RID')?.value ?? cookieStore.get('rider_id')?.value
     if (!rider_id) {
-      return NextResponse.json({ error: 'Not authenticated (no rider_id cookie)' }, { status: 401 })
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
     const sb = supabaseAdmin()
@@ -34,11 +35,15 @@ export async function POST(req: Request) {
     const efforts = await fetchAllSegmentEffortsSince2014()
     console.log(`[backfill] Found ${efforts.length} total efforts`)
 
-    let imported = 0
-    let dup = 0
-    let noWindow = 0
+    // Track best (lowest) main_ms per season to avoid overwriting a better time
+    const bestPerSeason = new Map<string, {
+      activity_id: number;
+      main_ms: number;
+      climb_sum_ms: number | null;
+      desc_sum_ms: number | null;
+    }>()
 
-    // diagnostics
+    let noWindow = 0
     let denied401 = 0
     let denied403 = 0
     let notFound404 = 0
@@ -46,20 +51,19 @@ export async function POST(req: Request) {
     let noSegEfforts = 0
 
     for (const e of efforts) {
-      // Type assertion for Strava effort object
       const effort = e as {
         start_date?: string;
         activity?: { id: number };
         activity_id?: number;
         elapsed_time?: number;
         moving_time?: number;
-      };
-      
+      }
+
       const activity_id = Number(effort.activity?.id ?? effort.activity_id)
       const startUtc: string | undefined = effort.start_date
       if (!activity_id || !startUtc) continue
 
-      // match season window in UTC
+      // Match to a season window
       const { data: win } = await sb
         .from('season_windows')
         .select('season_key')
@@ -67,10 +71,16 @@ export async function POST(req: Request) {
         .gte('end_at', startUtc)
         .single()
 
-      if (!win) { 
+      if (!win) {
         noWindow++
-        continue 
+        continue
       }
+
+      const main_ms = (effort.elapsed_time ?? effort.moving_time ?? 0) * 1000
+
+      // Only bother fetching activity details if this could beat the current best
+      const existing = bestPerSeason.get(win.season_key)
+      if (existing && existing.main_ms <= main_ms) continue
 
       let climb_sum_ms: number | null = null
       let desc_sum_ms: number | null = null
@@ -95,21 +105,23 @@ export async function POST(req: Request) {
         console.warn(`[backfill] Failed to get sums for activity ${activity_id}:`, err)
       }
 
-      const main_ms = (effort.elapsed_time ?? effort.moving_time ?? 0) * 1000
+      bestPerSeason.set(win.season_key, { activity_id, main_ms, climb_sum_ms, desc_sum_ms })
+    }
 
+    // Upsert one best attempt per season using the correct PK (rider_id, season_key)
+    let imported = 0
+    for (const [season_key, best] of bestPerSeason.entries()) {
       const { error: upErr } = await sb.from('attempts').upsert(
-        { rider_id, season_key: win.season_key, activity_id, main_ms, climb_sum_ms, desc_sum_ms },
-        { onConflict: 'rider_id,activity_id' }
+        { rider_id, season_key, ...best },
+        { onConflict: 'rider_id,season_key' }
       )
-
-      if (upErr?.message?.includes('duplicate key')) dup++
-      else if (!upErr) imported++
+      if (!upErr) imported++
+      else console.warn(`[backfill] Upsert failed for ${season_key}:`, upErr.message)
     }
 
     return NextResponse.json({
       ok: true,
       imported,
-      duplicates: dup,
       skipped_no_window: noWindow,
       diag: { denied401, denied403, notFound404, otherFetchErr, noSegEfforts, totalEfforts: efforts.length },
     })
