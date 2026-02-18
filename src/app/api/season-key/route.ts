@@ -1,9 +1,12 @@
-// import { NextResponse } from 'next/server';
+import { seasonKeyFor } from '@/lib/seasons';
+
+export const runtime = 'nodejs';
 
 export async function GET() {
-  // For now, return a default season key
-  // In a real app, this would determine the current active season
-  return new Response("2025_FALL", {
-    headers: { 'Content-Type': 'text/plain' }
-  });
+  const now = new Date().toISOString();
+  const key = await seasonKeyFor(now);
+  if (!key) {
+    return new Response('', { status: 404 });
+  }
+  return new Response(key, { headers: { 'Content-Type': 'text/plain' } });
 }
