@@ -1,7 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from "next/link";
 import SiteHeader from "@/components/layout/SiteHeader";
 import TrackerBackground from "@/components/race/TrackerBackground";
@@ -23,7 +24,18 @@ type AttemptStatus = {
 };
 
 
-export default function RacePage() {
+export default function Page() {
+  return (
+    <Suspense>
+      <RacePage />
+    </Suspense>
+  )
+}
+
+function RacePage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
   const [tab, setTab] = useState<'leaderboard'|'mine'>('leaderboard')
   const [lb, setLb] = useState<LeaderboardRow[]>([])
   const [lbLoading, setLbLoading] = useState(false)
@@ -33,6 +45,9 @@ export default function RacePage() {
   const [status, setStatus] = useState<AttemptStatus | null>(null)
   const [busy, setBusy] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [backfilling, setBackfilling] = useState(false)
+  const [backfillResult, setBackfillResult] = useState<{ imported: number } | null>(null)
+  const didAutoBackfill = useRef(false)
 
   const refreshLeaderboard = useCallback(async () => {
     try {
@@ -40,8 +55,7 @@ export default function RacePage() {
       const r = await fetch(`/api/leaderboard-simple?year=${lbYear}`, { cache: 'no-store' })
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || 'failed')
-      
-      // Normalize the API response to match LeaderboardRow type
+
       const normalized: LeaderboardRow[] = (j.rows ?? j ?? []).map((r: unknown) => {
         const row = r as Record<string, unknown>;
         const rider = row.rider as Record<string, unknown> | undefined;
@@ -75,6 +89,22 @@ export default function RacePage() {
     }
   }, [lbYear])
 
+  const runBackfill = useCallback(async () => {
+    setBackfilling(true)
+    try {
+      const r = await fetch('/api/my-times/backfill', { method: 'POST' })
+      const j = await r.json()
+      if (j.ok) {
+        setBackfillResult({ imported: j.imported })
+        await refreshLeaderboard()
+      }
+    } catch {
+      // non-fatal — user can retry from My Times tab
+    } finally {
+      setBackfilling(false)
+    }
+  }, [refreshLeaderboard])
+
   // initial fetches (session + season + leaderboard)
   useEffect(() => {
     (async () => {
@@ -96,7 +126,22 @@ export default function RacePage() {
     })();
   }, [refreshLeaderboard])
 
-  // load leaderboard when that tab opens
+  // Auto-backfill when rider returns from Strava OAuth (?connected=1)
+  useEffect(() => {
+    if (!isAuthenticated) return
+    if (searchParams.get('connected') !== '1') return
+    if (didAutoBackfill.current) return
+    didAutoBackfill.current = true
+
+    // Strip the query param from the URL without re-rendering
+    router.replace('/race-trackingV2', { scroll: false })
+
+    // Switch to My Times tab so the rider sees their history populate
+    setTab('mine')
+    runBackfill()
+  }, [isAuthenticated, searchParams, router, runBackfill])
+
+  // Reload leaderboard when that tab opens
   useEffect(() => {
     if (tab !== 'leaderboard') return
     refreshLeaderboard()
@@ -105,14 +150,10 @@ export default function RacePage() {
   const recordNow = async () => {
     setBusy(true);
     try {
-      const res = await fetch("/api/record", { 
+      const res = await fetch("/api/record", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          season_key: seasonKey || "2025_FALL"
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ season_key: seasonKey }),
       });
       const json = await res.json();
       setStatus(json as AttemptStatus);
@@ -124,7 +165,6 @@ export default function RacePage() {
       setBusy(false);
     }
   };
-
 
   const viewActivityUrl = status?.activity_id
     ? `https://www.strava.com/activities/${status.activity_id}`
@@ -142,45 +182,58 @@ export default function RacePage() {
             Horsetooth Four-Seasons Challenge
           </h1>
 
-          {/* Consent + Strava connect block */}
-          <div className="mt-8 space-y-6 bg-white/95 p-8 rounded-xl backdrop-blur-sm">
-            <div className="flex flex-wrap items-center gap-6">
-              <StravaConnect enabled={true} />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/strava/powered-by-strava-black.svg"
-                alt="Powered by Strava"
-                className="h-8 w-auto opacity-90"
-                height={32}
-              />
-            </div>
-            <p className="text-xs text-gray-600">
-              By clicking &quot;Connect with Strava&quot;, I agree to display my name and race times on the public leaderboard. 
-              You can withdraw consent anytime by emailing us.
-            </p>
+          {/* Strava connect block */}
+          <div className="mt-8 space-y-4 bg-white/95 p-8 rounded-xl backdrop-blur-sm">
+            {isAuthenticated ? (
+              <div className="flex items-center gap-3">
+                <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
+                <span className="text-sm font-medium text-green-700">Connected to Strava</span>
+                {backfilling && (
+                  <span className="text-sm text-neutral-500 animate-pulse">Importing your history…</span>
+                )}
+                {backfillResult && !backfilling && (
+                  <span className="text-sm text-neutral-500">{backfillResult.imported} season{backfillResult.imported !== 1 ? 's' : ''} imported</span>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-wrap items-center gap-6">
+                  <StravaConnect enabled={true} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/strava/powered-by-strava-black.svg"
+                    alt="Powered by Strava"
+                    className="h-8 w-auto opacity-90"
+                    height={32}
+                  />
+                </div>
+                <p className="text-xs text-gray-600">
+                  By clicking &quot;Connect with Strava&quot;, I agree to display my name and race times on the public leaderboard.
+                  You can withdraw consent anytime by emailing us.
+                </p>
+              </>
+            )}
             {seasonKey && (
-              <div className="text-xs text-neutral-500 bg-gray-100 px-3 py-2 rounded">Season key: <span className="font-mono">{seasonKey}</span></div>
+              <div className="text-xs text-neutral-400">Current season: <span className="font-mono">{seasonKey}</span></div>
             )}
           </div>
 
-          {/* Status / JSON */}
+          {/* Record status */}
           {status && (
-            <div className="mt-6 rounded-xl p-8 bg-white/95 backdrop-blur-sm ring-1 ring-neutral-200">
-              <div className="text-[11px] tracking-widest uppercase text-neutral-500 mb-3">
+            <div className="mt-6 rounded-xl p-6 bg-white/95 backdrop-blur-sm ring-1 ring-neutral-200">
+              <div className="text-[11px] tracking-widest uppercase text-neutral-500 mb-2">
                 {status.recorded ? "Success" : "Error"}
               </div>
-              <div className="text-sm mb-4">
+              <div className="text-sm mb-3">
                 {status.recorded ? "Time recorded successfully!" : `Failed to record: ${status.reason}`}
               </div>
               {viewActivityUrl && (
-                <div>
-                  <a 
-                    href={viewActivityUrl}
-                    className="inline-flex items-center justify-center rounded-full transition-colors focus-visible:outline-none h-8 px-3 text-sm border border-black/10 text-brand-900 hover:bg-black/5"
-                  >
-                    View on Strava
-                  </a>
-                </div>
+                <a
+                  href={viewActivityUrl}
+                  className="inline-flex items-center justify-center rounded-full transition-colors focus-visible:outline-none h-8 px-3 text-sm border border-black/10 text-brand-900 hover:bg-black/5"
+                >
+                  View on Strava
+                </a>
               )}
             </div>
           )}
@@ -212,7 +265,7 @@ export default function RacePage() {
                 <Button variant="outline" onClick={refreshLeaderboard} disabled={lbLoading}>Refresh</Button>
                 <Button
                   onClick={recordNow}
-                  disabled={busy || !isAuthenticated}
+                  disabled={busy || !isAuthenticated || !seasonKey}
                   title={!isAuthenticated ? 'Connect with Strava first' : undefined}
                 >
                   {busy ? 'Recording…' : 'Record now'}
@@ -234,14 +287,11 @@ export default function RacePage() {
             </TabsContent>
           </Tabs>
 
-
           {/* Guidance */}
           <div className="mt-8 bg-white/95 p-6 rounded-xl backdrop-blur-sm">
             <p className="text-xs text-neutral-500 mb-4">
-              Descent Sum = 3 descents from the same activity as your overall time.
+              Same-activity rule: your overall time, 2 climbs, and 3 descents must all come from the same ride.
             </p>
-
-            {/* Segment links */}
             <div className="text-xs text-neutral-500">
               <span className="font-semibold">Segments:</span>
               <div className="flex flex-wrap gap-2 mt-2">
