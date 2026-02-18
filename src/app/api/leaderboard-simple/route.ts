@@ -24,22 +24,24 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: seasonsError.message }, { status: 500 });
   }
 
-  // Calculate race years from season keys (Spring/Summer roll back to prior year)
+  // Race year label = the Spring/Summer calendar year.
+  // Race Year N = (N-1)_FALL + (N-1)_WINTER + N_SPRING + N_SUMMER
+  // e.g. Race Year 2026 = 2025_FALL + 2025_WINTER + 2026_SPRING + 2026_SUMMER
   const raceYears = [...new Set((allSeasons || []).map(s => {
     const seasonKey = s.season_key;
     const year = parseInt(seasonKey.split('_')[0]);
     const season = seasonKey.split('_')[1];
-    // Spring/Summer belong to prior race year
-    return (season === 'SPRING' || season === 'SUMMER') ? year - 1 : year;
+    // FALL/WINTER calendar year N → race year N+1
+    // SPRING/SUMMER calendar year N → race year N
+    return (season === 'FALL' || season === 'WINTER') ? year + 1 : year;
   }))].sort((a, b) => b - a);
-  
+
   console.log(`[${t.name}] ${t.id} available race years:`, raceYears);
   console.log(`[${t.name}] ${t.id} requested year:`, requestedYear);
-  
-  // Use the requested year exactly — don't silently fall back to a different year
-  // (that causes year 2026 to show year 2025 data when no 2026 data exists yet)
+
   const year = requestedYear;
-  const seasonKeys = [`${year}_FALL`, `${year}_WINTER`, `${year + 1}_SPRING`, `${year + 1}_SUMMER`];
+  // Season keys for race year N: (N-1)_FALL, (N-1)_WINTER, N_SPRING, N_SUMMER
+  const seasonKeys = [`${year - 1}_FALL`, `${year - 1}_WINTER`, `${year}_SPRING`, `${year}_SUMMER`];
   console.log(`[${t.name}] ${t.id} using race year`, year, 'seasonKeys', seasonKeys);
 
   // Get all attempts data

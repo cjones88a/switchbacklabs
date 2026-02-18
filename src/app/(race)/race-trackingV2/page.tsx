@@ -119,7 +119,17 @@ function RacePage() {
         }
         if (seasonRes.ok) {
           const s = await seasonRes.text();
-          if (s) setSeasonKey(s);
+          if (s) {
+            setSeasonKey(s);
+            // Derive current race year from season key:
+            // Race year = Spring/Summer calendar year
+            // FALL/WINTER: race year = calendar year + 1
+            // SPRING/SUMMER: race year = calendar year
+            const [calYearStr, season] = s.split('_');
+            const calYear = parseInt(calYearStr);
+            const raceYear = (season === 'FALL' || season === 'WINTER') ? calYear + 1 : calYear;
+            setLbYear(raceYear);
+          }
         }
       } catch {}
       await refreshLeaderboard();

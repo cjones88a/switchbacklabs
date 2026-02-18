@@ -1,21 +1,22 @@
 -- Fix race_year calculation in DB views.
 --
--- The 4SOH race year runs Sept–Aug, so:
---   FALL   (e.g. 2025_FALL)   → race_year = 2025  (calendar year matches)
---   WINTER (e.g. 2025_WINTER) → race_year = 2025  (calendar year matches)
---   SPRING (e.g. 2026_SPRING) → race_year = 2025  (subtract 1: belongs to prior Fall)
---   SUMMER (e.g. 2026_SUMMER) → race_year = 2025  (subtract 1: belongs to prior Fall)
+-- Race year label = the Spring/Summer calendar year.
+-- Race Year N = (N-1)_FALL + (N-1)_WINTER + N_SPRING + N_SUMMER
 --
--- The original views used SUBSTRING(season_key FROM 1 FOR 4) directly,
--- which gave 2026_SPRING a race_year of 2026 instead of 2025.
+-- Examples:
+--   2025_FALL   → race_year 2026  (FALL year + 1)
+--   2025_WINTER → race_year 2026  (WINTER year + 1)
+--   2026_SPRING → race_year 2026  (SPRING year as-is)
+--   2026_SUMMER → race_year 2026  (SUMMER year as-is)
+--
 -- Run this in the Supabase SQL Editor.
 
 CREATE OR REPLACE VIEW public.individual_attempts_simple AS
   SELECT
     a.rider_id,
     CASE
-      WHEN SUBSTRING(a.season_key FROM 6) IN ('SPRING', 'SUMMER')
-        THEN (SUBSTRING(a.season_key FROM 1 FOR 4))::INT - 1
+      WHEN SUBSTRING(a.season_key FROM 6) IN ('FALL', 'WINTER')
+        THEN (SUBSTRING(a.season_key FROM 1 FOR 4))::INT + 1
       ELSE (SUBSTRING(a.season_key FROM 1 FOR 4))::INT
     END AS race_year,
     SUBSTRING(a.season_key FROM 6) AS season_name,
@@ -31,8 +32,8 @@ CREATE OR REPLACE VIEW public.rider_yearly_times AS
   SELECT
     rider_id,
     CASE
-      WHEN season_key LIKE '%_SPRING' OR season_key LIKE '%_SUMMER'
-        THEN (SUBSTRING(season_key FROM 1 FOR 4))::INT - 1
+      WHEN season_key LIKE '%_FALL' OR season_key LIKE '%_WINTER'
+        THEN (SUBSTRING(season_key FROM 1 FOR 4))::INT + 1
       ELSE (SUBSTRING(season_key FROM 1 FOR 4))::INT
     END AS race_year,
     MAX(CASE WHEN season_key LIKE '%_FALL'   THEN main_ms END) AS fall_ms,
@@ -53,7 +54,7 @@ CREATE OR REPLACE VIEW public.rider_yearly_times AS
   FROM public.attempts
   GROUP BY rider_id,
     CASE
-      WHEN season_key LIKE '%_SPRING' OR season_key LIKE '%_SUMMER'
-        THEN (SUBSTRING(season_key FROM 1 FOR 4))::INT - 1
+      WHEN season_key LIKE '%_FALL' OR season_key LIKE '%_WINTER'
+        THEN (SUBSTRING(season_key FROM 1 FOR 4))::INT + 1
       ELSE (SUBSTRING(season_key FROM 1 FOR 4))::INT
     END;
