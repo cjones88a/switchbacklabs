@@ -28,10 +28,11 @@ export default function RacePage() {
   const [lb, setLb] = useState<LeaderboardRow[]>([])
   const [lbLoading, setLbLoading] = useState(false)
   const [lbErr, setLbErr] = useState<string | null>(null)
-  const [lbYear, setLbYear] = useState<number>(new Date().getFullYear())
+  const [lbYear, setLbYear] = useState<number>(2026)
   const [seasonKey, setSeasonKey] = useState<string>("")
   const [status, setStatus] = useState<AttemptStatus | null>(null)
   const [busy, setBusy] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   const refreshLeaderboard = useCallback(async () => {
     try {
@@ -74,12 +75,22 @@ export default function RacePage() {
     }
   }, [lbYear])
 
-  // initial fetches (season + leaderboard)
+  // initial fetches (session + season + leaderboard)
   useEffect(() => {
     (async () => {
       try {
-        const s = await fetch("/api/season-key").then(r => r.ok ? r.text() : "");
-        if (s) setSeasonKey(s);
+        const [sessionRes, seasonRes] = await Promise.all([
+          fetch("/api/debug/session"),
+          fetch("/api/season-key"),
+        ]);
+        if (sessionRes.ok) {
+          const { rid } = await sessionRes.json();
+          setIsAuthenticated(!!rid);
+        }
+        if (seasonRes.ok) {
+          const s = await seasonRes.text();
+          if (s) setSeasonKey(s);
+        }
       } catch {}
       await refreshLeaderboard();
     })();
@@ -182,11 +193,12 @@ export default function RacePage() {
 
             <TabsContent value="leaderboard">
               <div className="flex flex-wrap items-center gap-3">
-                <select 
-                  value={lbYear} 
+                <select
+                  value={lbYear}
                   onChange={(e) => setLbYear(Number(e.target.value))}
                   className="px-3 py-2 border border-gray-300 rounded-md text-sm"
                 >
+                  <option value={2026}>2026</option>
                   <option value={2025}>2025</option>
                   <option value={2024}>2024</option>
                   <option value={2023}>2023</option>
@@ -198,7 +210,11 @@ export default function RacePage() {
                   <option value={2017}>2017</option>
                 </select>
                 <Button variant="outline" onClick={refreshLeaderboard} disabled={lbLoading}>Refresh</Button>
-                <Button onClick={recordNow} disabled={busy}>
+                <Button
+                  onClick={recordNow}
+                  disabled={busy || !isAuthenticated}
+                  title={!isAuthenticated ? 'Connect with Strava first' : undefined}
+                >
                   {busy ? 'Recording…' : 'Record now'}
                 </Button>
                 {lbErr && <Notice>{lbErr}</Notice>}
