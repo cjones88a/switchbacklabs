@@ -248,38 +248,36 @@ function RacePage() {
             </div>
           )}
 
-          {/* Year selector + action buttons — shared across both tabs */}
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <select
-              value={lbYear}
-              onChange={(e) => setLbYear(Number(e.target.value))}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-            >
-              <option value={2026}>2026</option>
-              <option value={2025}>2025</option>
-              <option value={2024}>2024</option>
-              <option value={2023}>2023</option>
-              <option value={2022}>2022</option>
-              <option value={2021}>2021</option>
-              <option value={2020}>2020</option>
-              <option value={2019}>2019</option>
-              <option value={2018}>2018</option>
-              <option value={2017}>2017</option>
-            </select>
-            {tab === 'leaderboard' && (
-              <>
-                <Button variant="outline" onClick={refreshLeaderboard} disabled={lbLoading}>Refresh</Button>
-                <Button
-                  onClick={recordNow}
-                  disabled={busy || !isAuthenticated || !seasonKey}
-                  title={!isAuthenticated ? 'Connect with Strava first' : undefined}
-                >
-                  {busy ? 'Recording…' : 'Record now'}
-                </Button>
-                {lbErr && <Notice>{lbErr}</Notice>}
-              </>
-            )}
-          </div>
+          {/* Year selector + action buttons — leaderboard tab only */}
+          {tab === 'leaderboard' && (
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <select
+                value={lbYear}
+                onChange={(e) => setLbYear(Number(e.target.value))}
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value={2026}>2026</option>
+                <option value={2025}>2025</option>
+                <option value={2024}>2024</option>
+                <option value={2023}>2023</option>
+                <option value={2022}>2022</option>
+                <option value={2021}>2021</option>
+                <option value={2020}>2020</option>
+                <option value={2019}>2019</option>
+                <option value={2018}>2018</option>
+                <option value={2017}>2017</option>
+              </select>
+              <Button variant="outline" onClick={refreshLeaderboard} disabled={lbLoading}>Refresh</Button>
+              <Button
+                onClick={recordNow}
+                disabled={busy || !isAuthenticated || !seasonKey}
+                title={!isAuthenticated ? 'Connect with Strava first' : undefined}
+              >
+                {busy ? 'Recording…' : 'Record now'}
+              </Button>
+              {lbErr && <Notice>{lbErr}</Notice>}
+            </div>
+          )}
 
           <Tabs value={tab} onValueChange={(value) => setTab(value as 'leaderboard' | 'mine')}>
             <TabsList>
@@ -297,7 +295,7 @@ function RacePage() {
 
             <TabsContent value="mine">
               <div className="mt-4">
-                <MyTimes year={lbYear} />
+                <MyTimes />
               </div>
             </TabsContent>
           </Tabs>
