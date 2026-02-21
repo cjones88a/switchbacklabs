@@ -52,7 +52,7 @@ export function LeaderboardTable({
   // Version check: 2025-01-22-v3
   console.log('LeaderboardTable v3 loaded - avatar should be h-8 w-8');
   const [sortKey, setSortKey] = React.useState<SortKey>(defaultSort);
-  const [asc, setAsc] = React.useState(false);
+  const [asc, setAsc] = React.useState(true);
 
   const sorted = React.useMemo(() => {
     const list = [...rows];
@@ -91,7 +91,7 @@ export function LeaderboardTable({
             if (sortKey === k) setAsc((s) => !s);
             else {
               setSortKey(k);
-              setAsc(k === 'name'); // names ascend by default
+              setAsc(true); // always start ascending (A→Z for names, fastest first for times)
             }
           }}
           title="Sort"

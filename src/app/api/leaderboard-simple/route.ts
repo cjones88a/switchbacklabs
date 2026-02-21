@@ -116,10 +116,15 @@ export async function GET(req: Request) {
     riderData.by_season[season] = attempt.main_ms;
     riderData.by_season_climb[season] = attempt.climb_sum_ms;
     riderData.by_season_desc[season] = attempt.desc_sum_ms;
-    
-    // Use climb/desc from any season (prefer FALL if available)
-    if (attempt.climb_sum_ms != null) riderData.climb_sum_ms = attempt.climb_sum_ms;
-    if (attempt.desc_sum_ms != null) riderData.desc_sum_ms = attempt.desc_sum_ms;
+
+    // Sum climb/desc times across all seasons (each attempt already contains the
+    // intra-ride segment sum; here we accumulate the cross-season total).
+    if (attempt.climb_sum_ms != null) {
+      riderData.climb_sum_ms = (riderData.climb_sum_ms ?? 0) + attempt.climb_sum_ms;
+    }
+    if (attempt.desc_sum_ms != null) {
+      riderData.desc_sum_ms = (riderData.desc_sum_ms ?? 0) + attempt.desc_sum_ms;
+    }
   }
 
   const out = Array.from(byRider.values()).map((rider) => {
