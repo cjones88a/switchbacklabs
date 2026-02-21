@@ -48,6 +48,7 @@ function RacePage() {
   const [backfilling, setBackfilling] = useState(false)
   const [backfillResult, setBackfillResult] = useState<{ imported: number } | null>(null)
   const didAutoBackfill = useRef(false)
+  const userSelectedYear = useRef(false) // true once the user manually picks a year
 
   const refreshLeaderboard = useCallback(async () => {
     try {
@@ -130,7 +131,12 @@ function RacePage() {
             const [calYearStr, season] = s.split('_');
             const calYear = parseInt(calYearStr);
             const raceYear = (season === 'FALL' || season === 'WINTER') ? calYear + 1 : calYear;
-            setLbYear(raceYear);
+            // Only auto-set the year if the user hasn't already picked one.
+            // On slow mobile connections the fetch may complete after the user
+            // has changed the selector, which would snap the value back.
+            if (!userSelectedYear.current) {
+              setLbYear(raceYear);
+            }
           }
         }
       } catch {}
@@ -253,7 +259,7 @@ function RacePage() {
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <select
                 value={lbYear}
-                onChange={(e) => setLbYear(Number(e.target.value))}
+                onChange={(e) => { userSelectedYear.current = true; setLbYear(Number(e.target.value)) }}
                 className="px-3 py-2 border border-gray-300 rounded-md text-sm"
               >
                 <option value={2026}>2026</option>
