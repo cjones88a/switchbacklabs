@@ -105,7 +105,9 @@ function RacePage() {
     }
   }, [refreshLeaderboard])
 
-  // initial fetches (session + season + leaderboard)
+  // initial fetches (session + season key) — runs once on mount only.
+  // Leaderboard data is fetched by the lbYear effect below, which also
+  // fires on mount, so we don't need to call refreshLeaderboard() here.
   useEffect(() => {
     (async () => {
       try {
@@ -132,9 +134,8 @@ function RacePage() {
           }
         }
       } catch {}
-      await refreshLeaderboard();
     })();
-  }, [refreshLeaderboard])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-backfill when rider returns from Strava OAuth (?connected=1)
   useEffect(() => {
@@ -151,8 +152,7 @@ function RacePage() {
     runBackfill()
   }, [isAuthenticated, searchParams, router, runBackfill])
 
-  // Re-fetch leaderboard when year changes (lbYear is a dep of refreshLeaderboard,
-  // so this also fires on initial mount via the session effect above)
+  // Re-fetch leaderboard on initial mount and whenever the year selector changes.
   useEffect(() => {
     if (tab === 'leaderboard') refreshLeaderboard()
   }, [lbYear]) // eslint-disable-line react-hooks/exhaustive-deps
