@@ -30,7 +30,8 @@ function parseGPX(xmlString: string): Partial<Ride> | { error: string } {
     let startTime: Date | null = null;
     let endTime: Date | null = null;
 
-    trkpts.forEach((pt, i) => {
+    for (let i = 0; i < trkpts.length; i++) {
+      const pt = trkpts[i]!;
       const lat = parseFloat(pt.getAttribute("lat") ?? "0");
       const lon = parseFloat(pt.getAttribute("lon") ?? "0");
       const eleNode = pt.querySelector("ele");
@@ -54,9 +55,11 @@ function parseGPX(xmlString: string): Partial<Ride> | { error: string } {
       prevLat = lat;
       prevLon = lon;
       prevEle = ele;
-    });
+    }
 
-    const durationMs = startTime && endTime ? endTime.getTime() - startTime.getTime() : 0;
+    const startMs = startTime ? startTime.getTime() : 0;
+    const endMs = endTime ? endTime.getTime() : 0;
+    const durationMs = Math.max(0, endMs - startMs);
     const durationHrs = durationMs / 3600000;
     const distMiles = totalDist * 0.621371;
     const elevFt = totalGain * 3.28084;

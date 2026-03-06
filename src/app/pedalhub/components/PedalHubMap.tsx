@@ -10,16 +10,13 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 type PedalHubMapProps = {
   /** Route to draw; if null, show area overview */
   route: RouteInfo | null;
-  /** Optional [lng, lat] for user position (e.g. from geolocation) */
-  userPosition: [number, number] | null;
-  /** Show user location dot and follow */
+  /** Show user location dot and follow (uses browser geolocation) */
   showUserLocation?: boolean;
   className?: string;
 };
 
 export function PedalHubMap({
   route,
-  userPosition,
   showUserLocation = true,
   className = "",
 }: PedalHubMapProps) {
