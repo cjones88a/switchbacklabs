@@ -18,7 +18,7 @@ export function NavigateTab({ discipline, initialRoute = null, onClearRoute }: P
 
   useEffect(() => {
     if (initialRoute) setSelectedRoute(initialRoute);
-  }, [initialRoute?.id]);
+  }, [initialRoute]);
 
   return (
     <div className="space-y-4">
@@ -44,7 +44,6 @@ export function NavigateTab({ discipline, initialRoute = null, onClearRoute }: P
       <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-md">
         <PedalHubMap
           route={selectedRoute}
-          userPosition={null}
           showUserLocation={true}
           className="w-full"
         />
