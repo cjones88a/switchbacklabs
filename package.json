@@ -16,6 +16,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.545.0",
+    "mapbox-gl": "^3.19.1",
     "next": "15.5.9",
     "next-themes": "^0.4.6",
     "react": "19.1.0",
@@ -28,6 +29,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/typography": "^0.5.19",
+    "@types/mapbox-gl": "^3.4.1",
     "@types/node": "^20.19.19",
     "@types/react": "^19",
     "@types/react-dom": "^19",
