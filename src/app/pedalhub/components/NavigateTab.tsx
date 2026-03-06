@@ -1,18 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PedalHubMap } from "./PedalHubMap";
 import type { Discipline, RouteInfo } from "../data/constants";
 import { DISCIPLINES, ROUTES } from "../data/constants";
 
 type Props = {
   discipline: Discipline;
+  initialRoute?: RouteInfo | null;
+  onClearRoute?: () => void;
 };
 
-export function NavigateTab({ discipline }: Props) {
+export function NavigateTab({ discipline, initialRoute = null, onClearRoute }: Props) {
   const d = DISCIPLINES[discipline];
-  const [selectedRoute, setSelectedRoute] = useState<RouteInfo | null>(null);
+  const [selectedRoute, setSelectedRoute] = useState<RouteInfo | null>(initialRoute ?? null);
   const routes = ROUTES.filter((r) => r.discipline === discipline);
+
+  useEffect(() => {
+    if (initialRoute) setSelectedRoute(initialRoute);
+  }, [initialRoute?.id]);
 
   return (
     <div className="space-y-4">
@@ -23,7 +29,10 @@ export function NavigateTab({ discipline }: Props) {
         {selectedRoute && (
           <button
             type="button"
-            onClick={() => setSelectedRoute(null)}
+            onClick={() => {
+              setSelectedRoute(null);
+              onClearRoute?.();
+            }}
             className="text-sm font-medium"
             style={{ color: d.color }}
           >
