@@ -22,6 +22,10 @@ export async function seasonKeyFor(dateIso: string) {
 }
 
 export function raceYearFromSeasonKey(seasonKey: string): number {
-  // "2025_FALL" -> 2025, "2025_WINTER" (actually in next calendar year) still returns 2025
-  return Number(seasonKey.slice(0, 4));
+  // Race Year N = (N-1)_FALL + (N-1)_WINTER + N_SPRING + N_SUMMER
+  // FALL/WINTER calendar year N → race year N+1
+  // SPRING/SUMMER calendar year N → race year N
+  const calYear = Number(seasonKey.slice(0, 4));
+  const season = seasonKey.slice(5); // 'FALL', 'WINTER', 'SPRING', 'SUMMER'
+  return (season === 'FALL' || season === 'WINTER') ? calYear + 1 : calYear;
 }

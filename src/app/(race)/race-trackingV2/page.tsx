@@ -48,6 +48,7 @@ function RacePage() {
   const [backfilling, setBackfilling] = useState(false)
   const [backfillResult, setBackfillResult] = useState<{ imported: number } | null>(null)
   const didAutoBackfill = useRef(false)
+  const userSelectedYear = useRef(false) // true once the user manually picks a year
 
   const refreshLeaderboard = useCallback(async () => {
     try {
@@ -105,7 +106,9 @@ function RacePage() {
     }
   }, [refreshLeaderboard])
 
-  // initial fetches (session + season + leaderboard)
+  // initial fetches (session + season key) — runs once on mount only.
+  // Leaderboard data is fetched by the lbYear effect below, which also
+  // fires on mount, so we don't need to call refreshLeaderboard() here.
   useEffect(() => {
     (async () => {
       try {
@@ -128,13 +131,17 @@ function RacePage() {
             const [calYearStr, season] = s.split('_');
             const calYear = parseInt(calYearStr);
             const raceYear = (season === 'FALL' || season === 'WINTER') ? calYear + 1 : calYear;
-            setLbYear(raceYear);
+            // Only auto-set the year if the user hasn't already picked one.
+            // On slow mobile connections the fetch may complete after the user
+            // has changed the selector, which would snap the value back.
+            if (!userSelectedYear.current) {
+              setLbYear(raceYear);
+            }
           }
         }
       } catch {}
-      await refreshLeaderboard();
     })();
-  }, [refreshLeaderboard])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-backfill when rider returns from Strava OAuth (?connected=1)
   useEffect(() => {
@@ -151,8 +158,7 @@ function RacePage() {
     runBackfill()
   }, [isAuthenticated, searchParams, router, runBackfill])
 
-  // Re-fetch leaderboard when year changes (lbYear is a dep of refreshLeaderboard,
-  // so this also fires on initial mount via the session effect above)
+  // Re-fetch leaderboard on initial mount and whenever the year selector changes.
   useEffect(() => {
     if (tab === 'leaderboard') refreshLeaderboard()
   }, [lbYear]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -253,7 +259,7 @@ function RacePage() {
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <select
                 value={lbYear}
-                onChange={(e) => setLbYear(Number(e.target.value))}
+                onChange={(e) => { userSelectedYear.current = true; setLbYear(Number(e.target.value)) }}
                 className="px-3 py-2 border border-gray-300 rounded-md text-sm"
               >
                 <option value={2026}>2026</option>
