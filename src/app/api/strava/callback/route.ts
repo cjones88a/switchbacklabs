@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
   const stateRaw = searchParams.get('state');
-  const state = decodeState<{ consent_public?: boolean }>(stateRaw);
+  const state = decodeState<{ consent_public?: boolean; next?: string }>(stateRaw);
   console.log(`[${t.name}] ${t.id} query params`, { code: code ? `${code.substring(0, 8)}...` : null, state: stateRaw });
   if (!code) return NextResponse.redirect(new URL('/race-trackingV2?error=missing_code', req.url));
 
@@ -43,8 +43,17 @@ export async function GET(req: Request) {
     expires_at,
   });
 
+  const fallback = "/race-trackingV2?connected=1";
+  let path = fallback;
+  if (state?.next && typeof state.next === "string") {
+    const candidate = state.next.trim();
+    if (candidate.startsWith("/") && !candidate.startsWith("//") && !candidate.includes("://")) {
+      path = candidate.includes("?") ? `${candidate}&connected=1` : `${candidate}?connected=1`;
+    }
+  }
+
   // set cookies on the response (works in dev/prod)
-  const res = NextResponse.redirect(new URL('/race-trackingV2?connected=1', req.url));
+  const res = NextResponse.redirect(new URL(path, req.url));
   res.cookies.set('RID', riderRow.id, {
     httpOnly: true,
     sameSite: 'lax',
