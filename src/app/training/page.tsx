@@ -7,6 +7,12 @@ import {
   COURSE_STYLE_OPTIONS,
   isGoalsFormComplete,
 } from '@/lib/trainingGoals';
+import {
+  downloadCsv,
+  detailedPlanToCsv,
+  flexiblePlanToCsv,
+  exportFilename,
+} from '@/lib/trainingExport';
 
 // ── types ────────────────────────────────────────────────────────────────────
 
@@ -567,11 +573,11 @@ export default function TrainingPage() {
     const menu = flexiblePlan.intervalMenu;
 
     return (
-      <div className="min-h-screen bg-zinc-50">
+      <div className="min-h-screen bg-zinc-50 print:bg-white">
         <div className="max-w-lg mx-auto px-4 py-8 pb-16">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <Link href="/" className="text-xs text-zinc-400 hover:text-zinc-600 mb-1 block">
+              <Link href="/" className="no-print text-xs text-zinc-400 hover:text-zinc-600 mb-1 block">
                 ← Switchback Labs
               </Link>
               <h1 className="text-xl font-bold text-zinc-900">Flexible week</h1>
@@ -580,11 +586,36 @@ export default function TrainingPage() {
             <button
               type="button"
               onClick={goSetupFromSimple}
-              className="text-xs text-zinc-400 bg-zinc-100 hover:bg-zinc-200 px-3 py-1.5 rounded-lg transition-colors"
+              className="no-print text-xs text-zinc-400 bg-zinc-100 hover:bg-zinc-200 px-3 py-1.5 rounded-lg transition-colors"
             >
               Edit inputs
             </button>
           </div>
+
+          <div className="no-print flex flex-wrap gap-2 mb-5">
+            <button
+              type="button"
+              onClick={() =>
+                downloadCsv(
+                  exportFilename('switchback-flexible-menu'),
+                  flexiblePlanToCsv(flexiblePlan, { ftp: f, hoursPerWeek: hours })
+                )
+              }
+              className="text-xs font-semibold bg-zinc-900 text-white px-3 py-2 rounded-xl hover:bg-zinc-700 transition-colors"
+            >
+              Download CSV (Excel)
+            </button>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="text-xs font-semibold border border-zinc-200 text-zinc-700 px-3 py-2 rounded-xl hover:bg-zinc-50 transition-colors"
+            >
+              Print / Save as PDF
+            </button>
+          </div>
+          <p className="no-print text-[11px] text-zinc-400 mb-4 -mt-2">
+            CSV opens in Excel or Sheets. For PDF, use Print and choose &quot;Save as PDF&quot;.
+          </p>
 
           <div className="bg-white border border-zinc-100 rounded-2xl p-4 mb-5 shadow-sm">
             <p className="text-sm text-zinc-700 leading-relaxed whitespace-pre-wrap">{flexiblePlan.philosophy}</p>
@@ -638,24 +669,26 @@ export default function TrainingPage() {
               ))}
           </div>
 
-          <button
-            type="button"
-            onClick={() => requestPlan('simple')}
-            className="w-full bg-[#FC4C02] text-white text-sm font-bold py-3 rounded-2xl hover:bg-orange-600 transition-colors shadow-sm mb-3"
-          >
-            Regenerate flexible menu
-          </button>
+          <div className="no-print space-y-3">
+            <button
+              type="button"
+              onClick={() => requestPlan('simple')}
+              className="w-full bg-[#FC4C02] text-white text-sm font-bold py-3 rounded-2xl hover:bg-orange-600 transition-colors shadow-sm"
+            >
+              Regenerate flexible menu
+            </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              setPlanMode('detailed');
-              goSetupFromSimple();
-            }}
-            className="w-full border border-zinc-200 text-zinc-600 text-sm font-medium py-3 rounded-2xl hover:bg-zinc-50 transition-colors"
-          >
-            Switch to detailed AI plan
-          </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPlanMode('detailed');
+                goSetupFromSimple();
+              }}
+              className="w-full border border-zinc-200 text-zinc-600 text-sm font-medium py-3 rounded-2xl hover:bg-zinc-50 transition-colors"
+            >
+              Switch to detailed AI plan
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -968,13 +1001,13 @@ export default function TrainingPage() {
       .filter(Boolean) as PlanDay[];
 
     return (
-      <div className="min-h-screen bg-zinc-50">
+      <div className="min-h-screen bg-zinc-50 print:bg-white">
         <div className="max-w-lg mx-auto px-4 py-8">
 
           {/* header */}
           <div className="flex items-center justify-between mb-6">
             <div>
-              <Link href="/" className="text-xs text-zinc-400 hover:text-zinc-600 mb-1 block">
+              <Link href="/" className="no-print text-xs text-zinc-400 hover:text-zinc-600 mb-1 block">
                 ← Switchback Labs
               </Link>
               <h1 className="text-xl font-bold text-zinc-900">Week {plan.summary.weekNumber}</h1>
@@ -985,13 +1018,38 @@ export default function TrainingPage() {
                 setPlanMode('detailed');
                 setAppState('setup');
               }}
-              className="text-xs text-zinc-400 bg-zinc-100 hover:bg-zinc-200 px-3 py-1.5 rounded-lg transition-colors"
+              className="no-print text-xs text-zinc-400 bg-zinc-100 hover:bg-zinc-200 px-3 py-1.5 rounded-lg transition-colors"
             >
               Edit inputs
             </button>
           </div>
 
-          <p className="text-xs text-zinc-400 mb-4">Detailed AI week · day-by-day schedule</p>
+          <p className="text-xs text-zinc-400 mb-2">Detailed AI week · day-by-day schedule</p>
+
+          <div className="no-print flex flex-wrap gap-2 mb-4">
+            <button
+              type="button"
+              onClick={() =>
+                downloadCsv(exportFilename('switchback-training-week'), detailedPlanToCsv(plan))
+              }
+              className="text-xs font-semibold bg-zinc-900 text-white px-3 py-2 rounded-xl hover:bg-zinc-700 transition-colors"
+            >
+              Download CSV (Excel)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveDay(null);
+                requestAnimationFrame(() => window.print());
+              }}
+              className="text-xs font-semibold border border-zinc-200 text-zinc-700 px-3 py-2 rounded-xl hover:bg-zinc-50 transition-colors"
+            >
+              Print / Save as PDF
+            </button>
+          </div>
+          <p className="no-print text-[11px] text-zinc-400 mb-4">
+            CSV includes every day and interval. For PDF, print shows all days below — expand any card first if you need its full text on screen.
+          </p>
 
           {/* plan summary */}
           <div className="bg-white rounded-2xl border border-zinc-100 p-4 mb-5 shadow-sm">
@@ -1031,7 +1089,7 @@ export default function TrainingPage() {
           )}
 
           {/* day selector pills */}
-          <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1 scrollbar-hide">
+          <div className="no-print flex gap-1.5 mb-4 overflow-x-auto pb-1 scrollbar-hide">
             {orderedDays.map((day) => (
               <button
                 key={day.day}
@@ -1065,7 +1123,7 @@ export default function TrainingPage() {
           )}
 
           {/* regenerate & flexible option */}
-          <div className="mt-6 pb-8 space-y-3">
+          <div className="no-print mt-6 pb-8 space-y-3">
             <button
               type="button"
               onClick={() => requestPlan('detailed')}

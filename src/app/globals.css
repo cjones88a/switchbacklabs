@@ -82,3 +82,9 @@
   background-color: #667eea;
   color: white;
 }
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
