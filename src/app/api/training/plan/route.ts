@@ -42,18 +42,45 @@ function validatePlanShape(plan: unknown): plan is Record<string, unknown> {
   return true;
 }
 
-function isLikelyAnthropicError(err: unknown): err is APIError {
+/**
+ * APIConnectionError / timeout / abort extend APIError but set status to undefined.
+ * We were only branching on numeric status, so those became misleading generation_failed.
+ */
+function isAnthropicTransportError(err: unknown): err is APIError {
   return err instanceof APIError;
 }
 
-/** When bundlers duplicate the SDK, instanceof can fail — fall back to shape. */
-function getHttpStatusFromUnknownError(err: unknown): number | null {
-  if (isLikelyAnthropicError(err)) return err.status ?? null;
-  if (typeof err === 'object' && err !== null && 'status' in err) {
-    const s = (err as { status: unknown }).status;
-    return typeof s === 'number' ? s : null;
+const SDK_ERROR_NAMES = new Set([
+  'APIError',
+  'APIConnectionError',
+  'APIConnectionTimeoutError',
+  'APIUserAbortError',
+  'AuthenticationError',
+  'BadRequestError',
+  'NotFoundError',
+  'PermissionDeniedError',
+  'RateLimitError',
+  'InternalServerError',
+  'UnprocessableEntityError',
+  'ConflictError',
+]);
+
+function duckTypedSdkError(err: unknown): { status?: number; message: string } | null {
+  if (typeof err !== 'object' || err === null || !(err instanceof Error)) return null;
+  const name = err.constructor?.name ?? '';
+  if (!SDK_ERROR_NAMES.has(name) && !name.includes('Anthropic')) return null;
+  const statusRaw = (err as { status?: unknown }).status;
+  const status = typeof statusRaw === 'number' ? statusRaw : undefined;
+  return { status, message: err.message };
+}
+
+function formatUnknownError(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return String(err);
   }
-  return null;
 }
 
 const SUBMIT_PLAN_TOOL = 'submit_training_plan';
@@ -236,6 +263,11 @@ Call ${SUBMIT_PLAN_TOOL} with the full plan. Do not reply with plain text only.`
       messages: [{ role: 'user', content: prompt }],
     });
 
+    if (!Array.isArray(message.content)) {
+      console.error('[training/plan] Missing message.content', message);
+      return NextResponse.json({ error: 'bad_api_response' }, { status: 502 });
+    }
+
     const toolBlock = message.content.find(
       (b): b is Anthropic.Messages.ToolUseBlock =>
         b.type === 'tool_use' && b.name === SUBMIT_PLAN_TOOL
@@ -269,15 +301,35 @@ Call ${SUBMIT_PLAN_TOOL} with the full plan. Do not reply with plain text only.`
 
     return NextResponse.json({ plan });
   } catch (err) {
-    const statusFromErr = getHttpStatusFromUnknownError(err);
-    if (statusFromErr !== null) {
-      console.error('[training/plan] Anthropic API error:', statusFromErr, err);
+    if (isAnthropicTransportError(err)) {
+      const code = err.status;
+      if (typeof code === 'number') {
+        console.error('[training/plan] Anthropic HTTP error:', code, err.message);
+        return NextResponse.json({ error: 'anthropic_api', code }, { status: 502 });
+      }
+      console.error('[training/plan] Anthropic transport error (no status):', err.name, err.message);
       return NextResponse.json(
-        { error: 'anthropic_api', code: statusFromErr },
-        { status: 502 }
+        {
+          error: 'anthropic_connection',
+          message: err.message.slice(0, 400),
+        },
+        { status: 503 }
       );
     }
+
+    const duck = duckTypedSdkError(err);
+    if (duck) {
+      if (typeof duck.status === 'number') {
+        return NextResponse.json({ error: 'anthropic_api', code: duck.status }, { status: 502 });
+      }
+      return NextResponse.json(
+        { error: 'anthropic_connection', message: duck.message.slice(0, 400) },
+        { status: 503 }
+      );
+    }
+
+    const reason = formatUnknownError(err).slice(0, 400);
     console.error('[training/plan] Unexpected error:', err);
-    return NextResponse.json({ error: 'generation_failed' }, { status: 500 });
+    return NextResponse.json({ error: 'generation_failed', reason }, { status: 500 });
   }
 }
