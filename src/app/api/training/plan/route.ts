@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { APIError } from '@anthropic-ai/sdk/error';
+import { formatGoalsForPrompt, parseTrainingGoals } from '@/lib/trainingGoals';
 
 export const runtime = 'nodejs';
 
@@ -271,16 +272,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'missing_data' }, { status: 400 });
     }
 
-    const { ftp, weightLbs, hoursPerWeek, races } = inputs as {
+    const { ftp, weightLbs, hoursPerWeek, races, goals: goalsRaw } = inputs as {
       ftp?: number;
       weightLbs?: number;
       hoursPerWeek?: number;
       races?: { name: string; date: string; priority: string }[];
+      goals?: unknown;
     };
 
     if (typeof ftp !== 'number' || !Number.isFinite(ftp) || ftp < 30 || ftp > 600) {
       return NextResponse.json({ error: 'invalid_inputs' }, { status: 400 });
     }
+
+    const goals = parseTrainingGoals(goalsRaw);
+    if (!goals) {
+      return NextResponse.json({ error: 'invalid_inputs' }, { status: 400 });
+    }
+    const goalsBlock = formatGoalsForPrompt(goals);
 
     const raceList = Array.isArray(races)
       ? races.map((r) => `- ${r.name} on ${r.date} (${r.priority} race)`).join('\n')
@@ -325,10 +333,14 @@ ${raceList ? `RACE CALENDAR:\n${raceList}\n` : 'RACE CALENDAR: none listed — i
 RECENT RIDES:
 ${ridesSummary || '(no rides in the last 30 days — keep prescriptions conservative and encourage consistency)'}
 
+${goalsBlock}
+
 ${zoneLines}
 
 Instructions:
-- Personalize copy using their actual ride patterns, volume, and races.
+- Weight the questionnaire answers heavily: primary goal, race fade pattern, limiter, structure preference, and weekly habits must shape workout mix, intensity, and tone.
+- If they want "very flexible", emphasize the menu and optional language; if "fully structured", still use the flexible tool format but make weeklyRhythm and coachingNote fields highly prescriptive.
+- Personalize copy using their actual ride patterns, volume, races, AND goals above.
 - intervalMenu: 5–8 unique options; spread across moods strong, moderate, and tired. Include at least one "low energy" option that is truly easy or very short.
 - Use concrete watt targets derived from their FTP (reference the zones above).
 - weeklyRhythm: loose skeleton (e.g. "Tue–Fri pick two days for intervals") — not Monday=mandatory X.
@@ -341,7 +353,7 @@ Call ${FLEXIBLE_MENU_TOOL} once with the full object. No plain-text-only reply.`
       tools = [flexibleMenuTool];
     } else {
       const weightLbsVal = weightLbs as number;
-      prompt = `You are an expert MTB and gravel endurance coach. Build ONE weekly training plan for this athlete. Primary goal: Unbound 100–style durability and sustainable power.
+      prompt = `You are an expert MTB and gravel endurance coach. Build ONE weekly training plan for this athlete. Blend their questionnaire goals with durability for long gravel/MTB events when relevant.
 
 ATHLETE DATA:
 - FTP: ${ftp}w
@@ -349,6 +361,8 @@ ATHLETE DATA:
 - Available hours/week: ${hours}
 - Longest recent ride: ${summary.longestRideMinutes} min (${summary.longestRideName})
 - Volume last 30 days: ${summary.totalHours30d} hours across ${summary.rideCount30d} rides
+
+${goalsBlock}
 
 RACE CALENDAR:
 ${raceList}
@@ -359,12 +373,14 @@ ${ridesSummary || '(no rides in the last 30 days)'}
 ${zoneLines}
 
 Rules:
+- Weight the questionnaire heavily: primary goal, back-half race feel, limiter, structure preference, and weekly habits must change workout selection, distribution, and coaching tone.
+- Structure preference: if they want "very flexible", keep each day specific but add short alternatives in descriptions where helpful; if "fully structured", be maximally prescriptive each day; "loosely structured" is the default balance.
 - Include all 7 days (Monday through Sunday).
 - Use zone labels: Z1, Z2, Z3, Z4, Z5, Z6, or Rest.
 - day.type: rest | intervals | endurance | long | mtb
 - intervals: empty array on rest/easy days; otherwise specific watt targets and durations.
 - fuelingNote: string or null per day.
-- insights: 1–4 items with type positive | warning | critical.
+- insights: 1–4 items with type positive | warning | critical — reference their limiter or race pattern when relevant.
 
 Call ${SUBMIT_PLAN_TOOL} with the full plan. Do not reply with plain text only.`;
 

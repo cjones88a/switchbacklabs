@@ -2,6 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import {
+  PRIMARY_GOAL_OPTIONS,
+  RACE_SECOND_HALF_OPTIONS,
+  LIMITER_OPTIONS,
+  STRUCTURE_PREF_OPTIONS,
+  WEEK_HABIT_OPTIONS,
+  isGoalsFormComplete,
+} from '@/lib/trainingGoals';
 
 // ── types ────────────────────────────────────────────────────────────────────
 
@@ -304,6 +312,24 @@ export default function TrainingPage() {
   const [newRaceDate, setNewRaceDate] = useState('');
   const [newRacePriority, setNewRacePriority] = useState<'A' | 'B'>('B');
 
+  const [primaryGoal, setPrimaryGoal] = useState('');
+  const [raceSecondHalf, setRaceSecondHalf] = useState('');
+  const [limiter, setLimiter] = useState('');
+  const [structurePref, setStructurePref] = useState('');
+  const [weekHabits, setWeekHabits] = useState<string[]>([]);
+
+  const goalsForm = {
+    primaryGoal,
+    raceSecondHalf,
+    limiter,
+    structurePref,
+    weekHabits,
+  };
+
+  function toggleWeekHabit(id: string) {
+    setWeekHabits((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
+
   // fetch strava data on mount
   useEffect(() => {
     async function fetchStrava() {
@@ -334,6 +360,11 @@ export default function TrainingPage() {
   }
 
   async function requestPlan(style: PlanMode) {
+    if (!isGoalsFormComplete(goalsForm)) {
+      setError('Answer all training goals questions and pick at least one weekly habit.');
+      return;
+    }
+
     const f = parseInt(ftp, 10);
     if (style === 'simple') {
       if (!Number.isFinite(f) || f < 50 || f > 600) {
@@ -357,10 +388,12 @@ export default function TrainingPage() {
       hoursPerWeek: number;
       weightLbs?: number;
       races: Race[];
+      goals: typeof goalsForm;
     } = {
       ftp: f,
       hoursPerWeek: parseFloat(hoursPerWeek) || 8,
       races: races.length ? races : [],
+      goals: goalsForm,
     };
     if (style === 'detailed' || (style === 'simple' && Number.isFinite(w) && w > 0)) {
       inputs.weightLbs = style === 'detailed' ? parseFloat(weightLbs) : w;
@@ -409,8 +442,8 @@ export default function TrainingPage() {
         } else if (errType === 'invalid_inputs') {
           setError(
             style === 'simple'
-              ? 'Check FTP (30–600w), then try again.'
-              : 'Check FTP, weight, and at least one race, then try again.'
+              ? 'Check FTP, training goals, and try again.'
+              : 'Check FTP, weight, races, training goals, and try again.'
           );
         } else if (errType === 'generation_failed' && errMsg) {
           setError(`Plan failed: ${errMsg}`);
@@ -766,6 +799,134 @@ export default function TrainingPage() {
               </div>
             </div>
 
+            {/* training goals — feeds both AI modes */}
+            <div className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm space-y-5">
+              <div>
+                <h2 className="text-sm font-semibold text-zinc-900">Training goals</h2>
+                <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                  Quick answers — the AI uses these with your Strava data to shape every plan.
+                </p>
+              </div>
+
+              <fieldset className="space-y-2">
+                <legend className="text-xs font-medium text-zinc-600 mb-2 block">
+                  1. What&apos;s your primary goal right now?
+                </legend>
+                <div className="space-y-2">
+                  {PRIMARY_GOAL_OPTIONS.map((opt) => (
+                    <label
+                      key={opt.id}
+                      className="flex gap-2 items-start text-sm text-zinc-800 cursor-pointer"
+                    >
+                      <input
+                        type="radio"
+                        name="primaryGoal"
+                        value={opt.id}
+                        checked={primaryGoal === opt.id}
+                        onChange={() => setPrimaryGoal(opt.id)}
+                        className="mt-0.5 accent-orange-500 shrink-0"
+                      />
+                      <span>{opt.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              <fieldset className="space-y-2">
+                <legend className="text-xs font-medium text-zinc-600 mb-2 block">
+                  2. How do you usually feel in the back half of a race?
+                </legend>
+                <div className="space-y-2">
+                  {RACE_SECOND_HALF_OPTIONS.map((opt) => (
+                    <label
+                      key={opt.id}
+                      className="flex gap-2 items-start text-sm text-zinc-800 cursor-pointer"
+                    >
+                      <input
+                        type="radio"
+                        name="raceSecondHalf"
+                        value={opt.id}
+                        checked={raceSecondHalf === opt.id}
+                        onChange={() => setRaceSecondHalf(opt.id)}
+                        className="mt-0.5 accent-orange-500 shrink-0"
+                      />
+                      <span>{opt.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              <fieldset className="space-y-2">
+                <legend className="text-xs font-medium text-zinc-600 mb-2 block">
+                  3. What&apos;s your biggest limiter on the bike?
+                </legend>
+                <div className="space-y-2">
+                  {LIMITER_OPTIONS.map((opt) => (
+                    <label
+                      key={opt.id}
+                      className="flex gap-2 items-start text-sm text-zinc-800 cursor-pointer"
+                    >
+                      <input
+                        type="radio"
+                        name="limiter"
+                        value={opt.id}
+                        checked={limiter === opt.id}
+                        onChange={() => setLimiter(opt.id)}
+                        className="mt-0.5 accent-orange-500 shrink-0"
+                      />
+                      <span>{opt.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              <fieldset className="space-y-2">
+                <legend className="text-xs font-medium text-zinc-600 mb-2 block">
+                  4. How structured do you want your training?
+                </legend>
+                <div className="space-y-2">
+                  {STRUCTURE_PREF_OPTIONS.map((opt) => (
+                    <label
+                      key={opt.id}
+                      className="flex gap-2 items-start text-sm text-zinc-800 cursor-pointer"
+                    >
+                      <input
+                        type="radio"
+                        name="structurePref"
+                        value={opt.id}
+                        checked={structurePref === opt.id}
+                        onChange={() => setStructurePref(opt.id)}
+                        className="mt-0.5 accent-orange-500 shrink-0"
+                      />
+                      <span>{opt.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              <fieldset className="space-y-2">
+                <legend className="text-xs font-medium text-zinc-600 mb-2 block">
+                  5. What does your typical training week look like? (check all that apply)
+                </legend>
+                <div className="space-y-2">
+                  {WEEK_HABIT_OPTIONS.map((opt) => (
+                    <label
+                      key={opt.id}
+                      className="flex gap-2 items-start text-sm text-zinc-800 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={weekHabits.includes(opt.id)}
+                        onChange={() => toggleWeekHabit(opt.id)}
+                        className="mt-0.5 accent-orange-500 rounded border-zinc-300 shrink-0"
+                      />
+                      <span>{opt.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            </div>
+
             {/* plan style */}
             <div className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm space-y-3">
               <h2 className="text-sm font-semibold text-zinc-900">Plan style</h2>
@@ -869,9 +1030,10 @@ export default function TrainingPage() {
               type="button"
               onClick={() => requestPlan(planMode)}
               disabled={
-                planMode === 'simple'
+                !isGoalsFormComplete(goalsForm) ||
+                (planMode === 'simple'
                   ? !ftp
-                  : !ftp || !weightLbs || races.length === 0
+                  : !ftp || !weightLbs || races.length === 0)
               }
               className="w-full bg-[#FC4C02] text-white text-sm font-bold py-4 rounded-2xl disabled:opacity-30 hover:bg-orange-600 transition-colors shadow-sm"
             >
