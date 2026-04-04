@@ -13,6 +13,13 @@ import {
   flexiblePlanToCsv,
   exportFilename,
 } from '@/lib/trainingExport';
+import {
+  resolveFlexibleTimeline,
+  totalTimelineMinutes,
+  TIMELINE_ZONE_BAR,
+  TIMELINE_ZONE_HEIGHT_PCT,
+  type TimelineSegment,
+} from '@/lib/flexibleMenuTimeline';
 
 // ── types ────────────────────────────────────────────────────────────────────
 
@@ -142,6 +149,8 @@ interface FlexibleMenuItem {
   watts: string;
   sessionTime: string;
   coachingNote: string;
+  /** Model-supplied segments; UI falls back to parsing `structure` if missing */
+  timeline?: unknown;
 }
 
 interface FlexiblePlan {
@@ -160,6 +169,48 @@ function moodBucket(m: string): MoodBucket {
   return 'moderate';
 }
 
+function FlexiblePowerTimeline({ segments }: { segments: TimelineSegment[] }) {
+  if (segments.length === 0) return null;
+  const total = totalTimelineMinutes(segments);
+  if (total <= 0) return null;
+
+  return (
+    <div className="mt-2.5">
+      <div className="text-[10px] font-medium text-zinc-400 uppercase tracking-wide mb-1">Power · time</div>
+      <div
+        className="flex h-[52px] items-end gap-px rounded-lg bg-zinc-100 p-1 border border-zinc-200/80"
+        role="img"
+        aria-label={`Workout timeline, about ${total} minutes in ${segments.length} segments. Bar width is time, height is relative intensity.`}
+      >
+        {segments.map((seg, i) => {
+          const h = TIMELINE_ZONE_HEIGHT_PCT[seg.zone];
+          const bg = TIMELINE_ZONE_BAR[seg.zone];
+          const tip = seg.label
+            ? `${seg.label}: ${seg.minutes} min (${seg.zone})`
+            : `${seg.minutes} min (${seg.zone})`;
+          return (
+            <div
+              key={`${i}-${seg.minutes}-${seg.zone}-${seg.label ?? ''}`}
+              className={`rounded-sm ${bg}`}
+              style={{
+                flex: `${seg.minutes} 1 0`,
+                minWidth: 2,
+                height: `${h}%`,
+                maxHeight: '100%',
+              }}
+              title={tip}
+            />
+          );
+        })}
+      </div>
+      <div className="mt-1 flex justify-between gap-2 text-[10px] text-zinc-400 tabular-nums">
+        <span>Start</span>
+        <span className="text-zinc-500">~{total} min total</span>
+      </div>
+    </div>
+  );
+}
+
 function FlexibleIntervalCard({ row }: { row: FlexibleMenuItem }) {
   const [open, setOpen] = useState(false);
   const bucket = moodBucket(row.mood);
@@ -171,6 +222,11 @@ function FlexibleIntervalCard({ row }: { row: FlexibleMenuItem }) {
       : bucket === 'moderate'
         ? 'bg-amber-50 text-amber-800'
         : 'bg-slate-100 text-slate-600';
+
+  const timelineSegments = resolveFlexibleTimeline({
+    structure: row.structure,
+    timeline: row.timeline,
+  });
 
   return (
     <div className="bg-white border border-zinc-100 rounded-2xl overflow-hidden shadow-sm">
@@ -186,6 +242,7 @@ function FlexibleIntervalCard({ row }: { row: FlexibleMenuItem }) {
           <div className="text-sm font-semibold text-zinc-900">{row.title}</div>
           <div className="text-xs font-mono text-orange-600 font-semibold mt-1">{row.watts}</div>
           <div className="text-xs text-zinc-400 mt-0.5">{row.structure}</div>
+          <FlexiblePowerTimeline segments={timelineSegments} />
         </div>
         <svg
           className={`w-4 h-4 text-zinc-300 shrink-0 mt-1 transition-transform ${open ? 'rotate-180' : ''}`}

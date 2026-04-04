@@ -1,5 +1,7 @@
 /** CSV download + helpers for /training plan export (Excel-friendly) */
 
+import { resolveFlexibleTimeline } from '@/lib/flexibleMenuTimeline';
+
 function csvCell(s: string): string {
   const t = s.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   if (/[",\n]/.test(t)) return `"${t.replace(/"/g, '""')}"`;
@@ -112,6 +114,7 @@ export interface FlexiblePlanLike {
     watts: string;
     sessionTime: string;
     coachingNote: string;
+    timeline?: unknown;
   }>;
   volumeGuidance: string;
 }
@@ -131,11 +134,14 @@ export function flexiblePlanToCsv(plan: FlexiblePlanLike, meta: { ftp: number; h
   lines.push(row([]));
   lines.push(row(['Volume guidance', '', plan.volumeGuidance]));
   lines.push(row([]));
-  lines.push(row(['Mood', 'Title', 'Structure', 'Watts', 'Session length', 'Coaching note']));
+  lines.push(
+    row(['Mood', 'Title', 'Structure', 'Watts', 'Session length', 'Timeline (min@zone)', 'Coaching note'])
+  );
   for (const m of plan.intervalMenu) {
-    lines.push(
-      row([m.mood, m.title, m.structure, m.watts, m.sessionTime, m.coachingNote])
-    );
+    const tl = resolveFlexibleTimeline({ structure: m.structure, timeline: m.timeline })
+      .map((s) => `${s.minutes}@${s.zone}`)
+      .join(' | ');
+    lines.push(row([m.mood, m.title, m.structure, m.watts, m.sessionTime, tl, m.coachingNote]));
   }
   return lines.join('');
 }

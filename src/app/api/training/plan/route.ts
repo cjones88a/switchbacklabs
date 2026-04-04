@@ -188,6 +188,22 @@ const flexibleMenuTool = {
             watts: { type: 'string' },
             sessionTime: { type: 'string' },
             coachingNote: { type: 'string' },
+            timeline: {
+              type: 'array',
+              minItems: 1,
+              description:
+                'REQUIRED for each workout: session segments in chronological order for the app chart. Each block: minutes (positive integer) and zone Z1–Z6 or Rest. Bar width = duration; bar height = relative intensity. Expand repeats into alternating work/recovery (e.g. 5×4min with 3min easy between → five 4-min work segments and four 3-min recovery segments unless you specify otherwise). Minutes should sum to sessionTime.',
+              items: {
+                type: 'object',
+                additionalProperties: true,
+                required: ['minutes', 'zone'],
+                properties: {
+                  minutes: { type: 'number' },
+                  zone: { type: 'string', enum: ['Z1', 'Z2', 'Z3', 'Z4', 'Z5', 'Z6', 'Rest'] },
+                  label: { type: 'string', description: 'Optional short label e.g. Warm-up, Intervals, Cool-down' },
+                },
+              },
+            },
           },
         },
       },
@@ -341,6 +357,7 @@ Instructions:
 - Weight racing type (endurance vs sprint vs both) and course style (climbing / flat / rolling / mixed) when choosing interval types, intensity, and coaching tone.
 - Personalize using Strava data, volume, races, AND the racing context above.
 - intervalMenu: 5–8 unique options; spread across moods strong, moderate, and tired. Include at least one "low energy" option that is truly easy or very short.
+- Every intervalMenu item MUST include timeline[] (see tool schema): ordered { minutes, zone, optional label } matching the structure text; expand interval sets into alternating work/recovery blocks.
 - Use concrete watt targets derived from their FTP (reference the zones above).
 - weeklyRhythm: loose skeleton (e.g. "Tue–Fri pick two days for intervals") — not Monday=mandatory X.
 - philosophy: warm, specific, anti-perfectionism.
