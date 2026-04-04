@@ -269,8 +269,36 @@ export default function TrainingPage() {
           },
         }),
       });
-      if (!res.ok) throw new Error('generation_failed');
-      const { plan: generatedPlan } = await res.json();
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const errType = (payload as { error?: string }).error;
+        const errCode = (payload as { code?: string | number }).code;
+        if (
+          errType === 'server_misconfigured' ||
+          errCode === 'missing_anthropic_key'
+        ) {
+          setError('Training plan is not configured on the server yet (API key). Contact the site owner.');
+        } else if (errType === 'anthropic_api' && errCode === 401) {
+          setError('AI service rejected the API key. Check Vercel env ANTHROPIC_API_KEY.');
+        } else if (errType === 'anthropic_api' && (errCode === 404 || errCode === 400)) {
+          setError('AI model or request was rejected. Set ANTHROPIC_MODEL on Vercel or contact support.');
+        } else if (errType === 'anthropic_api') {
+          setError(`AI service error (${String(errCode)}). Try again in a minute.`);
+        } else if (
+          errType === 'invalid_model_json' ||
+          errType === 'invalid_plan_shape' ||
+          errType === 'no_plan_in_response'
+        ) {
+          setError('The AI returned an unexpected format. Tap regenerate or try again in a moment.');
+        } else if (errType === 'invalid_inputs') {
+          setError('Check FTP, weight, and at least one race, then try again.');
+        } else {
+          setError('Plan generation failed. Please try again.');
+        }
+        setAppState('setup');
+        return;
+      }
+      const { plan: generatedPlan } = payload as { plan: TrainingPlan };
       setPlan(generatedPlan);
       setAppState('plan');
     } catch {
