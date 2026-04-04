@@ -36,16 +36,21 @@ function isRecord(x: unknown): x is Record<string, unknown> {
   return typeof x === 'object' && x !== null && !Array.isArray(x);
 }
 
-function validatePlanShape(plan: unknown): plan is Record<string, unknown> {
+function validateDetailedPlan(plan: unknown): plan is Record<string, unknown> {
   if (!isRecord(plan)) return false;
   if (!Array.isArray(plan.days)) return false;
   return true;
 }
 
-/**
- * APIConnectionError / timeout / abort extend APIError but set status to undefined.
- * We were only branching on numeric status, so those became misleading generation_failed.
- */
+function validateFlexiblePlan(plan: unknown): plan is Record<string, unknown> {
+  if (!isRecord(plan)) return false;
+  if (!Array.isArray(plan.intervalMenu) || plan.intervalMenu.length < 3) return false;
+  if (!Array.isArray(plan.weeklyRhythm) || plan.weeklyRhythm.length < 2) return false;
+  if (typeof plan.philosophy !== 'string' || !plan.philosophy.trim()) return false;
+  if (typeof plan.volumeGuidance !== 'string') return false;
+  return true;
+}
+
 function isAnthropicTransportError(err: unknown): err is APIError {
   return err instanceof APIError;
 }
@@ -84,6 +89,7 @@ function formatUnknownError(err: unknown): string {
 }
 
 const SUBMIT_PLAN_TOOL = 'submit_training_plan';
+const FLEXIBLE_MENU_TOOL = 'submit_flexible_training_menu';
 
 const trainingPlanTool = {
   name: SUBMIT_PLAN_TOOL,
@@ -138,6 +144,111 @@ const trainingPlanTool = {
   },
 };
 
+const flexibleMenuTool = {
+  name: FLEXIBLE_MENU_TOOL,
+  description:
+    'Submit a personalized flexible training menu: not a rigid day-by-day calendar, but a weekly rhythm plus interval options the athlete picks by feel.',
+  input_schema: {
+    type: 'object' as const,
+    additionalProperties: true,
+    required: ['philosophy', 'weeklyRhythm', 'intervalMenu', 'volumeGuidance'],
+    properties: {
+      philosophy: {
+        type: 'string',
+        description: '2–4 sentences, specific to this athlete (Strava, races, limiters). Why flexible beats rigid for them.',
+      },
+      weeklyRhythm: {
+        type: 'array',
+        minItems: 2,
+        description: '3–5 bullets: e.g. which days to slot 2 interval sessions, long Z2, easy day — phrased loosely not as orders.',
+        items: {
+          type: 'object',
+          additionalProperties: true,
+          required: ['heading', 'detail'],
+          properties: {
+            heading: { type: 'string' },
+            detail: { type: 'string' },
+          },
+        },
+      },
+      intervalMenu: {
+        type: 'array',
+        minItems: 5,
+        description:
+          '5–8 distinct workouts. Each has mood strong|moderate|tired for "how you feel" picking. Use exact FTP-based watts.',
+        items: {
+          type: 'object',
+          additionalProperties: true,
+          required: ['mood', 'title', 'structure', 'watts', 'sessionTime', 'coachingNote'],
+          properties: {
+            mood: { type: 'string', enum: ['strong', 'moderate', 'tired'] },
+            title: { type: 'string' },
+            structure: { type: 'string' },
+            watts: { type: 'string' },
+            sessionTime: { type: 'string' },
+            coachingNote: { type: 'string' },
+          },
+        },
+      },
+      volumeGuidance: {
+        type: 'string',
+        description: 'One short paragraph tying their stated hours/week to priorities (protect quality, etc.).',
+      },
+    },
+  },
+};
+
+function normalizeAthleteData(raw: unknown): Record<string, unknown> {
+  if (raw != null && typeof raw === 'object' && !Array.isArray(raw)) {
+    return raw as Record<string, unknown>;
+  }
+  return {};
+}
+
+function buildContext(athleteData: Record<string, unknown>, ftp: number) {
+  const summaryIn =
+    'summary' in athleteData &&
+    athleteData.summary &&
+    typeof athleteData.summary === 'object'
+      ? (athleteData.summary as Record<string, unknown>)
+      : {};
+
+  const recentRides = Array.isArray(athleteData.recentRides)
+    ? (athleteData.recentRides as unknown[])
+    : [];
+
+  const summary = {
+    longestRideMinutes: Number(summaryIn.longestRideMinutes) || 0,
+    longestRideName: summaryIn.longestRideName != null ? String(summaryIn.longestRideName) : '—',
+    totalHours30d: Number(summaryIn.totalHours30d) || 0,
+    rideCount30d: Number(summaryIn.rideCount30d) || 0,
+  };
+
+  const ridesSummary = recentRides
+    .slice(0, 10)
+    .map((r: unknown) => {
+      const row = r && typeof r === 'object' ? (r as Record<string, unknown>) : {};
+      const name = String(row.name ?? 'Ride');
+      const durationMin = Number(row.durationMin) || 0;
+      const avgWatts = Number(row.avgWatts) || 0;
+      const npWatts = row.npWatts != null ? Number(row.npWatts) : null;
+      const devicePower = Boolean(row.devicePower);
+      const sportType = String(row.sportType ?? '');
+      return `- ${name}: ${durationMin} min, ${avgWatts}w avg${npWatts && Number.isFinite(npWatts) ? ` / ${npWatts}w NP` : ''}${devicePower ? ' (power meter)' : ' (estimated)'} [${sportType}]`;
+    })
+    .join('\n');
+
+  const zoneLines = `POWER ZONES (based on ${ftp}w FTP):
+- Z1 Recovery: <${Math.round(ftp * 0.55)}w
+- Z2 Endurance: ${Math.round(ftp * 0.56)}–${Math.round(ftp * 0.75)}w
+- Z3 Tempo: ${Math.round(ftp * 0.76)}–${Math.round(ftp * 0.87)}w
+- Z4 Sweet Spot: ${Math.round(ftp * 0.88)}–${Math.round(ftp * 0.94)}w
+- Z5 Threshold: ${Math.round(ftp * 0.95)}–${Math.round(ftp * 1.05)}w
+- Z6 VO2: >${Math.round(ftp * 1.06)}w`;
+
+  return { summary, ridesSummary, zoneLines };
+}
+
 export async function POST(req: Request) {
   if (!process.env.ANTHROPIC_API_KEY?.trim()) {
     console.error('[training/plan] ANTHROPIC_API_KEY is not set');
@@ -152,9 +263,11 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { athleteData, inputs } = body;
+    const planStyle = body.planStyle === 'simple' ? 'simple' : 'detailed';
+    const athleteData = normalizeAthleteData(body.athleteData);
+    const { inputs } = body;
 
-    if (!athleteData || typeof athleteData !== 'object' || !inputs || typeof inputs !== 'object') {
+    if (!inputs || typeof inputs !== 'object') {
       return NextResponse.json({ error: 'missing_data' }, { status: 400 });
     }
 
@@ -165,68 +278,74 @@ export async function POST(req: Request) {
       races?: { name: string; date: string; priority: string }[];
     };
 
-    if (
-      typeof ftp !== 'number' ||
-      !Number.isFinite(ftp) ||
-      typeof weightLbs !== 'number' ||
-      !Number.isFinite(weightLbs) ||
-      !Array.isArray(races) ||
-      races.length === 0
-    ) {
+    if (typeof ftp !== 'number' || !Number.isFinite(ftp) || ftp < 30 || ftp > 600) {
       return NextResponse.json({ error: 'invalid_inputs' }, { status: 400 });
     }
 
-    const summaryIn =
-      athleteData &&
-      typeof athleteData === 'object' &&
-      'summary' in athleteData &&
-      athleteData.summary &&
-      typeof athleteData.summary === 'object'
-        ? (athleteData.summary as Record<string, unknown>)
-        : {};
-
-    const recentRides = Array.isArray(
-      (athleteData as { recentRides?: unknown }).recentRides
-    )
-      ? (athleteData as { recentRides: unknown[] }).recentRides
-      : [];
-
-    const summary = {
-      longestRideMinutes: Number(summaryIn.longestRideMinutes) || 0,
-      longestRideName: summaryIn.longestRideName != null ? String(summaryIn.longestRideName) : '—',
-      totalHours30d: Number(summaryIn.totalHours30d) || 0,
-      rideCount30d: Number(summaryIn.rideCount30d) || 0,
-    };
-
-    const wtkg = (weightLbs * 0.453592).toFixed(1);
-    const wkg = (ftp / parseFloat(wtkg)).toFixed(2);
-
-    const ridesSummary = recentRides
-      .slice(0, 10)
-      .map((r: unknown) => {
-        const row = r && typeof r === 'object' ? (r as Record<string, unknown>) : {};
-        const name = String(row.name ?? 'Ride');
-        const durationMin = Number(row.durationMin) || 0;
-        const avgWatts = Number(row.avgWatts) || 0;
-        const npWatts = row.npWatts != null ? Number(row.npWatts) : null;
-        const devicePower = Boolean(row.devicePower);
-        const sportType = String(row.sportType ?? '');
-        return `- ${name}: ${durationMin} min, ${avgWatts}w avg${npWatts && Number.isFinite(npWatts) ? ` / ${npWatts}w NP` : ''}${devicePower ? ' (power meter)' : ' (estimated)'} [${sportType}]`;
-      })
-      .join('\n');
-
-    const raceList = races
-      .map((r) => `- ${r.name} on ${r.date} (${r.priority} race)`)
-      .join('\n');
+    const raceList = Array.isArray(races)
+      ? races.map((r) => `- ${r.name} on ${r.date} (${r.priority} race)`).join('\n')
+      : '';
 
     const hours =
       typeof hoursPerWeek === 'number' && Number.isFinite(hoursPerWeek) ? hoursPerWeek : 8;
 
-    const prompt = `You are an expert MTB and gravel endurance coach. Build ONE weekly training plan for this athlete. Primary goal: Unbound 100–style durability and sustainable power.
+    const hasWeight = typeof weightLbs === 'number' && Number.isFinite(weightLbs) && weightLbs > 0;
+    const wtkg = hasWeight ? (weightLbs * 0.453592).toFixed(1) : null;
+    const wkg = hasWeight && wtkg ? (ftp / parseFloat(wtkg)).toFixed(2) : null;
+
+    const { summary, ridesSummary, zoneLines } = buildContext(athleteData, ftp);
+
+    if (planStyle === 'detailed') {
+      if (!hasWeight || !Array.isArray(races) || races.length === 0) {
+        return NextResponse.json({ error: 'invalid_inputs' }, { status: 400 });
+      }
+    }
+
+    let prompt: string;
+    let toolName: string;
+    let tools: (typeof trainingPlanTool | typeof flexibleMenuTool)[];
+
+    if (planStyle === 'simple') {
+      const athleteLines =
+        hasWeight && wkg
+          ? `- FTP: ${ftp}w\n- Weight: ${weightLbs}lbs (${wtkg}kg) → ${wkg} w/kg`
+          : `- FTP: ${ftp}w\n- Weight: not provided`;
+
+      prompt = `You are an expert MTB and gravel endurance coach. This athlete wants a FLEXIBLE week — not a rigid day-by-day schedule.
+
+They aim for roughly TWO quality interval sessions per week plus a couple of Z2 / easy rides, choosing workouts by how they feel. Racing context: ~2–4 hour events (XCM, gravel, marathon MTB).
+
+${athleteLines}
+- Available hours/week (target): ${hours}
+- Longest recent ride: ${summary.longestRideMinutes} min (${summary.longestRideName})
+- Volume last 30 days: ${summary.totalHours30d} hours across ${summary.rideCount30d} rides
+
+${raceList ? `RACE CALENDAR:\n${raceList}\n` : 'RACE CALENDAR: none listed — infer general durability.\n'}
+
+RECENT RIDES:
+${ridesSummary || '(no rides in the last 30 days — keep prescriptions conservative and encourage consistency)'}
+
+${zoneLines}
+
+Instructions:
+- Personalize copy using their actual ride patterns, volume, and races.
+- intervalMenu: 5–8 unique options; spread across moods strong, moderate, and tired. Include at least one "low energy" option that is truly easy or very short.
+- Use concrete watt targets derived from their FTP (reference the zones above).
+- weeklyRhythm: loose skeleton (e.g. "Tue–Fri pick two days for intervals") — not Monday=mandatory X.
+- philosophy: warm, specific, anti-perfectionism.
+- volumeGuidance: tie ${hours}h/week to protecting the two quality sessions.
+
+Call ${FLEXIBLE_MENU_TOOL} once with the full object. No plain-text-only reply.`;
+
+      toolName = FLEXIBLE_MENU_TOOL;
+      tools = [flexibleMenuTool];
+    } else {
+      const weightLbsVal = weightLbs as number;
+      prompt = `You are an expert MTB and gravel endurance coach. Build ONE weekly training plan for this athlete. Primary goal: Unbound 100–style durability and sustainable power.
 
 ATHLETE DATA:
 - FTP: ${ftp}w
-- Weight: ${weightLbs}lbs (${wtkg}kg) → ${wkg} w/kg
+- Weight: ${weightLbsVal}lbs (${(weightLbsVal * 0.453592).toFixed(1)}kg) → ${(ftp / (weightLbsVal * 0.453592)).toFixed(2)} w/kg
 - Available hours/week: ${hours}
 - Longest recent ride: ${summary.longestRideMinutes} min (${summary.longestRideName})
 - Volume last 30 days: ${summary.totalHours30d} hours across ${summary.rideCount30d} rides
@@ -237,13 +356,7 @@ ${raceList}
 RECENT RIDES:
 ${ridesSummary || '(no rides in the last 30 days)'}
 
-POWER ZONES (based on ${ftp}w FTP):
-- Z1 Recovery: <${Math.round(ftp * 0.55)}w
-- Z2 Endurance: ${Math.round(ftp * 0.56)}–${Math.round(ftp * 0.75)}w
-- Z3 Tempo: ${Math.round(ftp * 0.76)}–${Math.round(ftp * 0.87)}w
-- Z4 Sweet Spot: ${Math.round(ftp * 0.88)}–${Math.round(ftp * 0.94)}w
-- Z5 Threshold: ${Math.round(ftp * 0.95)}–${Math.round(ftp * 1.05)}w
-- Z6 VO2: >${Math.round(ftp * 1.06)}w
+${zoneLines}
 
 Rules:
 - Include all 7 days (Monday through Sunday).
@@ -255,11 +368,15 @@ Rules:
 
 Call ${SUBMIT_PLAN_TOOL} with the full plan. Do not reply with plain text only.`;
 
+      toolName = SUBMIT_PLAN_TOOL;
+      tools = [trainingPlanTool];
+    }
+
     const message = await anthropic.messages.create({
       model,
       max_tokens: 8192,
-      tools: [trainingPlanTool],
-      tool_choice: { type: 'tool', name: SUBMIT_PLAN_TOOL },
+      tools,
+      tool_choice: { type: 'tool', name: toolName },
       messages: [{ role: 'user', content: prompt }],
     });
 
@@ -269,14 +386,13 @@ Call ${SUBMIT_PLAN_TOOL} with the full plan. Do not reply with plain text only.`
     }
 
     const toolBlock = message.content.find(
-      (b): b is Anthropic.Messages.ToolUseBlock =>
-        b.type === 'tool_use' && b.name === SUBMIT_PLAN_TOOL
+      (b): b is Anthropic.Messages.ToolUseBlock => b.type === 'tool_use' && b.name === toolName
     );
 
-    let plan: unknown;
+    let payload: unknown;
 
     if (toolBlock) {
-      plan = toolBlock.input;
+      payload = toolBlock.input;
     } else {
       const rawText = message.content
         .filter((b) => b.type === 'text')
@@ -287,19 +403,27 @@ Call ${SUBMIT_PLAN_TOOL} with the full plan. Do not reply with plain text only.`
         return NextResponse.json({ error: 'no_plan_in_response' }, { status: 502 });
       }
       try {
-        plan = parsePlanJson(rawText);
+        payload = parsePlanJson(rawText);
       } catch (e) {
         console.error('[training/plan] JSON parse failed:', e, rawText.slice(0, 500));
         return NextResponse.json({ error: 'invalid_model_json' }, { status: 502 });
       }
     }
 
-    if (!validatePlanShape(plan)) {
-      console.error('[training/plan] Plan failed validation:', JSON.stringify(plan).slice(0, 400));
+    if (planStyle === 'simple') {
+      if (!validateFlexiblePlan(payload)) {
+        console.error('[training/plan] Flexible plan failed validation:', JSON.stringify(payload).slice(0, 400));
+        return NextResponse.json({ error: 'invalid_plan_shape' }, { status: 502 });
+      }
+      return NextResponse.json({ planStyle: 'simple', flexiblePlan: payload });
+    }
+
+    if (!validateDetailedPlan(payload)) {
+      console.error('[training/plan] Plan failed validation:', JSON.stringify(payload).slice(0, 400));
       return NextResponse.json({ error: 'invalid_plan_shape' }, { status: 502 });
     }
 
-    return NextResponse.json({ plan });
+    return NextResponse.json({ planStyle: 'detailed', plan: payload });
   } catch (err) {
     if (isAnthropicTransportError(err)) {
       const code = err.status;

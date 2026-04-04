@@ -122,90 +122,42 @@ const INSIGHT_DOT: Record<string, string> = {
 
 type PlanMode = 'simple' | 'detailed';
 
-type SimpleMood = 'strong' | 'moderate' | 'tired';
+type MoodBucket = 'strong' | 'moderate' | 'tired';
 
-interface SimpleIntervalRow {
-  mood: SimpleMood;
+interface FlexibleMenuItem {
+  mood: string;
   title: string;
   structure: string;
   watts: string;
   sessionTime: string;
-  why: string;
+  coachingNote: string;
 }
 
-function buildSimpleIntervalMenu(ftp: number): SimpleIntervalRow[] {
-  const z2lo = Math.round(ftp * 0.6);
-  const z2hi = Math.round(ftp * 0.78);
-  const ssLo = Math.round(ftp * 0.88);
-  const ssHi = Math.round(ftp * 0.95);
-  const ssMid = Math.round(ftp * 0.915);
-  const overUp = Math.round(ftp * 1.05);
-  const tempoLo = Math.round(ftp * 0.76);
-  const tempoHi = Math.round(ftp * 0.9);
-  const vo2Lo = Math.round(ftp * 1.1);
-  const vo2Hi = Math.round(ftp * 1.19);
-  const punch = Math.round(ftp * 1.28);
-
-  return [
-    {
-      mood: 'strong',
-      title: 'Sweet spot blocks',
-      structure: '2×20 min (or 2×15 while building)',
-      watts: `${ssLo}–${ssHi}w`,
-      sessionTime: '~60–75 min with warm-up / cool-down',
-      why: 'High ROI for endurance: pushes FTP and efficiency without full threshold stress.',
-    },
-    {
-      mood: 'strong',
-      title: 'Threshold over-unders',
-      structure: '3×12 min: each block = 3 min steady + 1 min over, repeat 3×',
-      watts: `${ssMid}w steady / ${overUp}w over`,
-      sessionTime: '~65–80 min total',
-      why: 'Trains “recover while working” — useful on punchy climbs mid-race.',
-    },
-    {
-      mood: 'moderate',
-      title: 'Tempo cruise',
-      structure: '3×15 min',
-      watts: `${tempoLo}–${tempoHi}w`,
-      sessionTime: '~55–70 min',
-      why: 'Aerobic load without digging a deep hole. Good mid-week if you are not fully fresh.',
-    },
-    {
-      mood: 'moderate',
-      title: 'VO2 micro-intervals',
-      structure: '6×3 min hard, 3 min easy',
-      watts: `${vo2Lo}–${vo2Hi}w`,
-      sessionTime: '~60 min',
-      why: 'Short reps add up to real climbing power when you want something sharp, not long.',
-    },
-    {
-      mood: 'tired',
-      title: '30 / 30s',
-      structure: '10×30 sec on, 30 sec easy',
-      watts: `${punch}w+ (open hard, not a target to average)`,
-      sessionTime: '~35–45 min with warm-up',
-      why: 'Neuromuscular punch with little sustained fatigue — fine before a weekend long ride.',
-    },
-    {
-      mood: 'tired',
-      title: 'Optional: second Z2 instead',
-      structure: 'Replace intervals with 45–75 min easy spin',
-      watts: `${z2lo}–${z2hi}w if using power`,
-      sessionTime: 'Flexible',
-      why: 'If legs are cooked, bank easy volume instead of forcing quality.',
-    },
-  ];
+interface FlexiblePlan {
+  philosophy: string;
+  weeklyRhythm: { heading: string; detail: string }[];
+  intervalMenu: FlexibleMenuItem[];
+  volumeGuidance: string;
 }
 
-function SimpleIntervalCard({ row }: { row: SimpleIntervalRow }) {
+function moodBucket(m: string): MoodBucket {
+  const x = m.toLowerCase();
+  if (x.includes('strong') || x.includes('good') || x.includes('fresh') || x.includes('great'))
+    return 'strong';
+  if (x.includes('tired') || x.includes('low') || x.includes('cook') || x.includes('easy day'))
+    return 'tired';
+  return 'moderate';
+}
+
+function FlexibleIntervalCard({ row }: { row: FlexibleMenuItem }) {
   const [open, setOpen] = useState(false);
+  const bucket = moodBucket(row.mood);
   const moodLabel =
-    row.mood === 'strong' ? 'Good legs' : row.mood === 'moderate' ? 'Moderate' : 'Low energy';
+    bucket === 'strong' ? 'Good legs' : bucket === 'moderate' ? 'Moderate' : 'Low energy';
   const moodClass =
-    row.mood === 'strong'
+    bucket === 'strong'
       ? 'bg-emerald-50 text-emerald-800'
-      : row.mood === 'moderate'
+      : bucket === 'moderate'
         ? 'bg-amber-50 text-amber-800'
         : 'bg-slate-100 text-slate-600';
 
@@ -237,7 +189,7 @@ function SimpleIntervalCard({ row }: { row: SimpleIntervalRow }) {
             <span className="text-xs font-semibold text-zinc-500">Session length · </span>
             {row.sessionTime}
           </p>
-          <p className="mt-2 text-xs">{row.why}</p>
+          <p className="mt-2 text-xs">{row.coachingNote}</p>
         </div>
       )}
     </div>
@@ -336,6 +288,7 @@ export default function TrainingPage() {
   const [appState, setAppState] = useState<AppState>('loading');
   const [stravaData, setStravaData] = useState<StravaData | null>(null);
   const [plan, setPlan] = useState<TrainingPlan | null>(null);
+  const [flexiblePlan, setFlexiblePlan] = useState<FlexiblePlan | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeDay, setActiveDay] = useState<string | null>(null);
   const [planMode, setPlanMode] = useState<PlanMode>('simple');
@@ -376,36 +329,51 @@ export default function TrainingPage() {
     fetchStrava();
   }, []);
 
-  function showSimplePlan() {
-    const f = parseInt(ftp, 10);
-    if (!Number.isFinite(f) || f < 50 || f > 600) {
-      setError('Enter a realistic FTP (watts) to see power targets.');
-      return;
-    }
-    setError(null);
-    setAppState('simple_plan');
-  }
-
   function goSetupFromSimple() {
     setAppState('setup');
   }
 
-  async function generatePlan() {
-    if (!ftp || !weightLbs || races.length === 0) return;
+  async function requestPlan(style: PlanMode) {
+    const f = parseInt(ftp, 10);
+    if (style === 'simple') {
+      if (!Number.isFinite(f) || f < 50 || f > 600) {
+        setError('Enter a realistic FTP (watts).');
+        return;
+      }
+    } else {
+      if (!ftp || !weightLbs || races.length === 0) return;
+      if (!Number.isFinite(f) || f < 30 || f > 600) {
+        setError('Enter a valid FTP (watts).');
+        return;
+      }
+    }
+
     setAppState('generating');
     setError(null);
+
+    const w = weightLbs.trim() ? parseFloat(weightLbs) : NaN;
+    const inputs: {
+      ftp: number;
+      hoursPerWeek: number;
+      weightLbs?: number;
+      races: Race[];
+    } = {
+      ftp: f,
+      hoursPerWeek: parseFloat(hoursPerWeek) || 8,
+      races: races.length ? races : [],
+    };
+    if (style === 'detailed' || (style === 'simple' && Number.isFinite(w) && w > 0)) {
+      inputs.weightLbs = style === 'detailed' ? parseFloat(weightLbs) : w;
+    }
+
     try {
       const res = await fetch('/api/training/plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          athleteData: stravaData,
-          inputs: {
-            ftp: parseInt(ftp),
-            weightLbs: parseFloat(weightLbs),
-            hoursPerWeek: parseFloat(hoursPerWeek),
-            races,
-          },
+          planStyle: style === 'simple' ? 'simple' : 'detailed',
+          athleteData: stravaData ?? {},
+          inputs,
         }),
       });
       const payload = await res.json().catch(() => ({}));
@@ -439,7 +407,11 @@ export default function TrainingPage() {
         ) {
           setError('The AI returned an unexpected format. Tap regenerate or try again in a moment.');
         } else if (errType === 'invalid_inputs') {
-          setError('Check FTP, weight, and at least one race, then try again.');
+          setError(
+            style === 'simple'
+              ? 'Check FTP (30–600w), then try again.'
+              : 'Check FTP, weight, and at least one race, then try again.'
+          );
         } else if (errType === 'generation_failed' && errMsg) {
           setError(`Plan failed: ${errMsg}`);
         } else {
@@ -448,7 +420,26 @@ export default function TrainingPage() {
         setAppState('setup');
         return;
       }
-      const { plan: generatedPlan } = payload as { plan: TrainingPlan };
+
+      const ps = (payload as { planStyle?: string }).planStyle;
+      if (ps === 'simple') {
+        const fp = (payload as { flexiblePlan?: FlexiblePlan }).flexiblePlan;
+        if (!fp) {
+          setError('Unexpected response from server.');
+          setAppState('setup');
+          return;
+        }
+        setFlexiblePlan(fp);
+        setAppState('simple_plan');
+        return;
+      }
+
+      const generatedPlan = (payload as { plan?: TrainingPlan }).plan;
+      if (!generatedPlan) {
+        setError('Unexpected response from server.');
+        setAppState('setup');
+        return;
+      }
       setPlan(generatedPlan);
       setAppState('plan');
     } catch {
@@ -518,29 +509,45 @@ export default function TrainingPage() {
   // ── render: generating ───────────────────────────────────────────────────
 
   if (appState === 'generating') {
+    const simple = planMode === 'simple';
     return (
       <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-6">
         <div className="text-center max-w-xs">
           <div className="w-12 h-12 border-2 border-zinc-200 border-t-orange-500 rounded-full animate-spin mx-auto mb-6" />
-          <h2 className="text-lg font-semibold text-zinc-900 mb-2">Building your plan</h2>
+          <h2 className="text-lg font-semibold text-zinc-900 mb-2">
+            {simple ? 'Building your flexible menu' : 'Building your plan'}
+          </h2>
           <p className="text-sm text-zinc-400 leading-relaxed">
-            Analyzing your Strava data and generating a personalized week…
+            {simple
+              ? 'Your coach is reading your Strava + inputs and drafting a personalized interval menu…'
+              : 'Analyzing your Strava data and generating a personalized week…'}
           </p>
         </div>
       </div>
     );
   }
 
-  // ── render: simple flexible menu (no AI) ────────────────────────────────
+  // ── render: AI flexible menu ─────────────────────────────────────────────
 
-  if (appState === 'simple_plan') {
+  if (appState === 'simple_plan' && !flexiblePlan) {
+    return (
+      <div className="min-h-screen bg-zinc-50 flex flex-col items-center justify-center gap-4 p-6">
+        <p className="text-sm text-zinc-500 text-center">No menu loaded.</p>
+        <button
+          type="button"
+          onClick={() => setAppState('setup')}
+          className="text-sm font-medium text-orange-600 hover:text-orange-700"
+        >
+          Back to setup
+        </button>
+      </div>
+    );
+  }
+
+  if (appState === 'simple_plan' && flexiblePlan) {
     const f = parseInt(ftp, 10);
-    const menu = buildSimpleIntervalMenu(f);
-    const z = {
-      z2lo: Math.round(f * 0.6),
-      z2hi: Math.round(f * 0.78),
-    };
     const hours = parseFloat(hoursPerWeek) || 8;
+    const menu = flexiblePlan.intervalMenu;
 
     return (
       <div className="min-h-screen bg-zinc-50">
@@ -551,67 +558,76 @@ export default function TrainingPage() {
                 ← Switchback Labs
               </Link>
               <h1 className="text-xl font-bold text-zinc-900">Flexible week</h1>
-              <p className="text-xs text-zinc-400 mt-0.5">FTP {f}w · ~{hours}h/week target</p>
+              <p className="text-xs text-zinc-400 mt-0.5">AI menu · FTP {f}w · ~{hours}h/week</p>
             </div>
             <button
               type="button"
               onClick={goSetupFromSimple}
               className="text-xs text-zinc-400 bg-zinc-100 hover:bg-zinc-200 px-3 py-1.5 rounded-lg transition-colors"
             >
-              Edit FTP
+              Edit inputs
             </button>
           </div>
 
           <div className="bg-white border border-zinc-100 rounded-2xl p-4 mb-5 shadow-sm">
-            <p className="text-sm text-zinc-700 leading-relaxed">
-              Flexible beats perfect: two quality sessions done consistently beat a rigid plan that falls apart by week three.
-              For <span className="font-medium">2–4 hour</span> XCM / gravel / marathon MTB, rotate intervals that build{' '}
-              <span className="font-medium">sustainable threshold</span> and the ability to{' '}
-              <span className="font-medium">punch climbs</span> without blowing up.
-            </p>
+            <p className="text-sm text-zinc-700 leading-relaxed whitespace-pre-wrap">{flexiblePlan.philosophy}</p>
           </div>
 
           <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4 mb-5">
-            <div className="text-xs font-semibold text-orange-800 mb-2">Weekly skeleton</div>
-            <ul className="text-sm text-orange-900 space-y-2 leading-snug">
-              <li>
-                <span className="font-semibold">Tue–Fri (pick 2 days):</span> interval session — choose from the menu by how you feel.
-              </li>
-              <li>
-                <span className="font-semibold">Weekend:</span> long Z2 ride{' '}
-                <span className="font-mono text-xs">~2.5–4h @ {z.z2lo}–{z.z2hi}w</span> (feel-based is fine).
-              </li>
-              <li>
-                <span className="font-semibold">Other day:</span> easy spin or MTB{' '}
-                <span className="text-orange-800/90">60–90 min, no power target</span>.
-              </li>
+            <div className="text-xs font-semibold text-orange-800 mb-2">Weekly rhythm</div>
+            <ul className="text-sm text-orange-900 space-y-3 leading-snug">
+              {flexiblePlan.weeklyRhythm.map((row, i) => (
+                <li key={i}>
+                  <span className="font-semibold">{row.heading}</span>
+                  {row.detail ? (
+                    <span className="block text-orange-900/90 mt-0.5 font-normal">{row.detail}</span>
+                  ) : null}
+                </li>
+              ))}
             </ul>
-            <p className="text-xs text-orange-800/80 mt-3">
-              If you only have ~{hours}h/week, protect the two quality sessions and keep everything else truly easy.
+            <p className="text-xs text-orange-800/85 mt-4 leading-relaxed whitespace-pre-wrap">
+              {flexiblePlan.volumeGuidance}
             </p>
           </div>
 
           <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">Interval menu</div>
-          <p className="text-xs text-zinc-400 mb-3">Open a card before each session — pick by mood, not by calendar.</p>
+          <p className="text-xs text-zinc-400 mb-3">Pick by mood before each session — fresh copy each time you generate.</p>
 
           <div className="space-y-2 mb-3">
             <div className="text-[11px] font-semibold text-zinc-500 px-1">When you have legs</div>
-            {menu.filter((r) => r.mood === 'strong').map((row) => (
-              <SimpleIntervalCard key={row.title} row={row} />
-            ))}
+            {menu
+              .map((row, i) => ({ row, i }))
+              .filter(({ row }) => moodBucket(row.mood) === 'strong')
+              .map(({ row, i }) => (
+                <FlexibleIntervalCard key={`${row.title}-${i}`} row={row} />
+              ))}
           </div>
           <div className="space-y-2 mb-3">
             <div className="text-[11px] font-semibold text-zinc-500 px-1">When you feel moderate</div>
-            {menu.filter((r) => r.mood === 'moderate').map((row) => (
-              <SimpleIntervalCard key={row.title} row={row} />
-            ))}
+            {menu
+              .map((row, i) => ({ row, i }))
+              .filter(({ row }) => moodBucket(row.mood) === 'moderate')
+              .map(({ row, i }) => (
+                <FlexibleIntervalCard key={`${row.title}-${i}`} row={row} />
+              ))}
           </div>
           <div className="space-y-2 mb-6">
             <div className="text-[11px] font-semibold text-zinc-500 px-1">When you&apos;re cooked</div>
-            {menu.filter((r) => r.mood === 'tired').map((row) => (
-              <SimpleIntervalCard key={row.title} row={row} />
-            ))}
+            {menu
+              .map((row, i) => ({ row, i }))
+              .filter(({ row }) => moodBucket(row.mood) === 'tired')
+              .map(({ row, i }) => (
+                <FlexibleIntervalCard key={`${row.title}-${i}`} row={row} />
+              ))}
           </div>
+
+          <button
+            type="button"
+            onClick={() => requestPlan('simple')}
+            className="w-full bg-[#FC4C02] text-white text-sm font-bold py-3 rounded-2xl hover:bg-orange-600 transition-colors shadow-sm mb-3"
+          >
+            Regenerate flexible menu
+          </button>
 
           <button
             type="button"
@@ -642,7 +658,7 @@ export default function TrainingPage() {
             </Link>
             <h1 className="text-2xl font-bold text-zinc-900">Training Coach</h1>
             <p className="text-sm text-zinc-500 mt-1">
-              Flexible menu or a full AI week — Strava powers the detailed option.
+              Both options use AI + your Strava data; simple is a mood menu, detailed is a full week.
             </p>
           </div>
 
@@ -701,7 +717,7 @@ export default function TrainingPage() {
               <h2 className="text-sm font-semibold text-zinc-900 mb-4">Your fitness</h2>
               {planMode === 'simple' && (
                 <p className="text-xs text-zinc-400 mb-3 leading-relaxed">
-                  For the flexible menu you only need FTP. Weight and races are used for the detailed AI plan.
+                  Flexible menu needs FTP (required). Add weight if you have it — the AI uses Strava rides for everyone; races below only apply to the detailed week.
                 </p>
               )}
               <div className="grid grid-cols-2 gap-3 mb-3">
@@ -764,7 +780,7 @@ export default function TrainingPage() {
                 <div>
                   <div className="text-sm font-medium text-zinc-900">Keep it simple</div>
                   <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
-                    Two quality sessions + Z2 rides. Pick intervals from a mood-based menu — no rigid day-by-day AI schedule.
+                    AI builds a personalized mood-based interval menu and weekly rhythm — you choose sessions by feel, not a fixed calendar.
                   </p>
                 </div>
               </label>
@@ -851,7 +867,7 @@ export default function TrainingPage() {
             {/* primary action */}
             <button
               type="button"
-              onClick={() => (planMode === 'simple' ? showSimplePlan() : generatePlan())}
+              onClick={() => requestPlan(planMode)}
               disabled={
                 planMode === 'simple'
                   ? !ftp
@@ -859,7 +875,7 @@ export default function TrainingPage() {
               }
               className="w-full bg-[#FC4C02] text-white text-sm font-bold py-4 rounded-2xl disabled:opacity-30 hover:bg-orange-600 transition-colors shadow-sm"
             >
-              {planMode === 'simple' ? 'Show my flexible plan' : 'Generate detailed plan'}
+              {planMode === 'simple' ? 'Generate flexible menu' : 'Generate detailed plan'}
             </button>
           </div>
         </div>
@@ -976,7 +992,7 @@ export default function TrainingPage() {
           <div className="mt-6 pb-8 space-y-3">
             <button
               type="button"
-              onClick={generatePlan}
+              onClick={() => requestPlan('detailed')}
               className="w-full border border-zinc-200 text-zinc-600 text-sm font-medium py-3 rounded-2xl hover:bg-zinc-50 transition-colors"
             >
               Regenerate detailed plan
