@@ -120,6 +120,130 @@ const INSIGHT_DOT: Record<string, string> = {
   critical: 'bg-red-500',
 };
 
+type PlanMode = 'simple' | 'detailed';
+
+type SimpleMood = 'strong' | 'moderate' | 'tired';
+
+interface SimpleIntervalRow {
+  mood: SimpleMood;
+  title: string;
+  structure: string;
+  watts: string;
+  sessionTime: string;
+  why: string;
+}
+
+function buildSimpleIntervalMenu(ftp: number): SimpleIntervalRow[] {
+  const z2lo = Math.round(ftp * 0.6);
+  const z2hi = Math.round(ftp * 0.78);
+  const ssLo = Math.round(ftp * 0.88);
+  const ssHi = Math.round(ftp * 0.95);
+  const ssMid = Math.round(ftp * 0.915);
+  const overUp = Math.round(ftp * 1.05);
+  const tempoLo = Math.round(ftp * 0.76);
+  const tempoHi = Math.round(ftp * 0.9);
+  const vo2Lo = Math.round(ftp * 1.1);
+  const vo2Hi = Math.round(ftp * 1.19);
+  const punch = Math.round(ftp * 1.28);
+
+  return [
+    {
+      mood: 'strong',
+      title: 'Sweet spot blocks',
+      structure: '2×20 min (or 2×15 while building)',
+      watts: `${ssLo}–${ssHi}w`,
+      sessionTime: '~60–75 min with warm-up / cool-down',
+      why: 'High ROI for endurance: pushes FTP and efficiency without full threshold stress.',
+    },
+    {
+      mood: 'strong',
+      title: 'Threshold over-unders',
+      structure: '3×12 min: each block = 3 min steady + 1 min over, repeat 3×',
+      watts: `${ssMid}w steady / ${overUp}w over`,
+      sessionTime: '~65–80 min total',
+      why: 'Trains “recover while working” — useful on punchy climbs mid-race.',
+    },
+    {
+      mood: 'moderate',
+      title: 'Tempo cruise',
+      structure: '3×15 min',
+      watts: `${tempoLo}–${tempoHi}w`,
+      sessionTime: '~55–70 min',
+      why: 'Aerobic load without digging a deep hole. Good mid-week if you are not fully fresh.',
+    },
+    {
+      mood: 'moderate',
+      title: 'VO2 micro-intervals',
+      structure: '6×3 min hard, 3 min easy',
+      watts: `${vo2Lo}–${vo2Hi}w`,
+      sessionTime: '~60 min',
+      why: 'Short reps add up to real climbing power when you want something sharp, not long.',
+    },
+    {
+      mood: 'tired',
+      title: '30 / 30s',
+      structure: '10×30 sec on, 30 sec easy',
+      watts: `${punch}w+ (open hard, not a target to average)`,
+      sessionTime: '~35–45 min with warm-up',
+      why: 'Neuromuscular punch with little sustained fatigue — fine before a weekend long ride.',
+    },
+    {
+      mood: 'tired',
+      title: 'Optional: second Z2 instead',
+      structure: 'Replace intervals with 45–75 min easy spin',
+      watts: `${z2lo}–${z2hi}w if using power`,
+      sessionTime: 'Flexible',
+      why: 'If legs are cooked, bank easy volume instead of forcing quality.',
+    },
+  ];
+}
+
+function SimpleIntervalCard({ row }: { row: SimpleIntervalRow }) {
+  const [open, setOpen] = useState(false);
+  const moodLabel =
+    row.mood === 'strong' ? 'Good legs' : row.mood === 'moderate' ? 'Moderate' : 'Low energy';
+  const moodClass =
+    row.mood === 'strong'
+      ? 'bg-emerald-50 text-emerald-800'
+      : row.mood === 'moderate'
+        ? 'bg-amber-50 text-amber-800'
+        : 'bg-slate-100 text-slate-600';
+
+  return (
+    <div className="bg-white border border-zinc-100 rounded-2xl overflow-hidden shadow-sm">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-start gap-3 p-4 text-left"
+      >
+        <span className={`text-[10px] uppercase tracking-wide font-semibold px-2 py-1 rounded-md shrink-0 ${moodClass}`}>
+          {moodLabel}
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-semibold text-zinc-900">{row.title}</div>
+          <div className="text-xs font-mono text-orange-600 font-semibold mt-1">{row.watts}</div>
+          <div className="text-xs text-zinc-400 mt-0.5">{row.structure}</div>
+        </div>
+        <svg
+          className={`w-4 h-4 text-zinc-300 shrink-0 mt-1 transition-transform ${open ? 'rotate-180' : ''}`}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <div className="px-4 pb-4 border-t border-zinc-50 text-sm text-zinc-600 leading-relaxed">
+          <p className="mt-3">
+            <span className="text-xs font-semibold text-zinc-500">Session length · </span>
+            {row.sessionTime}
+          </p>
+          <p className="mt-2 text-xs">{row.why}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── sub-components ───────────────────────────────────────────────────────────
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
@@ -206,7 +330,7 @@ function DayCard({ day }: { day: PlanDay }) {
 
 // ── main page ────────────────────────────────────────────────────────────────
 
-type AppState = 'loading' | 'unauthenticated' | 'setup' | 'generating' | 'plan';
+type AppState = 'loading' | 'unauthenticated' | 'setup' | 'generating' | 'plan' | 'simple_plan';
 
 export default function TrainingPage() {
   const [appState, setAppState] = useState<AppState>('loading');
@@ -214,6 +338,7 @@ export default function TrainingPage() {
   const [plan, setPlan] = useState<TrainingPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeDay, setActiveDay] = useState<string | null>(null);
+  const [planMode, setPlanMode] = useState<PlanMode>('simple');
 
   // form inputs
   const [ftp, setFtp] = useState('');
@@ -250,6 +375,20 @@ export default function TrainingPage() {
     }
     fetchStrava();
   }, []);
+
+  function showSimplePlan() {
+    const f = parseInt(ftp, 10);
+    if (!Number.isFinite(f) || f < 50 || f > 600) {
+      setError('Enter a realistic FTP (watts) to see power targets.');
+      return;
+    }
+    setError(null);
+    setAppState('simple_plan');
+  }
+
+  function goSetupFromSimple() {
+    setAppState('setup');
+  }
 
   async function generatePlan() {
     if (!ftp || !weightLbs || races.length === 0) return;
@@ -392,6 +531,103 @@ export default function TrainingPage() {
     );
   }
 
+  // ── render: simple flexible menu (no AI) ────────────────────────────────
+
+  if (appState === 'simple_plan') {
+    const f = parseInt(ftp, 10);
+    const menu = buildSimpleIntervalMenu(f);
+    const z = {
+      z2lo: Math.round(f * 0.6),
+      z2hi: Math.round(f * 0.78),
+    };
+    const hours = parseFloat(hoursPerWeek) || 8;
+
+    return (
+      <div className="min-h-screen bg-zinc-50">
+        <div className="max-w-lg mx-auto px-4 py-8 pb-16">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <Link href="/" className="text-xs text-zinc-400 hover:text-zinc-600 mb-1 block">
+                ← Switchback Labs
+              </Link>
+              <h1 className="text-xl font-bold text-zinc-900">Flexible week</h1>
+              <p className="text-xs text-zinc-400 mt-0.5">FTP {f}w · ~{hours}h/week target</p>
+            </div>
+            <button
+              type="button"
+              onClick={goSetupFromSimple}
+              className="text-xs text-zinc-400 bg-zinc-100 hover:bg-zinc-200 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              Edit FTP
+            </button>
+          </div>
+
+          <div className="bg-white border border-zinc-100 rounded-2xl p-4 mb-5 shadow-sm">
+            <p className="text-sm text-zinc-700 leading-relaxed">
+              Flexible beats perfect: two quality sessions done consistently beat a rigid plan that falls apart by week three.
+              For <span className="font-medium">2–4 hour</span> XCM / gravel / marathon MTB, rotate intervals that build{' '}
+              <span className="font-medium">sustainable threshold</span> and the ability to{' '}
+              <span className="font-medium">punch climbs</span> without blowing up.
+            </p>
+          </div>
+
+          <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4 mb-5">
+            <div className="text-xs font-semibold text-orange-800 mb-2">Weekly skeleton</div>
+            <ul className="text-sm text-orange-900 space-y-2 leading-snug">
+              <li>
+                <span className="font-semibold">Tue–Fri (pick 2 days):</span> interval session — choose from the menu by how you feel.
+              </li>
+              <li>
+                <span className="font-semibold">Weekend:</span> long Z2 ride{' '}
+                <span className="font-mono text-xs">~2.5–4h @ {z.z2lo}–{z.z2hi}w</span> (feel-based is fine).
+              </li>
+              <li>
+                <span className="font-semibold">Other day:</span> easy spin or MTB{' '}
+                <span className="text-orange-800/90">60–90 min, no power target</span>.
+              </li>
+            </ul>
+            <p className="text-xs text-orange-800/80 mt-3">
+              If you only have ~{hours}h/week, protect the two quality sessions and keep everything else truly easy.
+            </p>
+          </div>
+
+          <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">Interval menu</div>
+          <p className="text-xs text-zinc-400 mb-3">Open a card before each session — pick by mood, not by calendar.</p>
+
+          <div className="space-y-2 mb-3">
+            <div className="text-[11px] font-semibold text-zinc-500 px-1">When you have legs</div>
+            {menu.filter((r) => r.mood === 'strong').map((row) => (
+              <SimpleIntervalCard key={row.title} row={row} />
+            ))}
+          </div>
+          <div className="space-y-2 mb-3">
+            <div className="text-[11px] font-semibold text-zinc-500 px-1">When you feel moderate</div>
+            {menu.filter((r) => r.mood === 'moderate').map((row) => (
+              <SimpleIntervalCard key={row.title} row={row} />
+            ))}
+          </div>
+          <div className="space-y-2 mb-6">
+            <div className="text-[11px] font-semibold text-zinc-500 px-1">When you&apos;re cooked</div>
+            {menu.filter((r) => r.mood === 'tired').map((row) => (
+              <SimpleIntervalCard key={row.title} row={row} />
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setPlanMode('detailed');
+              goSetupFromSimple();
+            }}
+            className="w-full border border-zinc-200 text-zinc-600 text-sm font-medium py-3 rounded-2xl hover:bg-zinc-50 transition-colors"
+          >
+            Switch to detailed AI plan
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // ── render: setup form ───────────────────────────────────────────────────
 
   if (appState === 'setup') {
@@ -406,7 +642,7 @@ export default function TrainingPage() {
             </Link>
             <h1 className="text-2xl font-bold text-zinc-900">Training Coach</h1>
             <p className="text-sm text-zinc-500 mt-1">
-              Powered by your Strava data + AI coaching
+              Flexible menu or a full AI week — Strava powers the detailed option.
             </p>
           </div>
 
@@ -463,6 +699,11 @@ export default function TrainingPage() {
             {/* ftp + weight */}
             <div className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm">
               <h2 className="text-sm font-semibold text-zinc-900 mb-4">Your fitness</h2>
+              {planMode === 'simple' && (
+                <p className="text-xs text-zinc-400 mb-3 leading-relaxed">
+                  For the flexible menu you only need FTP. Weight and races are used for the detailed AI plan.
+                </p>
+              )}
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <div>
                   <label className="text-xs text-zinc-500 mb-1.5 block">FTP (watts)</label>
@@ -509,7 +750,43 @@ export default function TrainingPage() {
               </div>
             </div>
 
-            {/* race calendar */}
+            {/* plan style */}
+            <div className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm space-y-3">
+              <h2 className="text-sm font-semibold text-zinc-900">Plan style</h2>
+              <label className="flex gap-3 items-start p-3 rounded-xl border border-zinc-100 cursor-pointer has-[:checked]:border-orange-400 has-[:checked]:bg-orange-50/40 transition-colors">
+                <input
+                  type="radio"
+                  name="planMode"
+                  checked={planMode === 'simple'}
+                  onChange={() => setPlanMode('simple')}
+                  className="mt-1 accent-orange-500 shrink-0"
+                />
+                <div>
+                  <div className="text-sm font-medium text-zinc-900">Keep it simple</div>
+                  <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+                    Two quality sessions + Z2 rides. Pick intervals from a mood-based menu — no rigid day-by-day AI schedule.
+                  </p>
+                </div>
+              </label>
+              <label className="flex gap-3 items-start p-3 rounded-xl border border-zinc-100 cursor-pointer has-[:checked]:border-orange-400 has-[:checked]:bg-orange-50/40 transition-colors">
+                <input
+                  type="radio"
+                  name="planMode"
+                  checked={planMode === 'detailed'}
+                  onChange={() => setPlanMode('detailed')}
+                  className="mt-1 accent-orange-500 shrink-0"
+                />
+                <div>
+                  <div className="text-sm font-medium text-zinc-900">Detailed AI plan</div>
+                  <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+                    Full week built from your Strava data, races, and FTP — more structured day cards.
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            {/* race calendar (detailed plan only) */}
+            {planMode === 'detailed' && (
             <div className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm">
               <h2 className="text-sm font-semibold text-zinc-900 mb-4">Race calendar</h2>
               <div className="space-y-2 mb-4">
@@ -569,14 +846,20 @@ export default function TrainingPage() {
                 </div>
               </div>
             </div>
+            )}
 
-            {/* generate button */}
+            {/* primary action */}
             <button
-              onClick={generatePlan}
-              disabled={!ftp || !weightLbs || races.length === 0}
+              type="button"
+              onClick={() => (planMode === 'simple' ? showSimplePlan() : generatePlan())}
+              disabled={
+                planMode === 'simple'
+                  ? !ftp
+                  : !ftp || !weightLbs || races.length === 0
+              }
               className="w-full bg-[#FC4C02] text-white text-sm font-bold py-4 rounded-2xl disabled:opacity-30 hover:bg-orange-600 transition-colors shadow-sm"
             >
-              Generate my training plan
+              {planMode === 'simple' ? 'Show my flexible plan' : 'Generate detailed plan'}
             </button>
           </div>
         </div>
@@ -606,12 +889,17 @@ export default function TrainingPage() {
               <p className="text-xs text-zinc-400">{plan.summary.phase}</p>
             </div>
             <button
-              onClick={() => setAppState('setup')}
+              onClick={() => {
+                setPlanMode('detailed');
+                setAppState('setup');
+              }}
               className="text-xs text-zinc-400 bg-zinc-100 hover:bg-zinc-200 px-3 py-1.5 rounded-lg transition-colors"
             >
               Edit inputs
             </button>
           </div>
+
+          <p className="text-xs text-zinc-400 mb-4">Detailed AI week · day-by-day schedule</p>
 
           {/* plan summary */}
           <div className="bg-white rounded-2xl border border-zinc-100 p-4 mb-5 shadow-sm">
@@ -684,13 +972,24 @@ export default function TrainingPage() {
             </div>
           )}
 
-          {/* regenerate */}
-          <div className="mt-6 pb-8">
+          {/* regenerate & flexible option */}
+          <div className="mt-6 pb-8 space-y-3">
             <button
+              type="button"
               onClick={generatePlan}
               className="w-full border border-zinc-200 text-zinc-600 text-sm font-medium py-3 rounded-2xl hover:bg-zinc-50 transition-colors"
             >
-              Regenerate plan
+              Regenerate detailed plan
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPlanMode('simple');
+                setAppState('setup');
+              }}
+              className="w-full text-zinc-500 text-sm py-2 hover:text-zinc-700 transition-colors"
+            >
+              Prefer a flexible menu instead?
             </button>
           </div>
         </div>
