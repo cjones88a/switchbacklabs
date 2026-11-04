@@ -35,9 +35,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${crimsonPro.variable}`}>
-      <head>
-        <link rel="icon" href="/favicon.ico" />
-      </head>
       <body className={`${inter.className} antialiased`}>
         {children}
       </body>

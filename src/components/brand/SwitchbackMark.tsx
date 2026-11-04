@@ -1,0 +1,59 @@
+import { useId } from "react";
+
+type Props = {
+  className?: string;
+};
+
+/**
+ * Small header mark. Same drawing as src/app/icon.svg — keep the paths in sync.
+ */
+export default function SwitchbackMark({ className }: Props) {
+  const raw = useId().replace(/:/g, "");
+  const badge = `sb-badge-${raw}`;
+  const sky = `sb-sky-${raw}`;
+
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 32 32"
+      className={className}
+      aria-hidden="true"
+    >
+      <defs>
+        <clipPath id={badge}>
+          <rect width="32" height="32" rx="7" />
+        </clipPath>
+        <linearGradient id={sky} x1="16" y1="0" x2="16" y2="15" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#f3b483" />
+          <stop offset="0.38" stopColor="#8d96a0" />
+          <stop offset="1" stopColor="#2c3238" />
+        </linearGradient>
+      </defs>
+      <g clipPath={`url(#${badge})`}>
+        <rect width="32" height="32" fill={`url(#${sky})`} />
+        <path d="M3.2 14.8 16 2.6 28.8 14.8Z" fill="#f7f5f1" />
+        <path d="M16 2.6 28.8 14.8 19.8 11.2Z" fill="#c5ccd3" />
+        <path d="M0 14.4h32V32H0Z" fill="#14181c" />
+        <path d="M2.8 15.6 7 8 11.2 15.6Z" fill="#0c0f13" />
+        <path d="M20.8 15.4 25.2 7 29.6 15.4Z" fill="#0c0f13" />
+        <path
+          d="M16 28.8C7.2 26.6 6.6 23.2 16 21.6 25.4 20 25.6 17.8 16 16.8"
+          fill="none"
+          stroke="#f7f5f1"
+          strokeWidth="3.6"
+          strokeLinecap="round"
+        />
+      </g>
+      <rect
+        x="0.75"
+        y="0.75"
+        width="30.5"
+        height="30.5"
+        rx="6.4"
+        fill="none"
+        stroke="#f6f3ec"
+        strokeWidth="1.5"
+      />
+    </svg>
+  );
+}
