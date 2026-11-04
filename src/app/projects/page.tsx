@@ -26,6 +26,15 @@ const projects: {
     featured: true,
   },
   {
+    slug: "hubspot-franchise",
+    title: "Franchise CRM on HubSpot",
+    description:
+      "A customized HubSpot instance for a multi-location franchise brand. Rent Manager, SalesMsg, Contentful, and Vagaro, with a custom pipeline, ticketing, and Claude in the instance.",
+    href: "/projects/hubspot-franchise",
+    liveHref: null,
+    liveLabel: null,
+  },
+  {
     slug: "4soh",
     title: "Horsetooth 4SOH Race Tracker",
     description:

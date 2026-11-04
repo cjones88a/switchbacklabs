@@ -15,14 +15,14 @@ export default function HomePage() {
               <Link href="/projects" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
                 Work
               </Link>
-              <Link href="#services" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                Services
+              <Link href="/how-i-work" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                How I work
               </Link>
               <Link 
                 href="#contact" 
                 className="px-4 py-2 bg-gray-900 text-white text-sm rounded-md hover:bg-gray-800 transition-colors"
               >
-                Get in touch
+                Say hi
               </Link>
             </div>
           </div>
@@ -42,8 +42,8 @@ export default function HomePage() {
               More Shipped.
             </h1>
             <p className="text-xl text-gray-600 leading-relaxed mb-12 max-w-2xl">
-              I help founders and teams turn fuzzy ideas into shipped experiences: crisp strategy, 
-              evidence-based decisions, and specs developers love.
+              A portfolio of product work, and of learning to ship it with AI.
+              Training Coach is the live app. The case studies are the write-ups.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link 
@@ -152,53 +152,29 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Services Section */}
       <section id="services" className="py-20 px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-16">
-            <p className="text-sm uppercase tracking-wider text-gray-500 mb-4">Services</p>
-            <h2 className="text-4xl md:text-5xl font-serif font-light mb-6">What I Do</h2>
+          <div className="mb-10">
+            <p className="text-sm uppercase tracking-wider text-gray-500 mb-4">How I work</p>
+            <h2 className="text-4xl md:text-5xl font-serif font-light mb-6">Decisions you can open</h2>
             <p className="text-xl text-gray-600 max-w-3xl">
-              End-to-end product leadership from strategy and discovery through delivery and launch.
+              Strategy, discovery, design, and delivery, each tied to a page on this site.
+              The other long thread is a HubSpot instance for a multi-location franchise brand.
             </p>
           </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="border-l-2 border-gray-900 pl-6">
-              <div className="text-sm text-gray-500 mb-2">01</div>
-              <h3 className="text-2xl font-serif font-light mb-4">Product Strategy</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Turn ambiguous opportunities into clear roadmaps. I help define what to build, 
-                why it matters, and how to measure success—grounded in user needs and business objectives.
-              </p>
-            </div>
-
-            <div className="border-l-2 border-gray-900 pl-6">
-              <div className="text-sm text-gray-500 mb-2">02</div>
-              <h3 className="text-2xl font-serif font-light mb-4">Technical Product Management</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Bridge the gap between vision and engineering. I write specs developers trust, 
-                make architectural decisions, and ship products that scale.
-              </p>
-            </div>
-
-            <div className="border-l-2 border-gray-900 pl-6">
-              <div className="text-sm text-gray-500 mb-2">03</div>
-              <h3 className="text-2xl font-serif font-light mb-4">Product Discovery</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Validate assumptions before building. Through rapid prototyping and user research, 
-                I help teams learn fast and avoid expensive mistakes.
-              </p>
-            </div>
-
-            <div className="border-l-2 border-gray-900 pl-6">
-              <div className="text-sm text-gray-500 mb-2">04</div>
-              <h3 className="text-2xl font-serif font-light mb-4">Team Leadership</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Build momentum and alignment. I establish product rituals, coach teams on best practices, 
-                and create environments where great work happens.
-              </p>
-            </div>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link
+              href="/how-i-work"
+              className="inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors"
+            >
+              How I work
+            </Link>
+            <Link
+              href="/projects/hubspot-franchise"
+              className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-900 rounded-md hover:border-gray-400 transition-colors"
+            >
+              HubSpot case study
+            </Link>
           </div>
         </div>
       </section>
@@ -207,17 +183,17 @@ export default function HomePage() {
       <section id="contact" className="py-20 px-6 lg:px-8 bg-gray-900 text-white">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-serif font-light mb-6">
-            Ready to ship something great?
+            Say hi
           </h2>
           <p className="text-xl text-gray-300 mb-10">
-            Let&apos;s discuss how I can help you turn your product vision into reality.
+            The work is on the site. Email if you want to talk about it.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a 
-              href="mailto:hello@switchbacklabsco.com"
+              href="mailto:switchbacklabsco@gmail.com"
               className="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 rounded-md hover:bg-gray-100 transition-colors font-medium"
             >
-              Get in touch
+              Email
             </a>
             <a 
               href="https://github.com/cjones88a"

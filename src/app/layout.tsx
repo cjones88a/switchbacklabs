@@ -16,12 +16,12 @@ const crimsonPro = Crimson_Pro({
 });
 
 export const metadata: Metadata = {
-  title: "Switchback Labs – Product Strategy & Technical PM",
-  description: "I help founders and teams turn fuzzy ideas into shipped experiences: crisp strategy, evidence-based decisions, and specs developers love.",
+  title: "Switchback Labs – Product work, built with AI",
+  description: "A portfolio of product work and of learning to ship with AI. Training Coach is live. Case studies cover the build and a HubSpot franchise CRM.",
   keywords: ["product management", "technical pm", "product strategy", "Fort Collins"],
   authors: [{ name: "Switchback Labs" }],
   openGraph: {
-    title: "Switchback Labs – Product Strategy & Technical PM",
+    title: "Switchback Labs – Product work, built with AI",
     description: "Less Talk. More Shipped.",
     type: "website",
     locale: "en_US",
