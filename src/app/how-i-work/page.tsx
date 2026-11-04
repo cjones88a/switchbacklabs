@@ -34,9 +34,15 @@ const SECTIONS: {
         <p className="mt-4">
           The checks that mattered are the ones a visitor hits. Signed out, access denied, a failed token exchange, and a missing model key each get a message. The page does not sit on a spinner.
         </p>
+        <p className="mt-4">
+          The crop budget is the same kind of loop on a different product. A grower or advisor can replace the sample assumptions, move price and yield, and send a note with that exact scenario attached. The case study is the process. No one has sent a note through it yet.
+        </p>
       </>
     ),
-    links: [{ href: "/projects/training", label: "How the coach was scoped" }],
+    links: [
+      { href: "/projects/training", label: "How the coach was scoped" },
+      { href: "/projects/crop-planning", label: "Crop planning case study" },
+    ],
   },
   {
     n: "03",
@@ -165,6 +171,9 @@ export default function HowIWorkPage() {
             <p>
               Claude also runs inside the products. It drafts the training week from the rider&apos;s recent activities, and it is integrated into the HubSpot instance. Those are different jobs. The agent writes the code. The model answers inside the product. Either way it has to run, and lint, types, tests, and the production build have to pass before it merges.
             </p>
+            <p>
+              The crop budget is the other proof from the same practice. A calculating slice, a share link, and a feedback panel are small enough to ship in the week the question comes up.
+            </p>
           </div>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/training" className="btn bg-white text-gray-900 hover:bg-gray-100">
@@ -172,6 +181,9 @@ export default function HowIWorkPage() {
             </Link>
             <Link href="/projects/training" className="btn border border-white/30 text-white hover:bg-white/10">
               Read how it was built
+            </Link>
+            <Link href="/projects/crop-planning" className="btn border border-white/30 text-white hover:bg-white/10">
+              Crop budget prototype
             </Link>
           </div>
         </div>

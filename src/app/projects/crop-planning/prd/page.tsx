@@ -16,10 +16,12 @@ export default function CropPlanningPRD() {
           </p>
           <h1 className="h2">CROP PLANNING & BUDGETING APP</h1>
           <p className="lead mt-6 max-w-[62ch]">
-            Complete product specification for MVP: user personas, feature requirements,
-            technical architecture, and success metrics.
+            The written spec for a future product. The thing you can use today is the living prototype. Any success figures below are targets for that product, not results from the prototype.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
+            <Link href="/projects/crop-planning/demo" className="btn btn-primary">
+              Launch prototype
+            </Link>
             <Link href="/projects/crop-planning" className="btn btn-pill">
               Back to overview <PillArrow />
             </Link>
