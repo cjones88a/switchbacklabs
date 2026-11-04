@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { friendlySupabaseMessage, getSupabaseAdmin } from "@/lib/supabase";
 import { traceHeaders } from "@/lib/trace";
 
 export const runtime = "nodejs";
@@ -21,7 +21,7 @@ export async function GET(req: Request) {
   
   if (seasonsError) {
     console.error(`[${t.name}] ${t.id} seasons error:`, seasonsError);
-    return NextResponse.json({ error: seasonsError.message }, { status: 500 });
+    return NextResponse.json({ error: friendlySupabaseMessage(seasonsError.message) }, { status: 500 });
   }
 
   // Race year label = the Spring/Summer calendar year.
@@ -65,7 +65,7 @@ export async function GET(req: Request) {
 
   if (error) {
     console.error(`[${t.name}] ${t.id} error:`, error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: friendlySupabaseMessage(error.message) }, { status: 500 });
   }
 
   console.log(`[${t.name}] ${t.id} found ${data?.length || 0} attempts for season keys:`, seasonKeys);

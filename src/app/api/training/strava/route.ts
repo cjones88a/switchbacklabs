@@ -18,6 +18,7 @@ async function refreshStravaToken(refreshToken: string): Promise<{
       refresh_token: refreshToken,
       grant_type: 'refresh_token',
     }),
+    signal: AbortSignal.timeout(15000),
   });
   if (!res.ok) return null;
   const data = await res.json();
@@ -29,6 +30,7 @@ async function refreshStravaToken(refreshToken: string): Promise<{
 }
 
 export async function GET() {
+  try {
   const cookieStore = await cookies();
   const riderId = cookieStore.get('rider_id')?.value;
   if (!riderId) {
@@ -69,7 +71,7 @@ export async function GET() {
   // fetch last 60 activities from Strava
   const activitiesRes = await fetch(
     'https://www.strava.com/api/v3/athlete/activities?per_page=60',
-    { headers: { Authorization: `Bearer ${accessToken}` } }
+    { headers: { Authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(15000) }
   );
 
   if (!activitiesRes.ok) {
@@ -81,6 +83,7 @@ export async function GET() {
   // fetch athlete profile
   const athleteRes = await fetch('https://www.strava.com/api/v3/athlete', {
     headers: { Authorization: `Bearer ${accessToken}` },
+    signal: AbortSignal.timeout(15000),
   });
   const athlete = athleteRes.ok ? await athleteRes.json() : null;
 
@@ -176,4 +179,13 @@ export async function GET() {
       avgWatts: Math.round(a.average_watts),
     })),
   });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'strava_error';
+    console.error('[training/strava]', message);
+    const unreachable = /fetch failed|timeout|aborted|Supabase|SUPABASE|ENOTFOUND|ECONNREFUSED/i.test(message);
+    return NextResponse.json(
+      { error: unreachable ? 'session_store_unreachable' : 'strava_error' },
+      { status: unreachable ? 503 : 500 }
+    );
+  }
 }

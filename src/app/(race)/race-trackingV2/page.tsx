@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
 import { Notice } from '@/components/ui/notice'
 import { LeaderboardTable, LeaderboardRow } from '@/components/leaderboard/LeaderboardTable'
 import MyTimes from '@/components/race/MyTimes'
+import { authErrorCopy } from '@/lib/trainingGate'
 
 
 type AttemptStatus = {
@@ -197,6 +198,13 @@ function RacePage() {
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.05] mt-6">
             Horsetooth Four-Seasons Challenge
           </h1>
+
+          {searchParams.get('error') && (
+            <Notice>
+              <span className="font-medium">{authErrorCopy(searchParams.get('error')).title}. </span>
+              {authErrorCopy(searchParams.get('error')).body}
+            </Notice>
+          )}
 
           {/* Strava connect block */}
           <div className="mt-8 space-y-4 bg-white/95 p-8 rounded-xl backdrop-blur-sm">

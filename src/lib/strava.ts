@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { env } from './env';
+import { readOAuthEnv } from './trainingGate';
 
 const STRAVA_TOKEN_URL = "https://www.strava.com/oauth/token";
 const STRAVA_API = "https://www.strava.com/api/v3";
@@ -12,9 +13,10 @@ const MAIN_SEGMENT_ID = Number(process.env.MAIN_SEGMENT_ID || process.env.NEXT_P
 
 // Legacy functions for backward compatibility
 export function getAuthorizeURL(stateObj: unknown) {
+  const cfg = readOAuthEnv();
   const url = new URL('https://www.strava.com/oauth/authorize');
-  url.searchParams.set('client_id', env.STRAVA_CLIENT_ID);
-  url.searchParams.set('redirect_uri', env.STRAVA_REDIRECT_URI);
+  url.searchParams.set('client_id', cfg.STRAVA_CLIENT_ID || env.STRAVA_CLIENT_ID);
+  url.searchParams.set('redirect_uri', cfg.STRAVA_REDIRECT_URI || env.STRAVA_REDIRECT_URI);
   url.searchParams.set('response_type', 'code');
   url.searchParams.set('approval_prompt', 'auto');
   url.searchParams.set('scope', 'read,activity:read_all');
@@ -30,16 +32,24 @@ export function decodeState<T extends object = Record<string, unknown>>(state?: 
 }
 
 export async function exchangeCodeForToken(code: string) {
+  const cfg = readOAuthEnv();
+  if (!cfg.STRAVA_CLIENT_ID || !cfg.STRAVA_CLIENT_SECRET) {
+    throw new Error('missing_strava_env');
+  }
   const res = await fetch('https://www.strava.com/oauth/token', {
     method: 'POST',
     headers: { 'Content-Type':'application/json' },
     body: JSON.stringify({
-      client_id: env.STRAVA_CLIENT_ID,
-      client_secret: env.STRAVA_CLIENT_SECRET,
+      client_id: cfg.STRAVA_CLIENT_ID,
+      client_secret: cfg.STRAVA_CLIENT_SECRET,
       code, grant_type: 'authorization_code'
-    })
+    }),
+    signal: AbortSignal.timeout(15000),
   });
-  if (!res.ok) throw new Error('token_exchange_failed');
+  if (!res.ok) {
+    console.error('[strava] token exchange failed', res.status);
+    throw new Error('token_exchange_failed');
+  }
   return res.json();
 }
 
