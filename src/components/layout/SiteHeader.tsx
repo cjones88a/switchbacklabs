@@ -10,7 +10,7 @@ export default function SiteHeader() {
         </Link>
         <nav className="hidden sm:flex items-center gap-6 lg:gap-10 text-sm">
           <Link href="/" className="hover:opacity-70">Home</Link>
-          <Link href="/services" className="hover:opacity-70">Services</Link>
+          <Link href="/how-i-work" className="hover:opacity-70">How I work</Link>
           <Link href="/projects" className="hover:opacity-70">Projects</Link>
           <Link href="/race-trackingV2" className="hover:opacity-70">Race Tracker</Link>
         </nav>
