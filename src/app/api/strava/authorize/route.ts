@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { getAuthorizeURL } from "@/lib/strava";
-import { authorizeEnvProblems, configIsBlocking, trainingErrorPath } from "@/lib/trainingGate";
+import { configIsBlocking, trainingConfigProblems, trainingErrorPath } from "@/lib/trainingGate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  const problems = authorizeEnvProblems(process.env);
+  const problems = trainingConfigProblems(process.env);
   if (configIsBlocking(problems)) {
     return NextResponse.redirect(
       new URL(trainingErrorPath("server_misconfigured", problems.missing), req.url)

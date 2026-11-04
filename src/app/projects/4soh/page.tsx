@@ -21,7 +21,7 @@ export default function P4SOH() {
             times aggregation, Supabase persistence, and a mobile-first leaderboard—deployed on Vercel.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/race-trackingV2" className="btn btn-primary">Live tracker</Link>
+            <Link href="/race-trackingV2" className="btn btn-primary">View demo</Link>
             <Link href="/projects" className="btn btn-pill">
               Back to projects <PillArrow />
             </Link>

@@ -1,22 +1,19 @@
-/** Pure decisions for the /training Strava gate. No I/O, no secrets. */
+/** Pure decisions for the training app's Strava session. No I/O, no secrets logged. */
 
-export const RACE_TRACKER_PATH = "/race-trackingV2";
-export const TRAINING_GATE_PATH = "/training";
+export const TRAINING_APP_PATH = "/training";
 
 const KNOWN_ENV = [
   "STRAVA_CLIENT_ID",
   "STRAVA_CLIENT_SECRET",
   "STRAVA_REDIRECT_URI",
-  "SUPABASE_URL",
-  "SUPABASE_SERVICE_ROLE",
+  "TRAINING_SESSION_SECRET",
 ] as const;
 
-export type KnownEnvName = (typeof KNOWN_ENV)[number];
-
-export type OAuthEnv = {
+export type TrainingEnv = {
   STRAVA_CLIENT_ID?: string;
   STRAVA_CLIENT_SECRET?: string;
   STRAVA_REDIRECT_URI?: string;
+  TRAINING_SESSION_SECRET?: string;
   SUPABASE_URL?: string;
   SUPABASE_SERVICE_ROLE?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
@@ -27,11 +24,19 @@ export type ConfigProblems = {
   details: string[];
 };
 
-export type TokenStatus = "present" | "missing" | "unreachable" | "rejected" | "unchecked";
-
-export type GateAction =
+export type TrainingEntry =
   | { type: "error"; code: string; missing: string[]; details: string[] }
-  | { type: "redirect"; to: string };
+  | { type: "signed_out" }
+  | { type: "app" };
+
+export function readOAuthEnv(env: NodeJS.ProcessEnv = process.env) {
+  return {
+    STRAVA_CLIENT_ID: normalizeEnvValue(env.STRAVA_CLIENT_ID),
+    STRAVA_CLIENT_SECRET: normalizeEnvValue(env.STRAVA_CLIENT_SECRET),
+    STRAVA_REDIRECT_URI: normalizeEnvValue(env.STRAVA_REDIRECT_URI),
+    TRAINING_SESSION_SECRET: normalizeEnvValue(env.TRAINING_SESSION_SECRET),
+  };
+}
 
 export function normalizeEnvValue(value: string | undefined): string {
   let v = (value ?? "").trim();
@@ -44,18 +49,7 @@ export function normalizeEnvValue(value: string | undefined): string {
   return v;
 }
 
-export function readOAuthEnv(env: NodeJS.ProcessEnv = process.env): OAuthEnv {
-  return {
-    STRAVA_CLIENT_ID: normalizeEnvValue(env.STRAVA_CLIENT_ID),
-    STRAVA_CLIENT_SECRET: normalizeEnvValue(env.STRAVA_CLIENT_SECRET),
-    STRAVA_REDIRECT_URI: normalizeEnvValue(env.STRAVA_REDIRECT_URI),
-    SUPABASE_URL: normalizeEnvValue(env.SUPABASE_URL),
-    SUPABASE_SERVICE_ROLE: normalizeEnvValue(env.SUPABASE_SERVICE_ROLE),
-    SUPABASE_SERVICE_ROLE_KEY: normalizeEnvValue(env.SUPABASE_SERVICE_ROLE_KEY),
-  };
-}
-
-/** What is wrong with SUPABASE_URL, or null when it is usable. */
+/** What is wrong with SUPABASE_URL, or null when it is usable. Kept for unused admin routes. */
 export function supabaseUrlIssue(url: string | undefined): string | null {
   const raw = normalizeEnvValue(url);
   if (!raw) return "SUPABASE_URL is not set.";
@@ -105,14 +99,21 @@ export function redirectUriIssue(uri: string | undefined): string | null {
   return null;
 }
 
-export function oauthConfigProblems(env: OAuthEnv | NodeJS.ProcessEnv): ConfigProblems {
+export function sessionSecretIssue(secret: string | undefined): string | null {
+  const raw = normalizeEnvValue(secret);
+  if (!raw) return "TRAINING_SESSION_SECRET is not set.";
+  if (raw.length < 32) {
+    return "TRAINING_SESSION_SECRET must be at least 32 characters. Generate one with: openssl rand -base64 32";
+  }
+  return null;
+}
+
+/** Strava app settings plus the cookie secret. Supabase is not required. */
+export function trainingConfigProblems(env: TrainingEnv | NodeJS.ProcessEnv): ConfigProblems {
   const missing: string[] = [];
   const details: string[] = [];
   const redirectUri = normalizeEnvValue(env.STRAVA_REDIRECT_URI);
-  const supabaseUrl = normalizeEnvValue(env.SUPABASE_URL);
-  const serviceRole =
-    normalizeEnvValue(env.SUPABASE_SERVICE_ROLE) ||
-    normalizeEnvValue(env.SUPABASE_SERVICE_ROLE_KEY);
+  const secret = normalizeEnvValue(env.TRAINING_SESSION_SECRET);
 
   if (!normalizeEnvValue(env.STRAVA_CLIENT_ID)) missing.push("STRAVA_CLIENT_ID");
   if (!normalizeEnvValue(env.STRAVA_CLIENT_SECRET)) missing.push("STRAVA_CLIENT_SECRET");
@@ -121,21 +122,11 @@ export function oauthConfigProblems(env: OAuthEnv | NodeJS.ProcessEnv): ConfigPr
   if (!redirectUri) missing.push("STRAVA_REDIRECT_URI");
   else if (redirectIssue) details.push(redirectIssue);
 
-  const urlIssue = supabaseUrlIssue(supabaseUrl);
-  if (!supabaseUrl) missing.push("SUPABASE_URL");
-  else if (urlIssue) details.push(urlIssue);
-
-  if (!serviceRole) missing.push("SUPABASE_SERVICE_ROLE");
+  const secretIssue = sessionSecretIssue(secret);
+  if (!secret) missing.push("TRAINING_SESSION_SECRET");
+  else if (secretIssue) details.push(secretIssue);
 
   return { missing, details };
-}
-
-export function authorizeEnvProblems(env: OAuthEnv | NodeJS.ProcessEnv): ConfigProblems {
-  const full = oauthConfigProblems(env);
-  return {
-    missing: full.missing.filter((name) => name === "STRAVA_CLIENT_ID" || name === "STRAVA_REDIRECT_URI"),
-    details: full.details.filter((line) => line.includes("STRAVA_REDIRECT_URI") || line.includes("/api/strava/callback")),
-  };
 }
 
 export function configIsBlocking(problems: ConfigProblems): boolean {
@@ -170,10 +161,10 @@ export function trainingErrorPath(code: string, missing?: string[]): string {
   params.set("error", normalizeOAuthError(code) ?? "missing_code");
   const safeMissing = sanitizeMissingList(missing?.join(","));
   if (safeMissing.length) params.set("missing", safeMissing.join(","));
-  return `${TRAINING_GATE_PATH}?${params.toString()}`;
+  return `${TRAINING_APP_PATH}?${params.toString()}`;
 }
 
-export function authorizePath(next: string = RACE_TRACKER_PATH): string {
+export function authorizePath(next: string = TRAINING_APP_PATH): string {
   const params = new URLSearchParams();
   params.set("next", next);
   return `/api/strava/authorize?${params.toString()}`;
@@ -181,14 +172,10 @@ export function authorizePath(next: string = RACE_TRACKER_PATH): string {
 
 /** Where to send the browser after a successful token exchange. */
 export function successRedirectPath(next: string | null | undefined): string {
-  const fallback = `${RACE_TRACKER_PATH}?connected=1`;
+  const fallback = `${TRAINING_APP_PATH}?connected=1`;
   if (!next || typeof next !== "string") return fallback;
   const candidate = next.trim();
   if (!isSafeNextPath(candidate)) return fallback;
-  const pathOnly = candidate.split(/[?#]/)[0].replace(/\/+$/, "") || "/";
-  // /training is this auth gate. Sending the athlete back here drops ?connected=1,
-  // which the tracker uses to import history.
-  if (pathOnly === TRAINING_GATE_PATH) return fallback;
   return candidate.includes("?") ? `${candidate}&connected=1` : `${candidate}?connected=1`;
 }
 
@@ -201,21 +188,19 @@ export function isSafeNextPath(candidate: string): boolean {
   return true;
 }
 
-export function decideTrainingGate(input: {
+export function trainingEntryDecision(input: {
   error: string | null;
   config: ConfigProblems;
-  riderId: string | null;
-  tokenStatus: TokenStatus;
-  supabaseReachable: boolean | null;
-}): GateAction {
+  hasSession: boolean;
+}): TrainingEntry {
   const error = normalizeOAuthError(input.error);
   if (error) {
-    const fromQuery = error === "server_misconfigured";
+    const fromConfig = error === "server_misconfigured";
     return {
       type: "error",
       code: error,
-      missing: fromQuery ? input.config.missing : [],
-      details: fromQuery ? input.config.details : [],
+      missing: fromConfig ? input.config.missing : [],
+      details: fromConfig ? input.config.details : [],
     };
   }
   if (configIsBlocking(input.config)) {
@@ -226,19 +211,8 @@ export function decideTrainingGate(input: {
       details: input.config.details,
     };
   }
-  if (input.riderId && input.tokenStatus === "present") {
-    return { type: "redirect", to: RACE_TRACKER_PATH };
-  }
-  if (input.riderId && input.tokenStatus === "unreachable") {
-    return { type: "error", code: "session_store_unreachable", missing: [], details: [] };
-  }
-  if (input.riderId && input.tokenStatus === "rejected") {
-    return { type: "error", code: "session_lookup_failed", missing: [], details: [] };
-  }
-  if (input.supabaseReachable === false) {
-    return { type: "error", code: "session_store_unreachable", missing: [], details: [] };
-  }
-  return { type: "redirect", to: authorizePath(RACE_TRACKER_PATH) };
+  if (!input.hasSession) return { type: "signed_out" };
+  return { type: "app" };
 }
 
 export type AuthErrorCopy = { title: string; body: string };
@@ -246,7 +220,7 @@ export type AuthErrorCopy = { title: string; body: string };
 const ERROR_COPY: Record<string, AuthErrorCopy> = {
   access_denied: {
     title: "Strava access was denied",
-    body: "The race tracker needs read-only access to your activities. Connect again and approve the request on Strava.",
+    body: "The training plan needs read-only access to your activities. Connect again and approve the request on Strava. Nothing is written to a database.",
   },
   missing_code: {
     title: "Strava did not finish connecting",
@@ -254,35 +228,23 @@ const ERROR_COPY: Record<string, AuthErrorCopy> = {
   },
   token_exchange_failed: {
     title: "Strava rejected the login",
-    body: "The authorization code could not be exchanged for a token. In the Strava API settings, set Authorization Callback Domain to switchbacklabsco.com. In Vercel (Production), set STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET, and STRAVA_REDIRECT_URI to https://switchbacklabsco.com/api/strava/callback. The secret must belong to that same Strava app.",
+    body: "The authorization code could not be exchanged for a token. In the Strava API settings, set Authorization Callback Domain to switchbacklabsco.com. In Vercel (Production), set STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET, and STRAVA_REDIRECT_URI to https://switchbacklabsco.com/api/strava/callback.",
   },
   invalid_token_response: {
     title: "Strava returned an incomplete login",
-    body: "Strava did not return an athlete profile and tokens. Approve the requested permissions (read and activity:read_all) and try again.",
+    body: "Strava did not return access and refresh tokens. Approve the requested permissions (read and activity:read_all) and try again.",
   },
-  rider_upsert_failed: {
-    title: "Your Strava profile could not be saved",
-    body: "Strava login succeeded, but the rider row could not be written. Confirm the Supabase project has a public.riders table (strava_athlete_id unique) and that SUPABASE_URL and SUPABASE_SERVICE_ROLE point at that project.",
-  },
-  token_store_failed: {
-    title: "Your Strava token could not be saved",
-    body: "Strava login succeeded, but the access token could not be written to oauth_tokens. Confirm that table exists with rider_id as the primary key, and that the service role key matches SUPABASE_URL.",
+  token_refresh_failed: {
+    title: "Your Strava session expired",
+    body: "The saved session could not be refreshed with Strava. Connect again. The previous token lived only in your browser cookie and has been dropped.",
   },
   server_misconfigured: {
     title: "Strava login is not configured",
-    body: "The server is missing a setting it needs before it can connect Strava and open the race tracker. Set the items below in Vercel → Project → Settings → Environment Variables for Production, then redeploy.",
+    body: "The training app needs Strava credentials and a session secret before it can connect. Set the items below in Vercel → Project → Settings → Environment Variables for Production, then redeploy. Tokens stay in an encrypted cookie; Supabase is not used.",
   },
   session_store_unreachable: {
-    title: "The session store is unreachable",
-    body: "The server could not reach Supabase, so it cannot save or read your Strava session. In Vercel, set SUPABASE_URL to the Project URL (https://<project-ref>.supabase.co) and SUPABASE_SERVICE_ROLE to the service_role key for that same project. If the Supabase project is paused, restore it, then try again.",
-  },
-  session_expired: {
-    title: "Your Strava session expired",
-    body: "This browser has a rider session, but there is no Strava token stored for it. Connect again to open the race tracker.",
-  },
-  session_lookup_failed: {
-    title: "Your session could not be read",
-    body: "Supabase responded, but the stored Strava session could not be read. Confirm SUPABASE_SERVICE_ROLE is the service_role key for this SUPABASE_URL, and that the oauth_tokens table exists.",
+    title: "The session could not be saved",
+    body: "The login finished, but the encrypted session cookie could not be set. Confirm TRAINING_SESSION_SECRET is set in Vercel and try again.",
   },
 };
 
@@ -291,11 +253,11 @@ export function authErrorCopy(code: string | null | undefined): AuthErrorCopy {
   return (
     ERROR_COPY[normalized] ?? {
       title: "Strava could not be connected",
-      body: "Something went wrong during Strava login. Try again. If it keeps failing, confirm the Strava callback domain and the Vercel Strava and Supabase environment variables.",
+      body: "Something went wrong during Strava login. Try again. If it keeps failing, confirm the Strava callback domain, the Strava env vars, and TRAINING_SESSION_SECRET.",
     }
   );
 }
 
 export function showConnectAction(code: string): boolean {
-  return code !== "server_misconfigured" && code !== "session_store_unreachable";
+  return code !== "server_misconfigured";
 }
