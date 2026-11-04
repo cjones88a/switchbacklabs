@@ -17,8 +17,9 @@ export default function P4SOH() {
           </p>
           <h1 className="h2">HORSETOOTH FOUR-SEASONS RACE TRACKER</h1>
           <p className="lead mt-6 max-w-[62ch]">
-            A personal project that doubles as a demo of technical PM execution: OAuth with Strava, segment effort parsing,
-            times aggregation, Supabase persistence, and a mobile-first leaderboard—deployed on Vercel.
+            The race-tracker UI, shown here as a static demo with fictional riders and times.
+            The original product used Strava OAuth, segment-effort parsing, and Supabase.
+            This copy does not call them, so the page still loads if the database is paused.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/race-trackingV2" className="btn btn-primary">View demo</Link>
@@ -35,10 +36,10 @@ export default function P4SOH() {
           <div className="max-w-3xl">
             <h2 className="h2 mb-6">Highlights</h2>
             <ul className="space-y-3 text-muted">
-              <li>• Strava OAuth (read-only), consented public leaderboard</li>
-              <li>• Same-activity rule: main segment + 2 climbs + 3 descents from the same ride</li>
-              <li>• Admin tool to add/extend eligible race windows (base + overrides)</li>
-              <li>• Next.js (App Router), Supabase, Vercel</li>
+              <li>• Static demo: bundled sample leaderboard and sample history, no runtime Strava or Supabase</li>
+              <li>• Same-activity rule, still explained in the UI: main segment + 2 climbs + 3 descents from the same ride</li>
+              <li>• Original build also had an admin tool for season windows (base + overrides)</li>
+              <li>• Next.js (App Router) on Vercel. The live database path is not wired up in this portfolio build</li>
             </ul>
 
             <h2 className="h2 mt-12 mb-6">Role</h2>

@@ -71,40 +71,84 @@ export default function HomePage() {
             <h2 className="text-4xl md:text-5xl font-serif font-light">Recent Projects</h2>
           </div>
 
-          {/* Project Card */}
-          <Link 
-            href="/race-trackingV2" 
-            className="group block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
-          >
-            <div className="aspect-[16/9] bg-gradient-to-br from-blue-500 to-purple-600 relative overflow-hidden">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-white text-center">
-                  <div className="text-6xl font-bold mb-2">4SOH</div>
-                  <div className="text-xl opacity-90">Race Tracker</div>
+          <div className="grid gap-8 lg:grid-cols-2">
+            <article className="bg-white rounded-lg overflow-hidden shadow-sm ring-1 ring-gray-900/10">
+              <div className="aspect-[16/9] bg-gradient-to-br from-gray-900 to-gray-700 relative overflow-hidden">
+                <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-medium uppercase tracking-widest text-gray-900">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#FC4C02]" aria-hidden />
+                  Live
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-white text-center">
+                    <div className="text-5xl md:text-6xl font-bold mb-2">Coach</div>
+                    <div className="text-xl opacity-90">Training</div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="p-8">
-              <h3 className="text-2xl font-serif font-light mb-4 group-hover:text-gray-600 transition-colors">
-                Four Seasons One Hour Challenge
-              </h3>
-              <p className="text-gray-600 leading-relaxed mb-6">
-                Seasonal leaderboard for the Horsetooth Four Seasons challenge. This portfolio build
-                shows the real UI on bundled sample riders, with no live Strava or database calls.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Next.js</span>
-                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">TypeScript</span>
-                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Sample data</span>
+              <div className="p-8">
+                <h3 className="text-2xl font-serif font-light mb-4">
+                  Training Coach
+                </h3>
+                <p className="text-gray-600 leading-relaxed mb-6">
+                  A weekly plan from your own Strava rides. The token stays in an encrypted
+                  browser cookie, and the page still works without a database.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Next.js</span>
+                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Strava</span>
+                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Claude</span>
+                </div>
+                <div className="mt-6 flex flex-wrap items-center gap-4">
+                  <Link
+                    href="/training"
+                    className="inline-flex items-center text-gray-900 font-medium hover:opacity-70"
+                  >
+                    Launch app
+                    <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </Link>
+                  <Link href="/projects/training" className="text-sm text-gray-500 hover:text-gray-900">
+                    Case study
+                  </Link>
+                </div>
               </div>
-              <div className="mt-6 flex items-center text-gray-900 font-medium group-hover:translate-x-2 transition-transform">
-                View project
-                <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
+            </article>
+
+            <Link
+              href="/race-trackingV2"
+              className="group block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
+            >
+              <div className="aspect-[16/9] bg-gradient-to-br from-blue-500 to-purple-600 relative overflow-hidden">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-white text-center">
+                    <div className="text-5xl md:text-6xl font-bold mb-2">4SOH</div>
+                    <div className="text-xl opacity-90">Race Tracker</div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </Link>
+              <div className="p-8">
+                <h3 className="text-2xl font-serif font-light mb-4 group-hover:text-gray-600 transition-colors">
+                  Four Seasons One Hour Challenge
+                </h3>
+                <p className="text-gray-600 leading-relaxed mb-6">
+                  Seasonal leaderboard for the Horsetooth Four Seasons challenge. This portfolio build
+                  shows the real UI on bundled sample riders, with no live Strava or database calls.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Next.js</span>
+                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">TypeScript</span>
+                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Sample data</span>
+                </div>
+                <div className="mt-6 flex items-center text-gray-900 font-medium group-hover:translate-x-2 transition-transform">
+                  View demo
+                  <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </div>
+              </div>
+            </Link>
+          </div>
         </div>
       </section>
 
