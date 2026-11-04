@@ -1,11 +1,9 @@
 // src/lib/seasons.ts
 import 'server-only';
-import { createClient as createServerClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from './supabase';
 
 export function adminSb() {
-  const url = process.env.SUPABASE_URL!;
-  const key = process.env.SUPABASE_SERVICE_ROLE!;
-  return createServerClient(url, key, { auth: { persistSession: false } });
+  return getSupabaseAdmin();
 }
 
 export async function seasonKeyFor(dateIso: string) {

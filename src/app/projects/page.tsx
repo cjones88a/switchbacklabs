@@ -11,7 +11,7 @@ const projects = [
     description: "OAuth with Strava, segment parsing, Supabase, Vercel. Mobile leaderboard with admin windows—strategy → schema → API → UI → launch.",
     href: "/projects/4soh",
     liveHref: "/race-trackingV2",
-    liveLabel: "Live tracker",
+    liveLabel: "View demo",
   },
   {
     slug: "crop-planning",

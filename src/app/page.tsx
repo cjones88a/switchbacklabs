@@ -89,15 +89,13 @@ export default function HomePage() {
                 Four Seasons One Hour Challenge
               </h3>
               <p className="text-gray-600 leading-relaxed mb-6">
-                Real-time race tracking and leaderboard platform connecting athletes through Strava. 
-                Built with Next.js, Supabase, and Strava OAuth for seamless performance tracking 
-                across multiple seasonal challenges.
+                Seasonal leaderboard for the Horsetooth Four Seasons challenge. This portfolio build
+                shows the real UI on bundled sample riders, with no live Strava or database calls.
               </p>
               <div className="flex flex-wrap gap-2">
                 <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Next.js</span>
                 <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">TypeScript</span>
-                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Supabase</span>
-                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Strava API</span>
+                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Sample data</span>
               </div>
               <div className="mt-6 flex items-center text-gray-900 font-medium group-hover:translate-x-2 transition-transform">
                 View project

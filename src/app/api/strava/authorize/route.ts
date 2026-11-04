@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 import { getAuthorizeURL } from "@/lib/strava";
+import { configIsBlocking, trainingConfigProblems, trainingErrorPath } from "@/lib/trainingGate";
+
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  if (!process.env.STRAVA_CLIENT_ID) {
-    return NextResponse.json({ error: "Missing STRAVA_CLIENT_ID in .env.local" }, { status: 500 });
+  const problems = trainingConfigProblems(process.env);
+  if (configIsBlocking(problems)) {
+    return NextResponse.redirect(
+      new URL(trainingErrorPath("server_misconfigured", problems.missing), req.url)
+    );
   }
   const { searchParams } = new URL(req.url);
   const consent_public = searchParams.get("consent_public") === "1";
