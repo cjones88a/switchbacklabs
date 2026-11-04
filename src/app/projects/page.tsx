@@ -52,14 +52,6 @@ const projects: {
     liveHref: "/projects/crop-planning/demo",
     liveLabel: "Launch prototype",
   },
-  {
-    slug: "ai-sites",
-    title: "AI-assisted Lightweight Websites",
-    description: "Templated approach to stand up clean marketing sites and internal tools quickly—Next.js, Tailwind, Vercel—with AI-assisted content and component generation.",
-    href: "/projects/ai-sites",
-    liveHref: null,
-    liveLabel: null,
-  },
 ];
 
 export default function Projects() {

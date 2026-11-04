@@ -13,11 +13,14 @@ export default function HomePage() {
               <span className="text-xl font-semibold tracking-tight">Switchback Labs</span>
             </Link>
             
-            <div className="hidden md:flex items-center space-x-8">
+            <div className="hidden md:flex items-center gap-6 xl:gap-8">
+              <Link href="/pm-of-the-future" className="text-sm text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap">
+                PM of the future
+              </Link>
               <Link href="/projects" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
                 Work
               </Link>
-              <Link href="/how-i-work" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+              <Link href="/how-i-work" className="text-sm text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap">
                 How I work
               </Link>
               <Link 
@@ -61,6 +64,26 @@ export default function HomePage() {
                 Let&apos;s talk
               </Link>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 lg:px-8 pb-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="rounded-lg bg-gray-900 text-white px-8 py-12 md:px-12 md:py-16">
+            <p className="text-sm uppercase tracking-wider text-white/50 mb-4">The PM of the Future</p>
+            <h2 className="text-3xl md:text-5xl font-serif font-light leading-tight max-w-3xl">
+              I prototype. I move fast. I empathize.
+            </h2>
+            <p className="mt-6 text-lg md:text-xl text-white/75 max-w-2xl leading-relaxed">
+              Customer need hasn&apos;t changed. The way I get there has.
+            </p>
+            <Link
+              href="/pm-of-the-future"
+              className="mt-8 inline-flex items-center justify-center px-6 py-3 bg-white text-gray-900 rounded-md hover:bg-gray-100 transition-colors font-medium"
+            >
+              Read it
+            </Link>
           </div>
         </div>
       </section>
