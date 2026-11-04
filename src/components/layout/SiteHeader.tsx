@@ -8,11 +8,12 @@ export default function SiteHeader() {
         <Link href="/" className="text-lg font-semibold shrink-0">
           <span>Switchback</span><span className="text-accent">&nbsp;Labs</span>
         </Link>
-        <nav className="hidden sm:flex items-center gap-6 lg:gap-10 text-sm">
+        <nav className="hidden sm:flex items-center gap-4 lg:gap-6 xl:gap-8 text-sm whitespace-nowrap">
           <Link href="/" className="hover:opacity-70">Home</Link>
+          <Link href="/pm-of-the-future" className="hover:opacity-70">PM of the future</Link>
           <Link href="/how-i-work" className="hover:opacity-70">How I work</Link>
           <Link href="/projects" className="hover:opacity-70">Projects</Link>
-          <Link href="/race-trackingV2" className="hover:opacity-70">Race Tracker</Link>
+          <Link href="/race-trackingV2" className="hidden lg:inline hover:opacity-70">Race Tracker</Link>
         </nav>
       </div>
     </header>

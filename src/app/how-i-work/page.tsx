@@ -174,9 +174,19 @@ export default function HowIWorkPage() {
             <p>
               The crop budget is the other proof from the same practice. A calculating slice, a share link, and a feedback panel are small enough to ship in the week the question comes up.
             </p>
+            <p>
+              The longer note is{" "}
+              <Link href="/pm-of-the-future" className="text-white underline underline-offset-4">
+                The PM of the Future
+              </Link>
+              . I prototype, I move fast, and I empathize. Customer need is the same. The path to it is shorter, and it is more fun.
+            </p>
           </div>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/training" className="btn bg-white text-gray-900 hover:bg-gray-100">
+            <Link href="/pm-of-the-future" className="btn bg-white text-gray-900 hover:bg-gray-100">
+              The PM of the Future
+            </Link>
+            <Link href="/training" className="btn border border-white/30 text-white hover:bg-white/10">
               Launch Training Coach
             </Link>
             <Link href="/projects/training" className="btn border border-white/30 text-white hover:bg-white/10">

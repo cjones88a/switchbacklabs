@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
         destination: "/how-i-work",
         permanent: true,
       },
+      {
+        source: "/projects/ai-sites",
+        destination: "/pm-of-the-future",
+        permanent: true,
+      },
     ];
   },
 };
