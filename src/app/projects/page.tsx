@@ -45,11 +45,12 @@ const projects: {
   },
   {
     slug: "crop-planning",
-    title: "Crop Planning & Budgeting App",
-    description: "Product specification for MVP: crop planning, budget tracking, and expense actuals for small to medium-sized farms.",
+    title: "Crop Planning & Budgeting",
+    description:
+      "A living budget prototype: sample cost assumptions you can edit, price and yield scenarios, and a share link so feedback points at the exact plan. No database.",
     href: "/projects/crop-planning",
-    liveHref: null,
-    liveLabel: null,
+    liveHref: "/projects/crop-planning/demo",
+    liveLabel: "Launch prototype",
   },
   {
     slug: "ai-sites",
