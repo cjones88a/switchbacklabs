@@ -137,7 +137,7 @@ export default function HubSpotFranchiseProject() {
           <div className="max-w-3xl">
             <h2 className="h2 mb-6">Role</h2>
             <p className="text-muted leading-relaxed">
-              Product management for the instance: requirements, the data model, integration design, and rollout. The background for that work is 15 years in digital agriculture at Nutrien, a lot of it inside HubSpot implementations and customizations.
+              Product manager on this instance in the current role: requirements, the data model, integration design, and rollout. Before that, 15 years in digital agriculture product work at Nutrien, including a large enterprise ERP system.
             </p>
 
             <h2 className="h2 mt-14 mb-6">What&apos;s next</h2>
