@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import SwitchbackMark from '@/components/brand/SwitchbackMark'
 
 export default function HomePage() {
   return (
@@ -7,7 +8,8 @@ export default function HomePage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center space-x-2">
+            <Link href="/" className="flex items-center gap-2.5">
+              <SwitchbackMark className="h-8 w-8" />
               <span className="text-xl font-semibold tracking-tight">Switchback Labs</span>
             </Link>
             
