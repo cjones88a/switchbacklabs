@@ -4,11 +4,32 @@ import PillArrow from "@/components/ui/PillArrow";
 
 export const metadata = { title: "Projects — Switchback Labs" };
 
-const projects = [
+const projects: {
+  slug: string;
+  title: string;
+  description: string;
+  href: string;
+  liveHref: string | null;
+  liveLabel: string | null;
+  badge?: string;
+  featured?: boolean;
+}[] = [
+  {
+    slug: "training",
+    title: "Training Coach",
+    description:
+      "A weekly plan from your own Strava rides. The token stays in an encrypted browser cookie — no database. Flexible interval menu or a day-by-day week.",
+    href: "/projects/training",
+    liveHref: "/training",
+    liveLabel: "Launch app",
+    badge: "Live",
+    featured: true,
+  },
   {
     slug: "4soh",
     title: "Horsetooth 4SOH Race Tracker",
-    description: "OAuth with Strava, segment parsing, Supabase, Vercel. Mobile leaderboard with admin windows—strategy → schema → API → UI → launch.",
+    description:
+      "Static demo of the four-seasons leaderboard. The UI runs on bundled sample riders — no live Strava or Supabase calls.",
     href: "/projects/4soh",
     liveHref: "/race-trackingV2",
     liveLabel: "View demo",
@@ -53,11 +74,25 @@ export default function Projects() {
           <ul className="divide-y divide-gray-200">
             {projects.map((project) => (
               <li key={project.slug} className="py-10 first:pt-0">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div
+                  className={
+                    project.featured
+                      ? "flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 rounded-xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm"
+                      : "flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4"
+                  }
+                >
                   <div className="min-w-0 flex-1">
-                    <h2 className="text-xl font-semibold tracking-tight text-gray-900">
-                      {project.title}
-                    </h2>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-xl font-semibold tracking-tight text-gray-900">
+                        {project.title}
+                      </h2>
+                      {project.badge && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-900 px-2 py-0.5 text-[11px] font-medium uppercase tracking-widest text-white">
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#FC4C02]" aria-hidden />
+                          {project.badge}
+                        </span>
+                      )}
+                    </div>
                     <p className="mt-2 text-muted text-sm sm:text-base leading-relaxed">
                       {project.description}
                     </p>
