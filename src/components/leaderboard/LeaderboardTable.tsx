@@ -48,15 +48,6 @@ const SEASONS: { key: 'fall_ms' | 'winter_ms' | 'spring_ms' | 'summer_ms'; climb
   { key: 'summer_ms', climb: 'summer_climb_ms', desc: 'summer_desc_ms', label: 'Summer' },
 ];
 
-function initials(name: string) {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
-}
-
 function SeasonTime({
   main,
   climb,
@@ -66,10 +57,14 @@ function SeasonTime({
   climb: number | null;
   desc: number | null;
 }) {
+  if (main == null) {
+    return <div className="text-center text-sm text-gray-400">—</div>;
+  }
+
   return (
     <div className="text-center">
       <div className="font-mono text-sm font-medium tabular-nums text-gray-900">{fmt(main)}</div>
-      <div className="mt-0.5 font-mono text-[10px] tabular-nums text-gray-500">
+      <div className="mt-1 font-mono text-xs tabular-nums text-gray-600">
         <span className="sr-only">climb </span>
         {fmt(climb)}
         <span aria-hidden> · </span>
@@ -121,16 +116,16 @@ export function LeaderboardTable({
         scope="col"
         aria-sort={active ? (asc ? 'ascending' : 'descending') : 'none'}
         className={cn(
-          'px-3 py-3 text-left align-bottom',
-          emphasize && 'bg-gray-900/[0.04]'
+          'bg-gray-100 px-3 py-3.5 text-center align-bottom',
+          emphasize && 'bg-amber-50'
         )}
       >
         <button
           type="button"
           className={cn(
-            'inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-wider',
+            'inline-flex w-full items-center justify-center gap-1.5 text-xs font-semibold uppercase tracking-wider',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/30 rounded',
-            active ? 'text-gray-900' : 'text-gray-500 hover:text-gray-800'
+            active ? 'text-gray-900' : 'text-gray-700 hover:text-gray-900'
           )}
           onClick={() => {
             if (sortKey === k) setAsc((s) => !s);
@@ -142,8 +137,8 @@ export function LeaderboardTable({
           aria-label={`Sort by ${typeof children === 'string' ? children : 'column'}`}
         >
           {children}
-          <span aria-hidden className={cn('text-[10px]', active ? 'opacity-80' : 'opacity-35')}>
-            {active ? (asc ? '▲' : '▼') : '↕'}
+          <span aria-hidden className={cn('text-xs', active ? 'text-gray-900' : 'text-gray-400')}>
+            {active ? (asc ? '↑' : '↓') : '↕'}
           </span>
         </button>
       </th>
@@ -151,18 +146,24 @@ export function LeaderboardTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/80 bg-white/80 shadow-[0_12px_40px_-24px_rgba(17,24,39,0.45)] backdrop-blur-md">
-      <p className="border-b border-gray-200/70 px-4 py-3 text-xs text-gray-500 sm:px-5">
+    <div className="w-full overflow-hidden rounded-2xl border border-gray-200 bg-white/95 shadow-[0_10px_30px_-16px_rgba(17,24,39,0.28)] backdrop-blur-sm">
+      <p className="border-b border-gray-200 px-4 py-3 text-sm text-gray-700 sm:px-5">
         Each season is the ride time, then climb · descent.
         <span className="sm:hidden"> Scroll sideways for the other seasons.</span>
       </p>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] border-separate border-spacing-0 text-sm">
+        <table className="w-full min-w-[880px] table-fixed border-separate border-spacing-0 text-sm">
+          <colgroup>
+            <col className="w-[24%]" />
+            <col span={4} />
+            <col className="w-[12%]" />
+            <col span={2} />
+          </colgroup>
           <thead>
-            <tr className="border-b border-gray-200/80">
+            <tr>
               <th
                 scope="col"
-                className="sticky left-0 z-20 bg-white/95 px-4 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-gray-500 shadow-[4px_0_8px_-6px_rgba(17,24,39,0.45)] backdrop-blur-md sm:px-5"
+                className="sticky left-0 z-20 border-r border-gray-200 bg-gray-100 px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-700 sm:px-5"
               >
                 Rider
               </th>
@@ -188,9 +189,12 @@ export function LeaderboardTable({
             ) : (
               sorted.map((r, i) => {
                 const name = r.rider?.name ?? '—';
+                const seasonsRidden = [r.fall_ms, r.winter_ms, r.spring_ms, r.summer_ms].filter((ms) => ms != null).length;
+                const leader = i === 0 && sortKey === 'total_ms' && asc && seasonsRidden === 4;
+                const surface = leader ? 'bg-amber-50 group-hover:bg-amber-100' : i % 2 === 1 ? 'bg-gray-50 group-hover:bg-gray-100' : 'bg-white group-hover:bg-gray-50';
                 return (
                   <tr key={`${name}-${i}`} className="group">
-                    <td className="sticky left-0 z-10 border-t border-gray-200/70 bg-white/95 px-4 py-3 shadow-[4px_0_8px_-6px_rgba(17,24,39,0.45)] backdrop-blur-md group-hover:bg-white sm:px-5">
+                    <td className={cn('sticky left-0 z-10 border-r border-t border-gray-200 px-4 py-4 sm:px-5', surface)}>
                       <div className="flex items-center gap-3 whitespace-nowrap">
                         {r.rider?.avatar ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -202,17 +206,20 @@ export function LeaderboardTable({
                           />
                         ) : (
                           <span
+                            className={cn(
+                              'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums',
+                              leader ? 'bg-gray-900 text-white' : 'bg-gray-200 text-gray-800'
+                            )}
                             aria-hidden
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-900/10 text-[11px] font-medium text-gray-800"
                           >
-                            {initials(name)}
+                            {i + 1}
                           </span>
                         )}
                         <span className="font-medium text-gray-900">{name}</span>
                       </div>
                     </td>
                     {SEASONS.map((season) => (
-                      <td key={season.key} className="border-t border-gray-200/70 px-3 py-3">
+                      <td key={season.key} className={cn('border-t border-gray-200 px-3 py-4', surface)}>
                         <SeasonTime
                           main={r[season.key] as number | null}
                           climb={r[season.climb] as number | null}
@@ -220,13 +227,13 @@ export function LeaderboardTable({
                         />
                       </td>
                     ))}
-                    <td className="border-t border-gray-200/70 bg-gray-900/[0.04] px-3 py-3 text-center font-mono text-sm font-semibold tabular-nums text-gray-900">
+                    <td className={cn('border-t border-gray-200 px-3 py-4 text-center font-mono text-sm font-semibold tabular-nums text-gray-900', leader ? 'bg-amber-100 group-hover:bg-amber-100' : surface)}>
                       {fmt(r.total_ms)}
                     </td>
-                    <td className="border-t border-gray-200/70 px-3 py-3 text-center font-mono text-sm tabular-nums text-gray-700">
+                    <td className={cn('border-t border-gray-200 px-3 py-4 text-center font-mono text-sm tabular-nums text-gray-700', surface)}>
                       {fmt(r.climb_sum_ms)}
                     </td>
-                    <td className="border-t border-gray-200/70 px-3 py-3 text-center font-mono text-sm tabular-nums text-gray-700">
+                    <td className={cn('border-t border-gray-200 px-3 py-4 text-center font-mono text-sm tabular-nums text-gray-700', surface)}>
                       {fmt(r.desc_sum_ms)}
                     </td>
                   </tr>
