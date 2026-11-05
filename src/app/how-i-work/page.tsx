@@ -8,16 +8,28 @@ type WorkLink = { href: string; label: string; external?: boolean };
 const SECTIONS: {
   n: string;
   title: string;
+  call: React.ReactNode;
   body: React.ReactNode;
   links: WorkLink[];
 }[] = [
   {
     n: "01",
     title: "Strategy and scoping",
+    call: (
+      <p>
+        A personal week of training was worth shipping. A database of riders was not.
+      </p>
+    ),
     body: (
       <>
         <p>
-          The scope cut on Training Coach was the database. An earlier race tracker stored Strava tokens in Supabase, and the free project kept pausing, so a login that depended on it failed even when the environment variables were set. The coach keeps the token in an encrypted browser cookie and reads activities from Strava for that session. The system got smaller, and the app stays up without a database.
+          A rider who already logs rides on Strava still has to turn that history into a week. A full coaching product — accounts, saved plans, tokens stored on a server — is a lot of system for a plan you regenerate when the week changes.
+        </p>
+        <p className="mt-4">
+          I considered keeping the Strava token in Supabase, the way an earlier race tracker did. That free project kept pausing, and a login that depended on it failed even when the environment was set. I rejected that dependency. Success was narrower: the plan uses the rider&apos;s own recent rides, and the app still opens with no database.
+        </p>
+        <p className="mt-4">
+          What shipped is Training Coach. The token stays in an encrypted browser cookie for that session, and the week is read from Strava then. There is no saved history of plans. The session ends with the cookie.
         </p>
       </>
     ),
@@ -26,16 +38,21 @@ const SECTIONS: {
   {
     n: "02",
     title: "Discovery and validation",
+    call: (
+      <p>
+        The coach is for one rider who already has the rides. I only ask for what the plan uses.
+      </p>
+    ),
     body: (
       <>
         <p>
-          Training Coach is scoped to one rider who already logs rides on Strava and wants a week of training from that history, plus a little racing context. The form asks for what the plan actually uses: FTP, hours per week, racing type, course style, and, for a day-by-day week, weight and at least one race.
+          This write-up is not a research study. The person is someone who logs on Strava and wants a week from that history, plus a little racing context. I did not open with a profile. The form asks for FTP, hours per week, racing type, and course style. A day-by-day week also asks for weight and at least one race, because that plan cannot be written without them.
         </p>
         <p className="mt-4">
-          The checks that mattered are the ones a visitor hits. Signed out, access denied, a failed token exchange, and a missing model key each get a message. The page does not sit on a spinner.
+          What I threw out on the page itself is a spinner that pretends the data is coming. Signed out, access denied, a failed token exchange, and a missing model key each say what broke.
         </p>
         <p className="mt-4">
-          The crop budget is the same kind of loop on a different product. A grower or advisor can replace the sample assumptions, move price and yield, and send a note with that exact scenario attached. The case study is the process. No one has sent a note through it yet.
+          The crop budget tests a different call. A static mock cannot answer what happens if the price moves. A grower or advisor can edit the sample assumptions, move price and yield, and send a note with that exact scenario attached. No one has sent a note through it yet. Until someone does, I do not treat the prototype as validated.
         </p>
       </>
     ),
@@ -47,13 +64,22 @@ const SECTIONS: {
   {
     n: "03",
     title: "Design",
+    call: (
+      <p>
+        I kept two ways to use the week, and I cut the rest of a coaching product.
+      </p>
+    ),
     body: (
       <>
         <p>
+          The default is a flexible menu. Options are tagged by how the day feels, including an easy one, so the rider is not forced onto a calendar. The other choice is a Monday-through-Sunday week, with zones, fueling notes, and a note on the week after, for when they want the schedule.
+        </p>
+        <p className="mt-4">
+          I did not build accounts, a library of past plans, or a way back to last week&apos;s draft.{" "}
           <Link href="/training" className="text-gray-900 underline underline-offset-4">
             /training
           </Link>{" "}
-          is a short path: connect Strava, see the last 30 days of rides, then choose a plan. The default is a flexible interval menu, with options tagged by how the day feels, including an easy one. The other choice is a day-by-day week, Monday through Sunday, with zones, fueling notes, and a note on the week after.
+          is a short path on purpose: connect Strava, see the last 30 days of rides, then choose a plan.
         </p>
       </>
     ),
@@ -65,20 +91,25 @@ const SECTIONS: {
   {
     n: "04",
     title: "Delivery and quality",
+    call: (
+      <p>
+        If the page cannot say what broke, it is not done.
+      </p>
+    ),
     body: (
       <>
         <p>
-          Changes land as pull requests on the{" "}
+          Production <span className="text-gray-800">/training</span> used to stop on a prerendered spinner that said it was loading Strava data. A denied login was reported as a missing code, and the token was written to Supabase. That project was paused, so the exchange never became a session. Pull request 7 seals the token in the cookie and returns a specific error instead.
+        </p>
+        <p className="mt-4">
+          That is how a bug gets closed here. The change is a pull request on the{" "}
           <a
             href="https://github.com/cjones88a/switchbacklabs"
             className="text-gray-900 underline underline-offset-4"
           >
             public repo
           </a>
-          . Production <span className="text-gray-800">/training</span> used to stop on a prerendered spinner that said it was loading Strava data. A denied login was reported as a missing code, and the token was written to Supabase. That project was paused, so the exchange never became a session. Pull request 7 seals the token in the cookie and returns a specific error instead.
-        </p>
-        <p className="mt-4">
-          Lint, typecheck, tests, and a production build run before those pull requests merge.
+          , and it does not merge until lint, typecheck, tests, and a production build pass.
         </p>
       </>
     ),
@@ -93,10 +124,21 @@ const SECTIONS: {
   {
     n: "05",
     title: "Systems and CRM",
+    call: (
+      <p>
+        The franchise needed one place for the commercial work, not another tool that ignored the ones staff already used.
+      </p>
+    ),
     body: (
       <>
         <p>
-          The other long thread is HubSpot. For a multi-location franchise brand, the instance connects Rent Manager, SalesMsg, Contentful, and Vagaro, with a custom deal pipeline, a custom ticketing system, custom objects synced to the property system, and Claude inside the instance. The work is ongoing.
+          Leases, texts, the website, and appointments lived in separate products, and there was no shared deal path or ticket path. I shaped a HubSpot instance around that operation, in the current role.
+        </p>
+        <p className="mt-4">
+          Rent Manager, SalesMsg, Contentful, and Vagaro connect through HubSpot. The pipeline follows this franchise&apos;s motion rather than a default sales path. Tickets sit with the deal and the property data. Custom objects sync with Rent Manager, so a deal can sit next to the location. Claude is in the instance the team uses.
+        </p>
+        <p className="mt-4">
+          There is no public outcome number for this. The work is still open. The next step is to turn this instance into a reusable pattern for other franchises, adapted per brand.
         </p>
       </>
     ),
@@ -116,7 +158,7 @@ export default function HowIWorkPage() {
           </p>
           <h1 className="h2">HOW I WORK</h1>
           <p className="lead mt-6 max-w-[68ch]">
-            Product decisions, shown on the things that shipped. Each section below is a paragraph and a link to the page that holds the evidence.
+            Each section opens with a call I made, then the page that holds the evidence.
           </p>
         </div>
       </section>
@@ -130,6 +172,7 @@ export default function HowIWorkPage() {
                 <h2 className="mt-2 font-serif text-2xl md:text-3xl font-light tracking-tight text-gray-900">
                   {section.title}
                 </h2>
+                <div className="mt-4 leading-relaxed text-gray-900">{section.call}</div>
                 <div className="mt-4 text-muted leading-relaxed">{section.body}</div>
                 <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2">
                   {section.links.map((link) =>
@@ -164,17 +207,17 @@ export default function HowIWorkPage() {
           <h2 className="font-serif text-3xl md:text-4xl font-light tracking-tight">
             Building with AI
           </h2>
-          <div className="mt-6 max-w-[68ch] space-y-4 text-lg text-white/80 leading-relaxed">
-            <p>
-              I am a product manager who ships the software with AI coding agents. This site is the proof. Training Coach is a working app: Strava sign-in, a sealed session, a plan form, and error states that say what broke. The case studies are the write-ups of those decisions.
+          <div className="mt-6 max-w-[68ch] space-y-4 text-lg leading-relaxed">
+            <p className="text-white">
+              I decide what the slice has to answer. The coding agent and the model are how that answer gets in front of someone.
             </p>
-            <p>
-              Claude also runs inside the products. It drafts the training week from the rider&apos;s recent activities, and it is integrated into the HubSpot instance. Those are different jobs. The agent writes the code. The model answers inside the product. Either way it has to run, and lint, types, tests, and the production build have to pass before it merges.
+            <p className="text-white/80">
+              Those are different jobs. The agent writes the code: the coach, the crop budget, and this site. The model answers inside the product. Claude drafts the training week from the rider&apos;s recent rides, and Claude sits in the HubSpot instance. I do not treat either as the product.
             </p>
-            <p>
-              The crop budget is the other proof from the same practice. A calculating slice, a share link, and a feedback panel are small enough to ship in the week the question comes up.
+            <p className="text-white/80">
+              The judgment stays on the call. The coach still has to say what broke when a token or a key is missing. The crop numbers stay labeled as sample assumptions, not a market. That budget was small enough to ship in the week the question came up: a plan that calculates, a share link, and a place to send a note. None of it merges until lint, types, tests, and the production build pass.
             </p>
-            <p>
+            <p className="text-white/80">
               The longer note is{" "}
               <Link href="/pm-of-the-future" className="text-white underline underline-offset-4">
                 The PM of the Future
