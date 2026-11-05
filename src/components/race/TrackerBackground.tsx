@@ -6,10 +6,9 @@
  * - aria-hidden so it's ignored by assistive tech
  */
 export default function TrackerBackground() {
-  console.log("[TrackerBackground] Rendering background");
-  
   return (
     <div
+      aria-hidden="true"
       style={{
         position: 'fixed',
         top: 0,

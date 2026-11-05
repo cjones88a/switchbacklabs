@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { TableWrap, T, TH, TD } from '@/components/ui/table';
 import { cn } from '@/lib/cn';
 
 export type LeaderboardRow = {
@@ -42,6 +41,45 @@ type SortKey =
   | 'climb_sum_ms'
   | 'desc_sum_ms';
 
+const SEASONS: { key: 'fall_ms' | 'winter_ms' | 'spring_ms' | 'summer_ms'; climb: keyof LeaderboardRow; desc: keyof LeaderboardRow; label: string }[] = [
+  { key: 'fall_ms', climb: 'fall_climb_ms', desc: 'fall_desc_ms', label: 'Fall' },
+  { key: 'winter_ms', climb: 'winter_climb_ms', desc: 'winter_desc_ms', label: 'Winter' },
+  { key: 'spring_ms', climb: 'spring_climb_ms', desc: 'spring_desc_ms', label: 'Spring' },
+  { key: 'summer_ms', climb: 'summer_climb_ms', desc: 'summer_desc_ms', label: 'Summer' },
+];
+
+function initials(name: string) {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
+}
+
+function SeasonTime({
+  main,
+  climb,
+  desc,
+}: {
+  main: number | null;
+  climb: number | null;
+  desc: number | null;
+}) {
+  return (
+    <div className="text-center">
+      <div className="font-mono text-sm font-medium tabular-nums text-gray-900">{fmt(main)}</div>
+      <div className="mt-0.5 font-mono text-[10px] tabular-nums text-gray-500">
+        <span className="sr-only">climb </span>
+        {fmt(climb)}
+        <span aria-hidden> · </span>
+        <span className="sr-only">descent </span>
+        {fmt(desc)}
+      </div>
+    </div>
+  );
+}
+
 export function LeaderboardTable({
   rows,
   defaultSort = 'total_ms',
@@ -49,8 +87,6 @@ export function LeaderboardTable({
   rows: LeaderboardRow[];
   defaultSort?: SortKey;
 }) {
-  // Version check: 2025-01-22-v3
-  console.log('LeaderboardTable v3 loaded - avatar should be h-8 w-8');
   const [sortKey, setSortKey] = React.useState<SortKey>(defaultSort);
   const [asc, setAsc] = React.useState(true);
 
@@ -73,65 +109,79 @@ export function LeaderboardTable({
   function Header({
     k,
     children,
-    className,
+    emphasize,
   }: {
     k: SortKey;
     children: React.ReactNode;
-    className?: string;
+    emphasize?: boolean;
   }) {
     const active = sortKey === k;
     return (
-      <TH className={className}>
+      <th
+        scope="col"
+        aria-sort={active ? (asc ? 'ascending' : 'descending') : 'none'}
+        className={cn(
+          'px-3 py-3 text-left align-bottom',
+          emphasize && 'bg-gray-900/[0.04]'
+        )}
+      >
         <button
+          type="button"
           className={cn(
-            'inline-flex items-center gap-1 text-left w-full',
-            active && 'text-black'
+            'inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-wider',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/30 rounded',
+            active ? 'text-gray-900' : 'text-gray-500 hover:text-gray-800'
           )}
           onClick={() => {
             if (sortKey === k) setAsc((s) => !s);
             else {
               setSortKey(k);
-              setAsc(true); // always start ascending (A→Z for names, fastest first for times)
+              setAsc(true);
             }
           }}
-          title="Sort"
+          aria-label={`Sort by ${typeof children === 'string' ? children : 'column'}`}
         >
           {children}
-          <span
-            aria-hidden
-            className={cn(
-              'text-[11px] opacity-50',
-              active ? 'opacity-80' : 'opacity-30'
-            )}
-          >
+          <span aria-hidden className={cn('text-[10px]', active ? 'opacity-80' : 'opacity-35')}>
             {active ? (asc ? '▲' : '▼') : '↕'}
           </span>
         </button>
-      </TH>
+      </th>
     );
   }
 
   return (
-    <TableWrap>
-      {/* standardized column widths to accommodate climb/descent times */}
-      <div className="min-w-[900px]">
-        <T>
+    <div className="overflow-hidden rounded-2xl border border-white/80 bg-white/80 shadow-[0_12px_40px_-24px_rgba(17,24,39,0.45)] backdrop-blur-md">
+      <p className="border-b border-gray-200/70 px-4 py-3 text-xs text-gray-500 sm:px-5">
+        Each season is the ride time, then climb · descent.
+        <span className="sm:hidden"> Scroll sideways for the other seasons.</span>
+      </p>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[760px] border-separate border-spacing-0 text-sm">
           <thead>
-            <tr>
-              <TH className="w-32">Rider</TH>
-              <Header k="fall_ms" className="w-24">Fall</Header>
-              <Header k="winter_ms" className="w-24">Winter</Header>
-              <Header k="spring_ms" className="w-24">Spring</Header>
-              <Header k="summer_ms" className="w-24">Summer</Header>
-              <Header k="total_ms" className="w-20">Total</Header>
-              <Header k="climb_sum_ms" className="w-20">Climb Sum</Header>
-              <Header k="desc_sum_ms" className="w-20">Descent Sum</Header>
+            <tr className="border-b border-gray-200/80">
+              <th
+                scope="col"
+                className="sticky left-0 z-20 bg-white/95 px-4 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-gray-500 shadow-[4px_0_8px_-6px_rgba(17,24,39,0.45)] backdrop-blur-md sm:px-5"
+              >
+                Rider
+              </th>
+              {SEASONS.map((season) => (
+                <Header key={season.key} k={season.key}>
+                  {season.label}
+                </Header>
+              ))}
+              <Header k="total_ms" emphasize>
+                Total
+              </Header>
+              <Header k="climb_sum_ms">Climb</Header>
+              <Header k="desc_sum_ms">Descent</Header>
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-200">
+          <tbody>
             {sorted.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-sm text-neutral-500">
+                <td colSpan={8} className="px-5 py-10 text-sm text-gray-500">
                   No entries yet for this season.
                 </td>
               </tr>
@@ -139,98 +189,53 @@ export function LeaderboardTable({
               sorted.map((r, i) => {
                 const name = r.rider?.name ?? '—';
                 return (
-                  <tr key={`${name}-${i}`} className="hover:bg-neutral-50">
-                    <TD>
-                      <div className="flex items-center">
+                  <tr key={`${name}-${i}`} className="group">
+                    <td className="sticky left-0 z-10 border-t border-gray-200/70 bg-white/95 px-4 py-3 shadow-[4px_0_8px_-6px_rgba(17,24,39,0.45)] backdrop-blur-md group-hover:bg-white sm:px-5">
+                      <div className="flex items-center gap-3 whitespace-nowrap">
                         {r.rider?.avatar ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={r.rider.avatar}
                             alt=""
-                            className="h-8 w-8 rounded-full object-cover ring-1 ring-black/10 mr-5"
-                            style={{width: '32px', height: '32px', marginRight: '20px'}}
+                            className="h-8 w-8 rounded-full object-cover ring-1 ring-black/10"
                             loading="lazy"
                           />
                         ) : (
-                          <div className="h-8 w-8 rounded-full bg-neutral-200 ring-1 ring-black/10 mr-5" style={{width: '32px', height: '32px', marginRight: '20px'}} />
+                          <span
+                            aria-hidden
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-900/10 text-[11px] font-medium text-gray-800"
+                          >
+                            {initials(name)}
+                          </span>
                         )}
-                        <span className="font-bold text-neutral-900" style={{fontWeight: 'bold'}}>{name}</span>
+                        <span className="font-medium text-gray-900">{name}</span>
                       </div>
-                    </TD>
-                    <TD>
-                      <div className="text-center">
-                        <div className="font-mono font-bold text-base mb-1">
-                          {fmt(r.fall_ms)}
-                        </div>
-                        <div className="flex justify-center gap-1 text-[10px]">
-                          <span className="font-mono font-semibold text-neutral-600">
-                            {fmt(r.fall_climb_ms)}
-                          </span>
-                          <span className="text-neutral-400">|</span>
-                          <span className="font-mono font-semibold text-neutral-500">
-                            {fmt(r.fall_desc_ms)}
-                          </span>
-                        </div>
-                      </div>
-                    </TD>
-                    <TD>
-                      <div className="text-center">
-                        <div className="font-mono font-bold text-base mb-1">
-                          {fmt(r.winter_ms)}
-                        </div>
-                        <div className="flex justify-center gap-1 text-[10px]">
-                          <span className="font-mono font-semibold text-neutral-600">
-                            {fmt(r.winter_climb_ms)}
-                          </span>
-                          <span className="text-neutral-400">|</span>
-                          <span className="font-mono font-semibold text-neutral-500">
-                            {fmt(r.winter_desc_ms)}
-                          </span>
-                        </div>
-                      </div>
-                    </TD>
-                    <TD>
-                      <div className="text-center">
-                        <div className="font-mono font-bold text-base mb-1">
-                          {fmt(r.spring_ms)}
-                        </div>
-                        <div className="flex justify-center gap-1 text-[10px]">
-                          <span className="font-mono font-semibold text-neutral-600">
-                            {fmt(r.spring_climb_ms)}
-                          </span>
-                          <span className="text-neutral-400">|</span>
-                          <span className="font-mono font-semibold text-neutral-500">
-                            {fmt(r.spring_desc_ms)}
-                          </span>
-                        </div>
-                      </div>
-                    </TD>
-                    <TD>
-                      <div className="text-center">
-                        <div className="font-mono font-bold text-base mb-1">
-                          {fmt(r.summer_ms)}
-                        </div>
-                        <div className="flex justify-center gap-1 text-[10px]">
-                          <span className="font-mono font-semibold text-neutral-600">
-                            {fmt(r.summer_climb_ms)}
-                          </span>
-                          <span className="text-neutral-400">|</span>
-                          <span className="font-mono font-semibold text-neutral-500">
-                            {fmt(r.summer_desc_ms)}
-                          </span>
-                        </div>
-                      </div>
-                    </TD>
-                    <TD mono className="font-bold text-base">{fmt(r.total_ms)}</TD>
-                    <TD mono className="font-semibold text-sm">{fmt(r.climb_sum_ms)}</TD>
-                    <TD mono className="font-semibold text-sm">{fmt(r.desc_sum_ms)}</TD>
+                    </td>
+                    {SEASONS.map((season) => (
+                      <td key={season.key} className="border-t border-gray-200/70 px-3 py-3">
+                        <SeasonTime
+                          main={r[season.key] as number | null}
+                          climb={r[season.climb] as number | null}
+                          desc={r[season.desc] as number | null}
+                        />
+                      </td>
+                    ))}
+                    <td className="border-t border-gray-200/70 bg-gray-900/[0.04] px-3 py-3 text-center font-mono text-sm font-semibold tabular-nums text-gray-900">
+                      {fmt(r.total_ms)}
+                    </td>
+                    <td className="border-t border-gray-200/70 px-3 py-3 text-center font-mono text-sm tabular-nums text-gray-700">
+                      {fmt(r.climb_sum_ms)}
+                    </td>
+                    <td className="border-t border-gray-200/70 px-3 py-3 text-center font-mono text-sm tabular-nums text-gray-700">
+                      {fmt(r.desc_sum_ms)}
+                    </td>
                   </tr>
                 );
               })
             )}
           </tbody>
-        </T>
+        </table>
       </div>
-    </TableWrap>
+    </div>
   );
 }

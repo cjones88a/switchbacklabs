@@ -2,108 +2,123 @@
 import * as React from "react";
 import { cn } from "@/lib/cn";
 
-export function Tabs({ children, defaultValue, value, onValueChange }: {
+type TabsContextValue = {
+  value: string;
+  setValue: (value: string) => void;
+  baseId: string;
+};
+
+const TabsContext = React.createContext<TabsContextValue | null>(null);
+
+function useTabs() {
+  const ctx = React.useContext(TabsContext);
+  if (!ctx) throw new Error("Tabs components must be used inside Tabs");
+  return ctx;
+}
+
+export function Tabs({
+  children,
+  defaultValue,
+  value,
+  onValueChange,
+  className,
+}: {
   children: React.ReactNode;
   defaultValue?: string;
   value?: string;
   onValueChange?: (value: string) => void;
+  className?: string;
 }) {
-  const [activeTab, setActiveTab] = React.useState(defaultValue || "");
-  
-  const currentValue = value !== undefined ? value : activeTab;
-  
-  const handleValueChange = (newValue: string) => {
-    if (value === undefined) {
-      setActiveTab(newValue);
-    }
-    onValueChange?.(newValue);
+  const [uncontrolled, setUncontrolled] = React.useState(defaultValue || "");
+  const baseId = React.useId();
+  const current = value !== undefined ? value : uncontrolled;
+
+  const setValue = (next: string) => {
+    if (value === undefined) setUncontrolled(next);
+    onValueChange?.(next);
   };
 
   return (
-    <div className="w-full">
-      {React.Children.map(children, (child) => {
-        if (React.isValidElement(child)) {
-          return React.cloneElement(child, { 
-            activeValue: currentValue, 
-            onValueChange: handleValueChange 
-          } as React.HTMLAttributes<HTMLElement>);
-        }
-        return child;
-      })}
-    </div>
+    <TabsContext.Provider value={{ value: current, setValue, baseId }}>
+      <div className={cn("w-full", className)}>{children}</div>
+    </TabsContext.Provider>
   );
 }
 
-export function TabsList({ children, className, activeValue, onValueChange }: {
+export function TabsList({
+  children,
+  className,
+}: {
   children: React.ReactNode;
   className?: string;
-  activeValue?: string;
-  onValueChange?: (value: string) => void;
 }) {
   return (
     <div
+      role="tablist"
       className={cn(
-        "inline-flex gap-2 rounded-full bg-zinc-100 p-1",
+        "inline-flex gap-1 rounded-full border border-white/80 bg-white/70 p-1 shadow-sm backdrop-blur-md",
         className
       )}
     >
-      {React.Children.map(children, (child) => {
-        if (React.isValidElement(child)) {
-        return React.cloneElement(child, { 
-          activeValue, 
-          onValueChange 
-        } as React.HTMLAttributes<HTMLElement>);
-        }
-        return child;
-      })}
+      {children}
     </div>
   );
 }
 
-export function TabsTrigger({ 
-  children, 
-  value, 
-  className, 
-  activeValue, 
-  onValueChange 
+export function TabsTrigger({
+  children,
+  value,
+  className,
 }: {
   children: React.ReactNode;
   value: string;
   className?: string;
-  activeValue?: string;
-  onValueChange?: (value: string) => void;
 }) {
-  const isActive = activeValue === value;
-  
+  const tabs = useTabs();
+  const selected = tabs.value === value;
+
   return (
     <button
+      type="button"
+      role="tab"
+      id={`${tabs.baseId}-tab-${value}`}
+      aria-selected={selected}
+      aria-controls={`${tabs.baseId}-panel-${value}`}
+      tabIndex={selected ? 0 : -1}
       className={cn(
-        "rounded-full px-4 py-1.5 text-sm font-medium text-zinc-700 data-[state=active]:bg-white data-[state=active]:shadow data-[state=active]:text-zinc-900 transition",
-        isActive && "bg-white shadow text-zinc-900",
+        "rounded-full px-4 py-1.5 text-sm font-medium text-gray-600 transition-colors",
+        "hover:text-gray-900",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/30 focus-visible:ring-offset-2",
+        selected && "bg-gray-900 text-white shadow-sm hover:text-white",
         className
       )}
-      onClick={() => onValueChange?.(value)}
+      onClick={() => tabs.setValue(value)}
     >
       {children}
     </button>
   );
 }
 
-export function TabsContent({ 
-  children, 
-  value, 
-  activeValue, 
-  className 
+export function TabsContent({
+  children,
+  value,
+  className,
 }: {
   children: React.ReactNode;
   value: string;
-  activeValue?: string;
   className?: string;
 }) {
-  if (activeValue !== value) return null;
-  
+  const tabs = useTabs();
+  if (tabs.value !== value) return null;
+
   return (
-    <div className={cn("mt-4", className)}>
+    <div
+      role="tabpanel"
+      id={`${tabs.baseId}-panel-${value}`}
+      aria-labelledby={`${tabs.baseId}-tab-${value}`}
+      tabIndex={0}
+      className={cn("mt-4 focus-visible:outline-none", className)}
+    >
       {children}
     </div>
   );
