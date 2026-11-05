@@ -14,102 +14,95 @@ const SECTIONS: {
 }[] = [
   {
     n: "01",
-    title: "Strategy and scoping",
+    title: "The useful piece",
     call: (
       <p>
-        A personal week of training was worth shipping. A database of riders was not.
+        The job was a personal week of training. A product that stores every rider was a different job, and I did not take it.
       </p>
     ),
     body: (
       <>
         <p>
-          A rider who already logs rides on Strava still has to turn that history into a week. A full coaching product — accounts, saved plans, tokens stored on a server — is a lot of system for a plan you regenerate when the week changes.
+          A rider who already logs their rides still has to turn that history into next week. A generic plan ignores the riding they just did and the race they are pointing at. Accounts, a library of old plans, and a record of every rider are a lot of product for a week that gets rewritten.
         </p>
         <p className="mt-4">
-          I considered keeping the Strava token in Supabase, the way an earlier race tracker did. That free project kept pausing, and a login that depended on it failed even when the environment was set. I rejected that dependency. Success was narrower: the plan uses the rider&apos;s own recent rides, and the app still opens with no database.
+          Training Coach is what shipped. The rider connects the rides they already have, sees the last 30 days, and chooses a plan. The default is a menu of sessions tagged by how the day feels, including an easy day. The other is a Monday-to-Sunday week, with the work, the fueling, and a note on the week after. The form asks for power, the hours available, and the kind of racing. A scheduled week also needs a weight and at least one race, because it cannot be written without them.
         </p>
         <p className="mt-4">
-          What shipped is Training Coach. The token stays in an encrypted browser cookie for that session, and the week is read from Strava then. There is no saved history of plans. The session ends with the cookie.
+          There is no account and no saved plans. Sign-in lasts for that session. The app is live. I am not claiming who uses it, or whether the weeks get ridden.
         </p>
       </>
     ),
-    links: [{ href: "/projects/training", label: "Training Coach case study" }],
+    links: [
+      { href: "/projects/training", label: "Training Coach case study" },
+      { href: "/training", label: "Open the app" },
+    ],
   },
   {
     n: "02",
-    title: "Discovery and validation",
+    title: "Something they can try",
     call: (
       <p>
-        The coach is for one rider who already has the rides. I only ask for what the plan uses.
+        The job was a budget that can answer a price change. A picture of the budget cannot answer it.
       </p>
     ),
     body: (
       <>
         <p>
-          This write-up is not a research study. The person is someone who logs on Strava and wants a week from that history, plus a little racing context. I did not open with a profile. The form asks for FTP, hours per week, racing type, and course style. A day-by-day week also asks for weight and at least one race, because that plan cannot be written without them.
+          A crop plan usually lives in a spreadsheet one person can follow, and a mock of the screens cannot run the question. The version on this site calculates. A grower or an advisor can replace the sample yield, price, and costs. Those numbers are labeled as samples, not a market. Revenue, margin, and break-even update as they type. They can move price and yield, share that exact scenario, and send a note with it attached.
         </p>
         <p className="mt-4">
-          What I threw out on the page itself is a spinner that pretends the data is coming. Signed out, access denied, a failed token exchange, and a missing model key each say what broke.
-        </p>
-        <p className="mt-4">
-          The crop budget tests a different call. A static mock cannot answer what happens if the price moves. A grower or advisor can edit the sample assumptions, move price and yield, and send a note with that exact scenario attached. No one has sent a note through it yet. Until someone does, I do not treat the prototype as validated.
+          The loop is that note: what they were trying to do, what was confusing, and the scenario on screen, then a next version from the note rather than from a guess. No note has come through yet. This is a prototype you can use. It is not proof that anyone has taken it up.
         </p>
       </>
     ),
-    links: [
-      { href: "/projects/training", label: "How the coach was scoped" },
-      { href: "/projects/crop-planning", label: "Crop planning case study" },
-    ],
+    links: [{ href: "/projects/crop-planning", label: "Crop planning case study" }],
   },
   {
     n: "03",
-    title: "Design",
+    title: "The operation",
     call: (
       <p>
-        I kept two ways to use the week, and I cut the rest of a coaching product.
+        The job was one place for the deal and the request, next to the location. Another tool that could not see the rest was not the job.
       </p>
     ),
     body: (
       <>
         <p>
-          The default is a flexible menu. Options are tagged by how the day feels, including an easy one, so the rider is not forced onto a calendar. The other choice is a Monday-through-Sunday week, with zones, fueling notes, and a note on the week after, for when they want the schedule.
+          A multi-location franchise already had places for property records, texts, the website, and appointments. Staff still had no shared path for a deal, and no shared path for a request. In my current role I owned the requirements, the records the commercial work needed, how those existing systems would connect, and the rollout.
         </p>
         <p className="mt-4">
-          I did not build accounts, a library of past plans, or a way back to last week&apos;s draft.{" "}
-          <Link href="/training" className="text-gray-900 underline underline-offset-4">
-            /training
-          </Link>{" "}
-          is a short path on purpose: connect Strava, see the last 30 days of rides, then choose a plan.
+          HubSpot holds that commercial view. The other systems stay where they are, and a deal can sit next to its location. A request sits with the deal and the location, instead of in an inbox that cannot see either. The stages follow this franchise&apos;s own motion, not a default sales path.
+        </p>
+        <p className="mt-4">
+          The work is still open. There is no public number here for adoption, time saved, or revenue. The next step is a pattern other franchises could adapt, for each brand.
         </p>
       </>
     ),
-    links: [
-      { href: "/training", label: "Open the app" },
-      { href: "/projects/training", label: "Read the flow" },
-    ],
+    links: [{ href: "/projects/hubspot-franchise", label: "HubSpot case study" }],
   },
   {
     n: "04",
-    title: "Delivery and quality",
+    title: "When it breaks",
     call: (
       <p>
-        If the page cannot say what broke, it is not done.
+        A version is not ready to hand someone if they cannot tell what went wrong.
       </p>
     ),
     body: (
       <>
         <p>
-          Production <span className="text-gray-800">/training</span> used to stop on a prerendered spinner that said it was loading Strava data. A denied login was reported as a missing code, and the token was written to Supabase. That project was paused, so the exchange never became a session. Pull request 7 seals the token in the cookie and returns a specific error instead.
-        </p>
-        <p className="mt-4">
-          That is how a bug gets closed here. The change is a pull request on the{" "}
+          Training Coach once sat on a message that said rides were loading, when nothing was. A refused sign-in came back as a missing code, which was not what had happened, because sign-in depended on a database that kept pausing. Pull request 7 on the{" "}
           <a
             href="https://github.com/cjones88a/switchbacklabs"
             className="text-gray-900 underline underline-offset-4"
           >
             public repo
-          </a>
-          , and it does not merge until lint, typecheck, tests, and a production build pass.
+          </a>{" "}
+          drops that dependency and says what actually broke.
+        </p>
+        <p className="mt-4">
+          The same bar is on the rest of this site. A change is a pull request, and it does not merge until lint, typecheck, tests, and a production build pass. That is about trust while someone is using it, not about how widely any of this is used.
         </p>
       </>
     ),
@@ -120,29 +113,6 @@ const SECTIONS: {
         external: true,
       },
     ],
-  },
-  {
-    n: "05",
-    title: "Systems and CRM",
-    call: (
-      <p>
-        The franchise needed one place for the commercial work, not another tool that ignored the ones staff already used.
-      </p>
-    ),
-    body: (
-      <>
-        <p>
-          Leases, texts, the website, and appointments lived in separate products, and there was no shared deal path or ticket path. I shaped a HubSpot instance around that operation, in the current role.
-        </p>
-        <p className="mt-4">
-          Rent Manager, SalesMsg, Contentful, and Vagaro connect through HubSpot. The pipeline follows this franchise&apos;s motion rather than a default sales path. Tickets sit with the deal and the property data. Custom objects sync with Rent Manager, so a deal can sit next to the location. Claude is in the instance the team uses.
-        </p>
-        <p className="mt-4">
-          There is no public outcome number for this. The work is still open. The next step is to turn this instance into a reusable pattern for other franchises, adapted per brand.
-        </p>
-      </>
-    ),
-    links: [{ href: "/projects/hubspot-franchise", label: "HubSpot case study" }],
   },
 ];
 
@@ -158,7 +128,7 @@ export default function HowIWorkPage() {
           </p>
           <h1 className="h2">HOW I WORK</h1>
           <p className="lead mt-6 max-w-[68ch]">
-            Each section opens with a call I made, then the page that holds the evidence.
+            I start with the job someone is trying to finish. I cut that job to a small piece that is useful on its own, and I put a working version in the room with the people who do the job and the people who decide what gets built. Each section is one of those pieces, then the page that holds the proof, including what it has not shown yet.
           </p>
         </div>
       </section>
@@ -203,26 +173,23 @@ export default function HowIWorkPage() {
 
       <section className="bg-gray-900 text-white">
         <div className="section">
-          <p className="text-[11px] tracking-widest uppercase text-white/50 mb-6">06</p>
+          <p className="text-[11px] tracking-widest uppercase text-white/50 mb-6">05</p>
           <h2 className="font-serif text-3xl md:text-4xl font-light tracking-tight">
             Building with AI
           </h2>
           <div className="mt-6 max-w-[68ch] space-y-4 text-lg leading-relaxed">
             <p className="text-white">
-              I decide what the slice has to answer. The coding agent and the model are how that answer gets in front of someone.
+              I decide what the small version has to answer. A coding agent, and a model inside the product, are how that answer gets in front of someone.
             </p>
             <p className="text-white/80">
-              Those are different jobs. The agent writes the code: the coach, the crop budget, and this site. The model answers inside the product. Claude drafts the training week from the rider&apos;s recent rides, and Claude sits in the HubSpot instance. I do not treat either as the product.
+              Those are different jobs. The agent writes the software: the coach, the crop budget, and this site. The model answers inside the product. It drafts the training week from the rider&apos;s recent rides, and it sits in the HubSpot instance. Neither one chooses the problem.
             </p>
             <p className="text-white/80">
-              The judgment stays on the call. The coach still has to say what broke when a token or a key is missing. The crop numbers stay labeled as sample assumptions, not a market. That budget was small enough to ship in the week the question came up: a plan that calculates, a share link, and a place to send a note. None of it merges until lint, types, tests, and the production build pass.
-            </p>
-            <p className="text-white/80">
-              The longer note is{" "}
+              Sample numbers stay labeled as samples. A failure still has to be said in plain language. The longer note is{" "}
               <Link href="/pm-of-the-future" className="text-white underline underline-offset-4">
                 The PM of the Future
               </Link>
-              . I prototype, I move fast, and I empathize. Customer need is the same. The path to it is shorter, and it is more fun.
+              . I prototype, I move fast, and I empathize. The need is the same. The path to a version someone can try is shorter.
             </p>
           </div>
           <div className="mt-8 flex flex-wrap gap-3">
