@@ -1,6 +1,7 @@
 import SiteHeader from "@/components/layout/SiteHeader";
 import Link from "next/link";
 import PillArrow from "@/components/ui/PillArrow";
+import { DEFAULT_ANTHROPIC_MODEL } from "@/lib/anthropicModel";
 
 export const metadata = { title: "Project: Training Coach — Switchback Labs" };
 
@@ -164,7 +165,7 @@ export default function TrainingCoachProject() {
               <li>• Next.js App Router. The page is a server gate. The form is a client component.</li>
               <li>• Vercel. Required environment variables are the Strava client id, secret, and redirect URI, plus the session secret. The Anthropic key is required only when generating a plan.</li>
               <li>• Strava OAuth. Redirect path is <code className="text-gray-800">/api/strava/callback</code>.</li>
-              <li>• Anthropic Claude, default model <code className="text-gray-800">claude-sonnet-4-20250514</code>, overridable with <code className="text-gray-800">ANTHROPIC_MODEL</code>. The plan is requested with tool use so the response matches the menu or the week schema.</li>
+              <li>• Anthropic Claude, default model <code className="text-gray-800">{DEFAULT_ANTHROPIC_MODEL}</code>, overridable with <code className="text-gray-800">ANTHROPIC_MODEL</code>. The plan is requested with tool use so the response matches the menu or the week schema.</li>
               <li>• No database on this path.</li>
             </ul>
 

@@ -500,7 +500,9 @@ export default function TrainingApp() {
           );
         } else if (errType === 'anthropic_api' && errCode === 401) {
           setError('AI service rejected the API key. Check Vercel env ANTHROPIC_API_KEY.');
-        } else if (errType === 'anthropic_api' && (errCode === 404 || errCode === 400)) {
+        } else if (errType === 'anthropic_api' && (errCode === 'model_not_found' || errCode === 404)) {
+          setError('The training plan model is unavailable right now. Please try again later.');
+        } else if (errType === 'anthropic_api' && errCode === 400) {
           setError('AI model or request was rejected. Set ANTHROPIC_MODEL on Vercel or contact support.');
         } else if (errType === 'anthropic_api') {
           setError(`AI service error (${String(errCode)}). Try again in a minute.`);
