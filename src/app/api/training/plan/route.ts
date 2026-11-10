@@ -1,10 +1,23 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { APIError } from '@anthropic-ai/sdk/error';
-import { isAnthropicModelNotFound, resolveAnthropicModel } from '@/lib/anthropicModel';
+import { anthropicHttpLog, isAnthropicModelNotFound, resolveAnthropicModel } from '@/lib/anthropicModel';
+import {
+  PLAN_MAX_DURATION_SECONDS,
+  PLAN_MAX_TOKENS,
+  PLAN_REQUEST_MAX_RETRIES,
+  PLAN_REQUEST_TIMEOUT_MS,
+} from '@/lib/planRequest';
 import { formatGoalsForPrompt, parseTrainingGoals } from '@/lib/trainingGoals';
 
 export const runtime = 'nodejs';
+
+/** Numeric literal so Next can read it. Must match PLAN_MAX_DURATION_SECONDS. */
+export const maxDuration = 300;
+
+if (maxDuration !== PLAN_MAX_DURATION_SECONDS) {
+  throw new Error('maxDuration must match PLAN_MAX_DURATION_SECONDS');
+}
 
 function parsePlanJson(rawText: string): unknown {
   const stripped = rawText.replace(/```json\s*|```/gi, '').trim();
@@ -83,6 +96,37 @@ function duckTypedSdkError(err: unknown): { status?: number; message: string } |
   const statusRaw = (err as { status?: unknown }).status;
   const status = typeof statusRaw === 'number' ? statusRaw : undefined;
   return { status, message: err.message };
+}
+
+type PlanRead =
+  | { ok: true; payload: unknown }
+  | { ok: false; error: 'bad_api_response' | 'invalid_model_json' | 'no_plan_in_response' };
+
+function readPlanFromMessage(message: Anthropic.Message, toolName: string): PlanRead {
+  if (!Array.isArray(message.content)) {
+    console.error('[training/plan] Missing message.content');
+    return { ok: false, error: 'bad_api_response' };
+  }
+
+  const toolBlock = message.content.find(
+    (b): b is Anthropic.Messages.ToolUseBlock => b.type === 'tool_use' && b.name === toolName
+  );
+  if (toolBlock) return { ok: true, payload: toolBlock.input };
+
+  const rawText = message.content
+    .filter((b) => b.type === 'text')
+    .map((b) => (b as { type: 'text'; text: string }).text)
+    .join('');
+  if (!rawText.trim()) {
+    console.error('[training/plan] No tool_use and no text; stop_reason=', message.stop_reason);
+    return { ok: false, error: 'no_plan_in_response' };
+  }
+  try {
+    return { ok: true, payload: parsePlanJson(rawText) };
+  } catch (e) {
+    console.error('[training/plan] JSON parse failed:', e, rawText.slice(0, 500));
+    return { ok: false, error: 'invalid_model_json' };
+  }
 }
 
 function formatUnknownError(err: unknown): string {
@@ -408,42 +452,41 @@ Call ${SUBMIT_PLAN_TOOL} with the full plan. Do not reply with plain text only.`
       tools = [trainingPlanTool];
     }
 
-    const message = await anthropic.messages.create({
-      model,
-      max_tokens: 8192,
-      tools,
-      tool_choice: { type: 'tool', name: toolName },
-      messages: [{ role: 'user', content: prompt }],
-    });
+    // Sonnet 5.5 rejects forced tool_choice ("tool" and "any") with HTTP 400.
+    // auto is allowed with adaptive thinking. The prompt still names the submit tool.
+    let payload: unknown | undefined;
+    let planError: 'bad_api_response' | 'invalid_model_json' | 'no_plan_in_response' | undefined;
 
-    if (!Array.isArray(message.content)) {
-      console.error('[training/plan] Missing message.content', message);
-      return NextResponse.json({ error: 'bad_api_response' }, { status: 502 });
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const content =
+        attempt === 0
+          ? prompt
+          : `${prompt}\n\nCall the ${toolName} tool now with the complete plan. Do not reply with plain text only.`;
+      const message = await anthropic.messages.create(
+        {
+          model,
+          max_tokens: PLAN_MAX_TOKENS,
+          tools,
+          tool_choice: { type: 'auto' },
+          messages: [{ role: 'user', content }],
+        },
+        { timeout: PLAN_REQUEST_TIMEOUT_MS, maxRetries: PLAN_REQUEST_MAX_RETRIES }
+      );
+      const read = readPlanFromMessage(message, toolName);
+      if (read.ok) {
+        payload = read.payload;
+        break;
+      }
+      planError = read.error;
+      if (attempt === 0) {
+        console.error('[training/plan] Plan tool was not called; retrying once', {
+          stop_reason: message.stop_reason,
+        });
+      }
     }
 
-    const toolBlock = message.content.find(
-      (b): b is Anthropic.Messages.ToolUseBlock => b.type === 'tool_use' && b.name === toolName
-    );
-
-    let payload: unknown;
-
-    if (toolBlock) {
-      payload = toolBlock.input;
-    } else {
-      const rawText = message.content
-        .filter((b) => b.type === 'text')
-        .map((b) => (b as { type: 'text'; text: string }).text)
-        .join('');
-      if (!rawText.trim()) {
-        console.error('[training/plan] No tool_use and no text; stop_reason=', message.stop_reason);
-        return NextResponse.json({ error: 'no_plan_in_response' }, { status: 502 });
-      }
-      try {
-        payload = parsePlanJson(rawText);
-      } catch (e) {
-        console.error('[training/plan] JSON parse failed:', e, rawText.slice(0, 500));
-        return NextResponse.json({ error: 'invalid_model_json' }, { status: 502 });
-      }
+    if (payload === undefined) {
+      return NextResponse.json({ error: planError ?? 'no_plan_in_response' }, { status: 502 });
     }
 
     if (planStyle === 'simple') {
@@ -468,7 +511,10 @@ Call ${SUBMIT_PLAN_TOOL} with the full plan. Do not reply with plain text only.`
           console.error('[training/plan] Anthropic model not found', { model });
           return NextResponse.json({ error: 'anthropic_api', code: 'model_not_found' }, { status: 502 });
         }
-        console.error('[training/plan] Anthropic HTTP error:', code);
+        console.error(
+          '[training/plan] Anthropic HTTP error',
+          anthropicHttpLog({ status: code, errorBody: err.error, message: err.message })
+        );
         return NextResponse.json({ error: 'anthropic_api', code }, { status: 502 });
       }
       console.error('[training/plan] Anthropic transport error (no status):', err.name, err.message);
@@ -489,7 +535,10 @@ Call ${SUBMIT_PLAN_TOOL} with the full plan. Do not reply with plain text only.`
           console.error('[training/plan] Anthropic model not found', { model });
           return NextResponse.json({ error: 'anthropic_api', code: 'model_not_found' }, { status: 502 });
         }
-        console.error('[training/plan] Anthropic HTTP error:', duck.status);
+        console.error(
+          '[training/plan] Anthropic HTTP error',
+          anthropicHttpLog({ status: duck.status, errorBody, message: duck.message })
+        );
         return NextResponse.json({ error: 'anthropic_api', code: duck.status }, { status: 502 });
       }
       return NextResponse.json(
