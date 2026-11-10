@@ -38,7 +38,7 @@ describe("training session cookie", () => {
     const now = 1_700_000_000_000;
     const sealed = sealTrainingSession(session(now), SECRET);
     const [v, iv, body, tag] = sealed.split(".");
-    const flipped = body.slice(0, -1) + (body.endsWith("a") ? "b" : "a");
+    const flipped = (body.startsWith("A") ? "B" : "A") + body.slice(1);
     expect(openTrainingSession([v, iv, flipped, tag].join("."), SECRET, now)).toBeNull();
     expect(openTrainingSession(sealed, SECRET + "-other-secret-padding", now)).toBeNull();
     expect(openTrainingSession(sealed, SECRET, now + TRAINING_SESSION_TTL_MS + 1)).toBeNull();

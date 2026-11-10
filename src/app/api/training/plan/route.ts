@@ -2,15 +2,22 @@ import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { APIError } from '@anthropic-ai/sdk/error';
 import { anthropicHttpLog, isAnthropicModelNotFound, resolveAnthropicModel } from '@/lib/anthropicModel';
+import {
+  PLAN_MAX_DURATION_SECONDS,
+  PLAN_MAX_TOKENS,
+  PLAN_REQUEST_MAX_RETRIES,
+  PLAN_REQUEST_TIMEOUT_MS,
+} from '@/lib/planRequest';
 import { formatGoalsForPrompt, parseTrainingGoals } from '@/lib/trainingGoals';
 
 export const runtime = 'nodejs';
 
-/**
- * Adaptive thinking on current Sonnet counts toward this budget.
- * 8192 was tight once thinking and a full week plan shared the same cap.
- */
-const PLAN_MAX_TOKENS = 32000;
+/** Numeric literal so Next can read it. Must match PLAN_MAX_DURATION_SECONDS. */
+export const maxDuration = 300;
+
+if (maxDuration !== PLAN_MAX_DURATION_SECONDS) {
+  throw new Error('maxDuration must match PLAN_MAX_DURATION_SECONDS');
+}
 
 function parsePlanJson(rawText: string): unknown {
   const stripped = rawText.replace(/```json\s*|```/gi, '').trim();
@@ -455,13 +462,16 @@ Call ${SUBMIT_PLAN_TOOL} with the full plan. Do not reply with plain text only.`
         attempt === 0
           ? prompt
           : `${prompt}\n\nCall the ${toolName} tool now with the complete plan. Do not reply with plain text only.`;
-      const message = await anthropic.messages.create({
-        model,
-        max_tokens: PLAN_MAX_TOKENS,
-        tools,
-        tool_choice: { type: 'auto' },
-        messages: [{ role: 'user', content }],
-      });
+      const message = await anthropic.messages.create(
+        {
+          model,
+          max_tokens: PLAN_MAX_TOKENS,
+          tools,
+          tool_choice: { type: 'auto' },
+          messages: [{ role: 'user', content }],
+        },
+        { timeout: PLAN_REQUEST_TIMEOUT_MS, maxRetries: PLAN_REQUEST_MAX_RETRIES }
+      );
       const read = readPlanFromMessage(message, toolName);
       if (read.ok) {
         payload = read.payload;
