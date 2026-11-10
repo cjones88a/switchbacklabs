@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_ANTHROPIC_MODEL,
+  anthropicHttpLog,
   isAnthropicModelNotFound,
   readAnthropicErrorType,
   resolveAnthropicModel,
@@ -46,5 +47,29 @@ describe("isAnthropicModelNotFound", () => {
     ).toBe(false);
     expect(isAnthropicModelNotFound({ status: 400, errorBody: retiredBody })).toBe(false);
     expect(isAnthropicModelNotFound({ status: 401, message: "not_found_error" })).toBe(false);
+  });
+});
+
+describe("anthropicHttpLog", () => {
+  it("logs the nested error type and message without a key", () => {
+    expect(
+      anthropicHttpLog({
+        status: 400,
+        errorBody: {
+          type: "error",
+          error: {
+            type: "invalid_request_error",
+            message:
+              'tool_choice: type "tool" and "any" are not supported for this model. sk-ant-api03-secret',
+          },
+        },
+        message: "400 raw body",
+      })
+    ).toEqual({
+      status: 400,
+      errorType: "invalid_request_error",
+      errorMessage:
+        'tool_choice: type "tool" and "any" are not supported for this model. [redacted]',
+    });
   });
 });
