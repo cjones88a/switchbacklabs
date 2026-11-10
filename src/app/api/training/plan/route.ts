@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { APIError } from '@anthropic-ai/sdk/error';
+import { isAnthropicModelNotFound, resolveAnthropicModel } from '@/lib/anthropicModel';
 import { formatGoalsForPrompt, parseTrainingGoals } from '@/lib/trainingGoals';
 
 export const runtime = 'nodejs';
-
-/** Snapshot ID from Anthropic docs (stable); override with ANTHROPIC_MODEL. */
-const DEFAULT_MODEL = 'claude-sonnet-4-20250514';
 
 function parsePlanJson(rawText: string): unknown {
   const stripped = rawText.replace(/```json\s*|```/gi, '').trim();
@@ -70,6 +68,13 @@ const SDK_ERROR_NAMES = new Set([
   'UnprocessableEntityError',
   'ConflictError',
 ]);
+
+function errorBodyOf(err: unknown): unknown {
+  if (typeof err === 'object' && err !== null && 'error' in err) {
+    return (err as { error?: unknown }).error;
+  }
+  return undefined;
+}
 
 function duckTypedSdkError(err: unknown): { status?: number; message: string } | null {
   if (typeof err !== 'object' || err === null || !(err instanceof Error)) return null;
@@ -276,7 +281,7 @@ export async function POST(req: Request) {
   }
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const model = process.env.ANTHROPIC_MODEL?.trim() || DEFAULT_MODEL;
+  const model = resolveAnthropicModel(process.env.ANTHROPIC_MODEL);
 
   try {
     const body = await req.json();
@@ -459,7 +464,11 @@ Call ${SUBMIT_PLAN_TOOL} with the full plan. Do not reply with plain text only.`
     if (isAnthropicTransportError(err)) {
       const code = err.status;
       if (typeof code === 'number') {
-        console.error('[training/plan] Anthropic HTTP error:', code, err.message);
+        if (isAnthropicModelNotFound({ status: code, errorBody: err.error, message: err.message })) {
+          console.error('[training/plan] Anthropic model not found', { model });
+          return NextResponse.json({ error: 'anthropic_api', code: 'model_not_found' }, { status: 502 });
+        }
+        console.error('[training/plan] Anthropic HTTP error:', code);
         return NextResponse.json({ error: 'anthropic_api', code }, { status: 502 });
       }
       console.error('[training/plan] Anthropic transport error (no status):', err.name, err.message);
@@ -475,6 +484,12 @@ Call ${SUBMIT_PLAN_TOOL} with the full plan. Do not reply with plain text only.`
     const duck = duckTypedSdkError(err);
     if (duck) {
       if (typeof duck.status === 'number') {
+        const errorBody = errorBodyOf(err);
+        if (isAnthropicModelNotFound({ status: duck.status, errorBody, message: duck.message })) {
+          console.error('[training/plan] Anthropic model not found', { model });
+          return NextResponse.json({ error: 'anthropic_api', code: 'model_not_found' }, { status: 502 });
+        }
+        console.error('[training/plan] Anthropic HTTP error:', duck.status);
         return NextResponse.json({ error: 'anthropic_api', code: duck.status }, { status: 502 });
       }
       return NextResponse.json(
