@@ -1,17 +1,23 @@
 "use client";
 
-import { Archivo_Black, DM_Sans, Fraunces, IBM_Plex_Sans, Source_Sans_3 } from "next/font/google";
+import localFont from "next/font/local";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PALETTES, type Palette } from "./palette";
 import styles from "./redesign.module.css";
 
-const archivo = Archivo_Black({ weight: "400", subsets: ["latin"], display: "swap" });
-const dm = DM_Sans({ subsets: ["latin"], display: "swap" });
-const plex = IBM_Plex_Sans({ weight: ["400", "500"], subsets: ["latin"], display: "swap" });
-const fraunces = Fraunces({ subsets: ["latin"], display: "swap" });
-const sourceSans = Source_Sans_3({ subsets: ["latin"], display: "swap" });
+const archivo = localFont({ src: "../fonts/archivo-black-latin.woff2", weight: "400", display: "swap" });
+const dm = localFont({ src: "../fonts/dm-sans-latin.woff2", weight: "100 1000", display: "swap" });
+const plex = localFont({
+  src: [
+    { path: "../fonts/ibm-plex-400-latin.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/ibm-plex-500-latin.woff2", weight: "500", style: "normal" },
+  ],
+  display: "swap",
+});
+const fraunces = localFont({ src: "../fonts/fraunces-latin.woff2", weight: "100 900", display: "swap" });
+const sourceSans = localFont({ src: "../fonts/source-sans-3-latin.woff2", weight: "200 900", display: "swap" });
 
 const PROJECTS: {
   index: string;
