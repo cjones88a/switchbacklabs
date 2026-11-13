@@ -67,7 +67,6 @@ export function TrainingAuthError({
             <span className="font-mono">https://switchbacklabsco.com/api/strava/callback</span>.{" "}
             <span className="font-mono">TRAINING_SESSION_SECRET</span> encrypts the session cookie
             (32+ characters, for example the output of <span className="font-mono">openssl rand -base64 32</span>).
-            Supabase variables are not used by this page.
           </p>
         )}
         {showConnectAction(code) ? (

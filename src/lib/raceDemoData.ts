@@ -2,7 +2,7 @@ import type { LeaderboardRow } from "@/components/leaderboard/LeaderboardTable";
 
 /**
  * Portfolio demo for /race-trackingV2.
- * Riders and times are fictional. The page must not call Strava or Supabase.
+ * Riders and times are fictional. The page must not call Strava or a database.
  */
 export const RACE_TRACKER_MODE = "demo" as const;
 

@@ -11,7 +11,7 @@ import { DEMO_LEADERBOARDS, DEMO_MY_TIMES, DEMO_YEARS, RACE_TRACKER_MODE } from 
 
 /**
  * Static portfolio demo. RACE_TRACKER_MODE is fixed to "demo":
- * this page does not call Strava or Supabase, so a paused project cannot break it.
+ * this page does not call Strava or a database.
  */
 
 const SEGMENTS = [
@@ -65,8 +65,8 @@ export default function Page() {
 
           <div className={`mt-8 px-5 py-5 sm:px-6 ${panel}`} data-tracker-mode={RACE_TRACKER_MODE}>
             <p className="text-sm leading-relaxed text-gray-800">
-              These riders and times are fictional, bundled with the site. This portfolio build does not
-              connect to Strava or Supabase, so it still renders if those services are paused or unconfigured.
+              These riders and times are fictional, bundled with the site. This page does not connect to
+              Strava or a database.
             </p>
             <p className="mt-3 text-sm font-medium text-gray-800">Showing sample season {year}</p>
           </div>

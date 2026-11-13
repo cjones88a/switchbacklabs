@@ -7,7 +7,6 @@ import {
   sanitizeMissingList,
   sessionSecretIssue,
   successRedirectPath,
-  supabaseUrlIssue,
   trainingConfigProblems,
   trainingEntryDecision,
   trainingErrorPath,
@@ -53,12 +52,6 @@ describe("training config", () => {
     expect(problems.missing).toEqual([]);
     expect(problems.details.join(" ")).toMatch(/callback/);
     expect(problems.details.join(" ")).toMatch(/32 characters/);
-  });
-
-  it("still describes a Postgres URI for unused admin helpers", () => {
-    expect(supabaseUrlIssue("postgresql://postgres:pw@db.example.supabase.co:5432/postgres")).toMatch(
-      /Postgres connection string/
-    );
   });
 });
 

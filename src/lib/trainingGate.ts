@@ -14,9 +14,6 @@ export type TrainingEnv = {
   STRAVA_CLIENT_SECRET?: string;
   STRAVA_REDIRECT_URI?: string;
   TRAINING_SESSION_SECRET?: string;
-  SUPABASE_URL?: string;
-  SUPABASE_SERVICE_ROLE?: string;
-  SUPABASE_SERVICE_ROLE_KEY?: string;
 };
 
 export type ConfigProblems = {
@@ -47,34 +44,6 @@ export function normalizeEnvValue(value: string | undefined): string {
     v = v.slice(1, -1).trim();
   }
   return v;
-}
-
-/** What is wrong with SUPABASE_URL, or null when it is usable. Kept for unused admin routes. */
-export function supabaseUrlIssue(url: string | undefined): string | null {
-  const raw = normalizeEnvValue(url);
-  if (!raw) return "SUPABASE_URL is not set.";
-  if (raw.startsWith("postgres://") || raw.startsWith("postgresql://")) {
-    return "SUPABASE_URL is a Postgres connection string. Set it to the Project URL from Supabase → Project Settings → API (https://<project-ref>.supabase.co), not the database URI.";
-  }
-  let parsed: URL;
-  try {
-    parsed = new URL(raw);
-  } catch {
-    return "SUPABASE_URL is not a valid URL. Use the Project URL from Supabase → Project Settings → API.";
-  }
-  const localHttp =
-    parsed.protocol === "http:" &&
-    (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1");
-  if (parsed.protocol !== "https:" && !localHttp) {
-    return "SUPABASE_URL must be the https Project URL (https://<project-ref>.supabase.co).";
-  }
-  if (parsed.pathname && parsed.pathname !== "/") {
-    return "SUPABASE_URL should be the project origin only (https://<project-ref>.supabase.co) with no path.";
-  }
-  if (parsed.username || parsed.password) {
-    return "SUPABASE_URL should not include a username or password. Use the Project URL, and put the service role key in SUPABASE_SERVICE_ROLE.";
-  }
-  return null;
 }
 
 /** What is wrong with STRAVA_REDIRECT_URI, or null when it can be sent to Strava. */
@@ -108,7 +77,7 @@ export function sessionSecretIssue(secret: string | undefined): string | null {
   return null;
 }
 
-/** Strava app settings plus the cookie secret. Supabase is not required. */
+/** Strava app settings plus the cookie secret. */
 export function trainingConfigProblems(env: TrainingEnv | NodeJS.ProcessEnv): ConfigProblems {
   const missing: string[] = [];
   const details: string[] = [];
@@ -149,11 +118,6 @@ export function normalizeOAuthError(error: string | null | undefined): string | 
   const code = error.trim().toLowerCase();
   if (!/^[a-z0-9_]{1,40}$/.test(code)) return "missing_code";
   return code;
-}
-
-export function isFetchFailureMessage(message: string | null | undefined): boolean {
-  if (!message) return false;
-  return /fetch failed|enotfound|econnrefused|etimedout|eai_again|certificate|unable to verify/i.test(message);
 }
 
 export function trainingErrorPath(code: string, missing?: string[]): string {
@@ -240,7 +204,7 @@ const ERROR_COPY: Record<string, AuthErrorCopy> = {
   },
   server_misconfigured: {
     title: "Strava login is not configured",
-    body: "The training app needs Strava credentials and a session secret before it can connect. Set the items below in Vercel → Project → Settings → Environment Variables for Production, then redeploy. Tokens stay in an encrypted cookie; Supabase is not used.",
+    body: "The training app needs Strava credentials and a session secret before it can connect. Set the items below in Vercel → Project → Settings → Environment Variables for Production, then redeploy. Tokens stay in an encrypted cookie.",
   },
   session_store_unreachable: {
     title: "The session could not be saved",
