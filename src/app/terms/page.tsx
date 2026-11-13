@@ -1,4 +1,5 @@
 import { LegalPage, LegalSection } from "@/components/legal/LegalPage";
+import { DISCLAIMER_TEXT } from "@/lib/trainingDisclaimerCopy";
 
 export const metadata = { title: "Terms of Service — Switchback Labs" };
 
@@ -38,7 +39,11 @@ export default function Terms() {
           <a href="https://www.strava.com/settings/apps">Strava&apos;s app settings</a>.
         </p>
         <p>
-          When you generate a week, the app sends a summary of recent rides and the form you filled in to Anthropic, which drafts the plan. The plan is a draft. It can be wrong. It is not medical advice, and it is not a substitute for a coach or a doctor. I do not guarantee that a plan is safe, accurate, or suited to you. You decide whether to ride it.
+          When you generate a week, the app sends a summary of recent rides and the form you filled in to Anthropic, which drafts the plan. The plan is a draft. It can be wrong. You have to accept the following before a plan is generated:
+        </p>
+        <p>{DISCLAIMER_TEXT}</p>
+        <p>
+          That acceptance is stored in this browser as the disclaimer version and the time you accepted it. It is not a record of your rides or the plan. If the wording changes, the app asks again. The app can also refuse a new plan when this browser has generated several recently, or when the site has generated too many in a day.
         </p>
       </LegalSection>
 

@@ -13,6 +13,9 @@ import {
   flexiblePlanToCsv,
   exportFilename,
 } from '@/lib/trainingExport';
+import { DISCLAIMER_VERSION } from '@/lib/trainingDisclaimerCopy';
+import { DisclaimerAcceptedNote, DisclaimerCheckbox, saveDisclaimerAcceptance } from './DisclaimerCheckbox';
+import { TrainingConnect } from './TrainingConnect';
 import {
   resolveFlexibleTimeline,
   totalTimelineMinutes,
@@ -374,6 +377,8 @@ export default function TrainingApp() {
 
   const [racingType, setRacingType] = useState('');
   const [courseStyle, setCourseStyle] = useState('');
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
+  const [disclaimerSaving, setDisclaimerSaving] = useState(false);
 
   const goalsForm = { racingType, courseStyle };
 
@@ -398,6 +403,7 @@ export default function TrainingApp() {
         const data = await res.json();
         if (cancelled) return;
         setStravaData(data);
+        setDisclaimerAccepted(Boolean(data.disclaimerAccepted));
         // pre-fill weight from Strava if available
         if (data.athlete?.weight) {
           setWeightLbs(Math.round(data.athlete.weight * 2.20462).toString());
@@ -451,6 +457,11 @@ export default function TrainingApp() {
       }
     }
 
+    if (!disclaimerAccepted) {
+      setError('Accept the disclaimer before generating a plan.');
+      return;
+    }
+
     setAppState('generating');
     setError(null);
 
@@ -477,6 +488,7 @@ export default function TrainingApp() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planStyle: style === 'simple' ? 'simple' : 'detailed',
+          disclaimerVersion: DISCLAIMER_VERSION,
           athleteData: stravaData ?? {},
           inputs,
         }),
@@ -487,7 +499,12 @@ export default function TrainingApp() {
         const errCode = (payload as { code?: string | number }).code;
         const errMsg = (payload as { message?: string; reason?: string }).message
           ?? (payload as { reason?: string }).reason;
-        if (
+        if (res.status === 429 || errType === 'rate_limited') {
+          setError(errMsg || "You've generated several plans recently. Wait a bit and try again.");
+        } else if (errType === 'disclaimer_required') {
+          setDisclaimerAccepted(false);
+          setError('Accept the disclaimer before generating a plan.');
+        } else if (
           errType === 'server_misconfigured' ||
           errCode === 'missing_anthropic_key'
         ) {
@@ -555,6 +572,18 @@ export default function TrainingApp() {
     }
   }
 
+  async function acceptDisclaimer() {
+    setDisclaimerSaving(true);
+    setError(null);
+    const ok = await saveDisclaimerAcceptance();
+    setDisclaimerSaving(false);
+    if (!ok) {
+      setError('Could not save that. Please try the checkbox again.');
+      return;
+    }
+    setDisclaimerAccepted(true);
+  }
+
   function addRace() {
     if (!newRaceName || !newRaceDate) return;
     setRaces([...races, { name: newRaceName, date: newRaceDate, priority: newRacePriority }]);
@@ -614,22 +643,18 @@ export default function TrainingApp() {
   if (appState === 'unauthenticated') {
     return (
       <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-6">
-        <div className="max-w-sm w-full text-center">
+        <div className="max-w-md w-full text-center">
           <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-zinc-900 mb-2">Connect Strava</h1>
-          <p className="text-sm text-zinc-500 mb-8 leading-relaxed">
+          <p className="text-sm text-zinc-500 mb-6 leading-relaxed">
             Connect your Strava account to get a personalized training plan built from your actual ride data.
+            Tick the disclaimer before connecting.
           </p>
-          <Link
-            href="/api/strava/authorize?next=/training"
-            className="block w-full bg-[#FC4C02] text-white text-sm font-semibold py-3 px-6 rounded-xl hover:bg-orange-600 transition-colors"
-          >
-            Connect with Strava
-          </Link>
+          <TrainingConnect />
           <Link href="/" className="block mt-4 text-xs text-zinc-400 hover:text-zinc-600">
             Back to home
           </Link>
@@ -1081,11 +1106,18 @@ export default function TrainingApp() {
             </div>
             )}
 
+            {disclaimerAccepted ? (
+              <DisclaimerAcceptedNote />
+            ) : (
+              <DisclaimerCheckbox checked={disclaimerSaving} disabled={disclaimerSaving} onAccept={acceptDisclaimer} />
+            )}
+
             {/* primary action */}
             <button
               type="button"
               onClick={() => requestPlan(planMode)}
               disabled={
+                !disclaimerAccepted ||
                 !isGoalsFormComplete(goalsForm) ||
                 (planMode === 'simple'
                   ? !ftp

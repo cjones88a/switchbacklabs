@@ -14,7 +14,7 @@ export default function Privacy() {
           </p>
           <ul className="mt-6 list-disc space-y-3 pl-5 text-base leading-relaxed">
             <li>
-              <strong className="font-medium text-gray-900">Training Coach</strong>, if you connect it, reads your Strava profile and recent rides, including private activities. The tokens sit in an encrypted cookie for 14 days. Generating a week sends a ride summary and your form to Anthropic. The plan is not saved.
+              <strong className="font-medium text-gray-900">Training Coach</strong>, if you connect it, reads your Strava profile and recent rides, including private activities. The tokens sit in an encrypted cookie for 14 days. Generating a week sends a ride summary and your form to Anthropic. The plan is not saved. If you accept the disclaimer, this browser also keeps that acceptance (the version and the time) in a second encrypted cookie.
             </li>
             <li>
               <strong className="font-medium text-gray-900">The race page</strong> shows fictional sample riders. It does not read your Strava account, and this site does not keep a database of race results.
@@ -55,6 +55,9 @@ export default function Privacy() {
       <LegalSection title="The session cookie">
         <p>
           The access token, refresh token, token expiry, athlete id, and a session deadline are stored in a cookie named <code>training_strava</code>. The cookie is httpOnly, so scripts on the page cannot read it. In production it is only sent over HTTPS. It is SameSite=Lax and is sent back to this site, not attached to other sites&apos; requests. The value is encrypted. The session deadline is 14 days from sign-in. Refreshing the Strava token does not extend that deadline. If a refresh fails, the server clears the cookie.
+        </p>
+        <p>
+          Accepting the plan disclaimer stores a second cookie, <code>training_disclaimer</code>. It holds the disclaimer version and the time you accepted it. It does not hold your rides, your name, or the plan. It is encrypted, httpOnly, and lasts 180 days. If the disclaimer text changes, you are asked again. Deleting the cookie in your browser clears it.
         </p>
         <p>
           There is no disconnect button in the app. You can revoke Switchback Labs in{" "}
@@ -119,6 +122,7 @@ export default function Privacy() {
       <LegalSection title="How long it stays">
         <ul>
           <li>The Training Coach cookie lasts 14 days, or until you delete it, or until a failed token refresh clears it.</li>
+          <li>The disclaimer acceptance cookie lasts 180 days, or until you delete it. It stores the version and the time only.</li>
           <li>A generated plan is not stored on the server.</li>
           <li>A crop plan stays in this browser until you reset it or clear site data. A share link lasts as long as someone keeps the URL.</li>
         </ul>

@@ -7,6 +7,7 @@ import {
   TRAINING_COOKIE_NAME,
   trainingCookieOptions,
 } from '@/lib/trainingCookie';
+import { DISCLAIMER_COOKIE_NAME, DISCLAIMER_VERSION, openDisclaimer } from '@/lib/trainingDisclaimer';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -89,7 +90,15 @@ export async function GET() {
     });
     const athlete = athleteRes.ok ? await athleteRes.json() : null;
 
-    return NextResponse.json(summarizeActivities(activities, athlete));
+    const disclaimer = openDisclaimer(
+      cookieStore.get(DISCLAIMER_COOKIE_NAME)?.value,
+      secret
+    );
+    return NextResponse.json({
+      ...summarizeActivities(activities, athlete),
+      disclaimerAccepted: disclaimer != null,
+      disclaimerVersion: DISCLAIMER_VERSION,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'strava_error';
     console.error('[training/strava]', message);

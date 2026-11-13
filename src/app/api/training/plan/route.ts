@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import Anthropic from '@anthropic-ai/sdk';
 import { APIError } from '@anthropic-ai/sdk/error';
 import { anthropicHttpLog, isAnthropicModelNotFound, resolveAnthropicModel } from '@/lib/anthropicModel';
@@ -9,6 +10,9 @@ import {
   PLAN_REQUEST_TIMEOUT_MS,
 } from '@/lib/planRequest';
 import { formatGoalsForPrompt, parseTrainingGoals } from '@/lib/trainingGoals';
+import { clientIp, consumePlanGeneration, rateLimitMessage } from '@/lib/planLimits';
+import { DISCLAIMER_COOKIE_NAME, planDisclaimerGate } from '@/lib/trainingDisclaimer';
+import { openTrainingSession, TRAINING_COOKIE_NAME } from '@/lib/trainingCookie';
 
 export const runtime = 'nodejs';
 
@@ -316,6 +320,44 @@ function buildContext(athleteData: Record<string, unknown>, ftp: number) {
 }
 
 export async function POST(req: Request) {
+  let body: {
+    planStyle?: unknown;
+    disclaimerVersion?: unknown;
+    athleteData?: unknown;
+    inputs?: unknown;
+  };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'missing_data' }, { status: 400 });
+  }
+
+  const cookieStore = await cookies();
+  const disclaimer = planDisclaimerGate({
+    bodyVersion: body.disclaimerVersion,
+    cookie: cookieStore.get(DISCLAIMER_COOKIE_NAME)?.value,
+    secret: process.env.TRAINING_SESSION_SECRET,
+  });
+  if (!disclaimer.ok) {
+    return NextResponse.json({ error: 'disclaimer_required' }, { status: 400 });
+  }
+
+  const session = openTrainingSession(
+    cookieStore.get(TRAINING_COOKIE_NAME)?.value,
+    process.env.TRAINING_SESSION_SECRET
+  );
+  const limit = await consumePlanGeneration({
+    athleteId: session?.athleteId ?? null,
+    ip: clientIp(req.headers),
+  });
+  if (!limit.ok) {
+    console.error('[training/plan] rate_limited', limit.scope);
+    return NextResponse.json(
+      { error: 'rate_limited', message: rateLimitMessage(limit) },
+      { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } }
+    );
+  }
+
   if (!process.env.ANTHROPIC_API_KEY?.trim()) {
     console.error('[training/plan] ANTHROPIC_API_KEY is not set');
     return NextResponse.json(
@@ -328,7 +370,6 @@ export async function POST(req: Request) {
   const model = resolveAnthropicModel(process.env.ANTHROPIC_MODEL);
 
   try {
-    const body = await req.json();
     const planStyle = body.planStyle === 'simple' ? 'simple' : 'detailed';
     const athleteData = normalizeAthleteData(body.athleteData);
     const { inputs } = body;
