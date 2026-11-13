@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { authorizePath } from "@/lib/trainingGate";
 import { DisclaimerAcceptedNote, DisclaimerCheckbox, saveDisclaimerAcceptance } from "./DisclaimerCheckbox";
 
@@ -68,6 +69,12 @@ export function TrainingConnect() {
           </button>
         )}
       </div>
+      <p className="mt-3 text-center text-xs leading-relaxed text-zinc-500">
+        Strava access is read-only. The app reads your activities to draft a plan.{" "}
+        <Link href="/privacy" className="text-zinc-700 underline underline-offset-2">
+          Privacy
+        </Link>
+      </p>
     </div>
   );
 }
