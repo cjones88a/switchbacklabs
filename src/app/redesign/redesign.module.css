@@ -1,0 +1,388 @@
+.shell {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--body);
+}
+
+.shell a {
+  color: inherit;
+}
+
+.switcher {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(12px);
+}
+
+.mark {
+  margin-right: auto;
+  font-family: var(--display);
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.switcher button,
+.live {
+  min-height: 44px;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.switcher button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+
+.switcher button:focus-visible,
+.live:focus-visible,
+.cta:focus-visible,
+.textLink:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.hero,
+.band,
+.section {
+  padding: 3.5rem 1.25rem;
+  scroll-margin-top: 5rem;
+}
+
+.inner {
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.kicker {
+  margin: 0 0 1rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.heroTitle {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(3.4rem, 10vw, 7.5rem);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+}
+
+.lead {
+  max-width: 40rem;
+  margin: 1.25rem 0 0;
+  font-size: 1.125rem;
+  line-height: 1.55;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
+.cta,
+.textLink {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.cta {
+  padding: 0.7rem 1.1rem;
+  background: var(--accent);
+  color: var(--on-accent);
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.ghost {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--line);
+}
+
+.wordmark {
+  margin: 0 0 0.4rem;
+  font-family: var(--display);
+  line-height: 0.8;
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: var(--card);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  text-decoration: none;
+}
+
+.card h3,
+.band h2,
+.practice h2,
+.about h2,
+.contact h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  font-size: clamp(2rem, 4.5vw, 3.2rem);
+}
+
+.card p,
+.band p,
+.practice p,
+.about p,
+.contact p {
+  margin: 0;
+  line-height: 1.6;
+  max-width: 62ch;
+}
+
+.index {
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.cardLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: auto;
+}
+
+.textLink {
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  justify-content: space-between;
+  padding: 1.5rem 1.25rem 2.5rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+
+/* Tangerine: oversized wordmark, orange field, lime stickers */
+.shell[data-palette="tangerine"] .hero {
+  padding-top: 1.5rem;
+  padding-bottom: 4rem;
+  background:
+    linear-gradient(#d4ff3a, #d4ff3a) left top / 0.7rem 100% no-repeat,
+    var(--bg);
+}
+
+.shell[data-palette="tangerine"] .wordmark {
+  font-size: clamp(2.7rem, 11vw, 8rem);
+  text-transform: uppercase;
+  letter-spacing: -0.06em;
+  max-width: 100%;
+}
+
+.shell[data-palette="tangerine"] .heroTitle {
+  text-transform: uppercase;
+  font-size: clamp(2.6rem, 7vw, 5.5rem);
+}
+
+.shell[data-palette="tangerine"] .heroTitle span {
+  display: inline;
+  background: var(--lime);
+  box-decoration-break: clone;
+  padding: 0 0.12em;
+}
+
+.shell[data-palette="tangerine"] .band {
+  background: var(--accent);
+  color: var(--ink);
+}
+
+.shell[data-palette="tangerine"] .band .cta {
+  background: var(--lime);
+  color: var(--ink);
+}
+
+.shell[data-palette="tangerine"] .band .ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: rgba(12, 12, 13, 0.55);
+}
+
+.shell[data-palette="tangerine"] .grid {
+  grid-template-columns: 1fr;
+}
+
+.shell[data-palette="tangerine"] .card {
+  border-width: 0;
+  border-radius: 0;
+  background: var(--bg);
+  border-top: 8px solid var(--lime);
+}
+
+.shell[data-palette="tangerine"] .card h3 {
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  text-transform: uppercase;
+}
+
+/* Cobalt: dark engineered frame, thin borders, cobalt glow */
+.shell[data-palette="cobalt"] .hero .inner {
+  border: 1px solid rgba(46, 75, 255, 0.7);
+  padding: 2rem 1.25rem;
+  box-shadow:
+    0 0 0 1px rgba(46, 75, 255, 0.35),
+    0 0 90px rgba(46, 75, 255, 0.42);
+}
+
+.shell[data-palette="cobalt"] .wordmark {
+  font-size: 0.8rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.shell[data-palette="cobalt"] .heroTitle {
+  font-size: clamp(3rem, 8vw, 6.4rem);
+  letter-spacing: -0.045em;
+}
+
+.shell[data-palette="cobalt"] .heroTitle span {
+  color: var(--accent);
+}
+
+.shell[data-palette="cobalt"] .grid {
+  grid-template-columns: 1fr;
+}
+
+.shell[data-palette="cobalt"] .card {
+  background: #111216;
+  border-color: rgba(207, 201, 191, 0.35);
+  box-shadow:
+    inset 0 0 0 1px rgba(46, 75, 255, 0.28),
+    0 0 24px rgba(46, 75, 255, 0.16);
+  transition: box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.shell[data-palette="cobalt"] .card:hover,
+.shell[data-palette="cobalt"] .card:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 36px rgba(46, 75, 255, 0.38);
+}
+
+.shell[data-palette="cobalt"] .band {
+  background: #101114;
+}
+
+/* Coral: editorial serif, generous measure, hairline rules */
+.shell[data-palette="coral"] .hero,
+.shell[data-palette="coral"] .section,
+.shell[data-palette="coral"] .band {
+  padding-top: 4.5rem;
+  padding-bottom: 4.5rem;
+}
+
+.shell[data-palette="coral"] .inner {
+  max-width: 46rem;
+}
+
+.shell[data-palette="coral"] .wordmark {
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  font-weight: 460;
+  font-style: italic;
+}
+
+.shell[data-palette="coral"] .heroTitle {
+  font-weight: 460;
+  font-size: clamp(3.2rem, 8vw, 6rem);
+  line-height: 1.02;
+}
+
+.shell[data-palette="coral"] .heroTitle span {
+  box-shadow: inset 0 -0.18em 0 var(--accent);
+}
+
+.shell[data-palette="coral"] .card {
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--accent);
+  border-radius: 0;
+  padding: 1.75rem 0;
+}
+
+.shell[data-palette="coral"] .card h3 {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+}
+
+.shell[data-palette="coral"] .band {
+  background: var(--navy);
+  color: var(--ivory);
+}
+
+.shell[data-palette="coral"] .band .cta {
+  background: var(--accent);
+  color: var(--navy);
+}
+
+.shell[data-palette="coral"] .band .ghost {
+  background: transparent;
+  color: var(--ivory);
+  border-color: rgba(243, 237, 226, 0.7);
+}
+
+@media (min-width: 800px) {
+  .hero,
+  .band,
+  .section {
+    padding: 5rem 2rem;
+  }
+
+  .shell[data-palette="cobalt"] .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .shell[data-palette="cobalt"] .hero .inner {
+    padding: 3.5rem;
+  }
+
+  .shell[data-palette="tangerine"] .hero {
+    padding-top: 2rem;
+  }
+}

@@ -1,18 +1,21 @@
 import type { Metadata } from "next";
-import { Inter, Crimson_Pro } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin"],
+// Self-hosted so production builds do not fetch Google Fonts.
+// Google sometimes returns extensionless font URLs, which crash next/font.
+const inter = localFont({
+  src: "./fonts/inter-latin.woff2",
   variable: "--font-inter",
   display: "swap",
+  weight: "100 900",
 });
 
-const crimsonPro = Crimson_Pro({
-  subsets: ["latin"],
+const crimsonPro = localFont({
+  src: "./fonts/crimson-latin.woff2",
   variable: "--font-crimson",
   display: "swap",
-  weight: ["300", "400", "500", "600"],
+  weight: "200 900",
 });
 
 export const metadata: Metadata = {
